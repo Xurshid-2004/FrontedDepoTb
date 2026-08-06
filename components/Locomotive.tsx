@@ -2,16 +2,174 @@
 
 import { useEffect, useRef, useState } from "react";
 
-/**
- * «AFROSIYOB» (Talgo-250) old koʻrinishi — mascot.
- * Haqiqiy livreyaga mos: tepasi toʻq koʻk kabina, pasti oq-kumush burun,
- * keng qora shamol oynasi, past joylashgan farlar va tashqi qizil signallar.
- *
- * - Farlar kursorni / barmoqni kuzatadi (nur konusi ham buriladi)
- * - `blind` = true  → farlar yopiladi (PIN yoki parol kiritilmoqda)
- * - `happy` = true  → farlar yashil yonadi (muvaffaqiyatli kirish)
- */
-export default function Locomotive({
+/* ------------------------------------------------------------------
+   MASCOT — Afrosiyob old koʻrinishi.
+
+   `public/mascot.png` mavjud boʻlsa — fotorealistik 3D render ishlatiladi:
+   parallaks, kursorni kuzatuvchi far nurlari, yonuvchi faralar.
+   Fayl boʻlmasa — quyidagi SVG versiya (zaxira).
+------------------------------------------------------------------ */
+
+const MASCOT = "/mascot.png";
+
+/** far markazlari — rasmning foizlarida (rasm kelgach sozlanadi) */
+const LAMP_L = { x: 34, y: 74 };
+const LAMP_R = { x: 66, y: 74 };
+
+export default function Locomotive(props: {
+  blind?: boolean;
+  happy?: boolean;
+  size?: number;
+}) {
+  const [hasImg, setHasImg] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    const img = new Image();
+    img.onload = () => alive && setHasImg(true);
+    img.onerror = () => alive && setHasImg(false);
+    img.src = MASCOT;
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  if (hasImg === null) return <div style={{ width: props.size ?? 220, height: (props.size ?? 220) * 0.94 }} />;
+  return hasImg ? <ImgLoco {...props} /> : <SvgLoco {...props} />;
+}
+
+/* ================= FOTOREALISTIK RENDER ================= */
+
+function ImgLoco({
+  blind = false,
+  happy = false,
+  size = 220,
+}: {
+  blind?: boolean;
+  happy?: boolean;
+  size?: number;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [p, setP] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const onMove = (e: PointerEvent) => {
+      const el = ref.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const dx = (e.clientX - (r.left + r.width / 2)) / Math.max(r.width, 1);
+      const dy = (e.clientY - (r.top + r.height / 2)) / Math.max(r.height, 1);
+      const c = (v: number, m: number) => Math.max(-m, Math.min(m, v));
+      setP({ x: c(dx, 1), y: c(dy, 1) });
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    return () => window.removeEventListener("pointermove", onMove);
+  }, []);
+
+  const beam = happy ? "34,197,94" : "190,232,255";
+  const core = happy ? "#7bf3a8" : "#eafaff";
+  const angle = p.x * 26; // nur konusining burilishi
+  const w = size;
+  const h = size * 0.94;
+
+  return (
+    <div
+      ref={ref}
+      className="animate-floaty relative select-none"
+      style={{ width: w, height: h, perspective: 900 }}
+      aria-hidden
+    >
+      <div
+        className="relative h-full w-full"
+        style={{
+          transform: `rotateX(${-p.y * 7}deg) rotateY(${p.x * 9}deg) translate3d(${p.x * 8}px, ${p.y * 5}px, 0)`,
+          transformStyle: "preserve-3d",
+          transition: "transform .12s ease-out",
+        }}
+      >
+        {/* far nur konuslari — rasm ORTIDA */}
+        {!blind && (
+          <div className="pointer-events-none absolute inset-0" style={{ transform: "translateZ(-30px)" }}>
+            {[LAMP_L, LAMP_R].map((L, i) => (
+              <span
+                key={i}
+                className="absolute origin-top blur-[10px]"
+                style={{
+                  left: `${L.x}%`,
+                  top: `${L.y}%`,
+                  width: w * 0.5,
+                  height: h * 0.75,
+                  marginLeft: -w * 0.25,
+                  transform: `rotate(${angle}deg)`,
+                  transition: "transform .18s ease-out",
+                  background: `linear-gradient(180deg, rgba(${beam},.55) 0%, rgba(${beam},.16) 45%, transparent 78%)`,
+                  clipPath: "polygon(42% 0, 58% 0, 100% 100%, 0 100%)",
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* asosiy render */}
+        <img
+          src={MASCOT}
+          alt=""
+          className="relative h-full w-full object-contain"
+          style={{
+            filter: blind
+              ? "brightness(.86) saturate(.85) contrast(1.02)"
+              : happy
+              ? "brightness(1.06) saturate(1.12)"
+              : "brightness(1.02) saturate(1.05)",
+            transition: "filter .4s ease",
+            transform: "translateZ(0)",
+          }}
+        />
+
+        {/* faralarning yonishi — rasm USTIDA */}
+        {!blind && (
+          <div className="pointer-events-none absolute inset-0" style={{ transform: "translateZ(20px)" }}>
+            {[LAMP_L, LAMP_R].map((L, i) => (
+              <span
+                key={i}
+                className="absolute rounded-full"
+                style={{
+                  left: `${L.x}%`,
+                  top: `${L.y}%`,
+                  width: w * 0.24,
+                  height: w * 0.24,
+                  marginLeft: -w * 0.12,
+                  marginTop: -w * 0.12,
+                  background: `radial-gradient(circle, ${core} 0%, rgba(${beam},.62) 26%, rgba(${beam},0) 68%)`,
+                  animation: "lampPulse 3.2s ease-in-out infinite",
+                  animationDelay: `${i * 0.4}s`,
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* yumshoq aks — shishasimon yaltirash */}
+        <div
+          className="pointer-events-none absolute inset-0 mix-blend-screen"
+          style={{
+            transform: "translateZ(30px)",
+            background: `radial-gradient(420px circle at ${50 + p.x * 22}% ${28 + p.y * 14}%, rgba(255,255,255,.22), transparent 46%)`,
+            transition: "background .2s ease-out",
+          }}
+        />
+      </div>
+
+      {/* pastdagi soya */}
+      <div
+        className="pointer-events-none absolute inset-x-[12%] bottom-[-2%] h-[7%] rounded-[50%] blur-md"
+        style={{ background: "rgba(10,26,44,.35)" }}
+      />
+    </div>
+  );
+}
+
+function SvgLoco({
   blind = false,
   happy = false,
   size = 220,

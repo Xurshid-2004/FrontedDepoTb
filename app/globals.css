@@ -166,3 +166,8 @@ body {
 ::selection {
   background: rgba(27, 111, 224, 0.18);
 }
+
+@keyframes lampPulse {
+  0%, 100% { opacity: .92; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
