@@ -16,18 +16,18 @@ export function iso(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
+const p2 = (n: number) => String(n).padStart(2, "0");
+
 export function fmt(d: string | Date) {
   const x = typeof d === "string" ? new Date(d) : d;
-  return x.toLocaleDateString("uz-UZ", { day: "2-digit", month: "2-digit", year: "numeric" });
+  if (Number.isNaN(x.getTime())) return "—";
+  return `${p2(x.getDate())}.${p2(x.getMonth() + 1)}.${x.getFullYear()}`;
 }
 
 export function fmtDT(d: string | Date) {
   const x = typeof d === "string" ? new Date(d) : d;
-  return (
-    x.toLocaleDateString("uz-UZ", { day: "2-digit", month: "2-digit", year: "numeric" }) +
-    " " +
-    x.toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" })
-  );
+  if (Number.isNaN(x.getTime())) return "—";
+  return `${fmt(x)} ${p2(x.getHours())}:${p2(x.getMinutes())}`;
 }
 
 export function addMonths(d: Date, m: number) {
@@ -43,7 +43,7 @@ export function daysBetween(a: Date | string, b: Date | string) {
 }
 
 export function money(n: number) {
-  return new Intl.NumberFormat("uz-UZ").format(Math.round(n)) + " soʻm";
+  return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " soʻm";
 }
 
 /* ---------------- qishki mavsum ---------------- */
