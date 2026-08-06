@@ -158,11 +158,11 @@ export default function Lab() {
 
           <Demo
             n="09"
-            title="Tezlik chiziqlari — 3D perspektiva"
-            note="Canvas 2D, lekin perspektiv hisob bilan: chiziqlar yoʻqolish nuqtasidan tashqariga eksponensial tezlashib uchadi — tunnel ichida ketayotgandek. Faol kartalar va oʻtishlarda ishlatiladi."
+            title="Tezlik chiziqlari — 3D perspektiva + yulduz uchishi"
+            note="Ikki barobar tezlashtirildi. Har bir chiziqning boshi yorugʻ yulduz — orqasida soʻnib boruvchi dum. Vaqti-vaqti bilan yirik meteorlar kesishuvchi nur bilan uchib oʻtadi. Fonda miltillovchi yulduzlar chuqurlik beradi."
           >
             <div className="relative h-[260px] overflow-hidden rounded-xl border border-white/10 bg-[#050b14]">
-              <SpeedLines count={220} opacity={0.9} speed={1.15} />
+              <SpeedLines count={240} opacity={0.95} speed={2.3} />
             </div>
           </Demo>
         </div>

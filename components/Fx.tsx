@@ -119,20 +119,33 @@ export function Tilt({
 }
 
 /* ------------------------------------------------------------------
-   SpeedLines — 3D perspektivali tezlik chiziqlari (canvas).
-   Chiziqlar markazdan (yoʻqolish nuqtasi) tashqariga qarab uchadi —
-   xuddi tunnel ichida tez ketayotgandek.
+   SpeedLines — 3D perspektivali tezlik chiziqlari + yulduz uchishi.
+   Chiziqlar yoʻqolish nuqtasidan tashqariga eksponensial tezlashib uchadi.
+   Har bir chiziqning boshi yorugʻ "yulduz" — orqasida soʻnib boruvchi dum.
+   Vaqti-vaqti bilan yirikroq meteorlar (kesishuvchi nur bilan) uchib oʻtadi.
 ------------------------------------------------------------------ */
+type Star = {
+  a: number;      // burchak
+  r: number;      // radius koeffitsiyenti
+  z: number;      // 0..1 — chuqurlik
+  v: number;      // tezlik
+  l: number;      // dum uzunligi
+  meteor: boolean;
+  tw: number;     // miltillash fazasi
+};
+
 export function SpeedLines({
   count = 160,
   opacity = 0.6,
-  speed = 1,
+  speed = 2,
   hue = 199,
+  meteorRate = 0.09,
 }: {
   count?: number;
   opacity?: number;
   speed?: number;
   hue?: number;
+  meteorRate?: number;
 }) {
   const ref = useRef<HTMLCanvasElement | null>(null);
 
@@ -161,54 +174,117 @@ export function SpeedLines({
     const ro = new ResizeObserver(resize);
     ro.observe(parent);
 
-    type P = { a: number; r: number; z: number; v: number; l: number };
-    const parts: P[] = Array.from({ length: count }, () => ({
-      a: Math.random() * Math.PI * 2,
-      r: 0.06 + Math.random() * 0.9,
-      z: Math.random(),
-      v: 0.0035 + Math.random() * 0.011,
-      l: 0.05 + Math.random() * 0.16,
+    const mk = (fresh = false): Star => {
+      const meteor = Math.random() < meteorRate;
+      return {
+        a: Math.random() * Math.PI * 2,
+        r: 0.06 + Math.random() * 0.9,
+        z: fresh ? 0 : Math.random(),
+        v: (meteor ? 0.006 : 0.0035) + Math.random() * (meteor ? 0.016 : 0.011),
+        l: (meteor ? 0.14 : 0.05) + Math.random() * (meteor ? 0.2 : 0.14),
+        meteor,
+        tw: Math.random() * Math.PI * 2,
+      };
+    };
+    const parts: Star[] = Array.from({ length: count }, () => mk());
+
+    // fon yulduzlari (qimirlamaydi, faqat miltillaydi)
+    const bg = Array.from({ length: Math.round(count * 0.35) }, () => ({
+      x: Math.random(),
+      y: Math.random(),
+      s: 0.4 + Math.random() * 1.2,
+      tw: Math.random() * Math.PI * 2,
+      sp: 0.6 + Math.random() * 1.8,
     }));
 
     let raf = 0;
+    let time = 0;
+
     const draw = () => {
+      time += 0.016;
       ctx.clearRect(0, 0, w, h);
       const cx = w / 2;
       const cy = h / 2;
       const R = Math.hypot(w, h) * 0.62;
 
       ctx.globalCompositeOperation = "lighter";
-      ctx.lineCap = "round";
 
-      for (const p of parts) {
-        p.z += p.v * speed;
-        if (p.z > 1) {
-          p.z = 0;
-          p.a = Math.random() * Math.PI * 2;
-          p.r = 0.06 + Math.random() * 0.9;
-        }
-        // perspektiva: z oshgani sari markazdan uzoqlashadi (eksponensial)
-        const k = Math.pow(p.z, 2.4);
-        const k2 = Math.pow(Math.min(1, p.z + p.l), 2.4);
-        const d1 = k * R * (0.35 + p.r);
-        const d2 = k2 * R * (0.35 + p.r);
-        const ca = Math.cos(p.a);
-        const sa = Math.sin(p.a);
-
-        const alpha = Math.min(1, p.z * 2.4) * (1 - p.z * 0.25);
-        ctx.strokeStyle = `hsla(${hue}, 95%, 78%, ${alpha * 0.75})`;
-        ctx.lineWidth = 0.5 + k * 2.4;
+      /* --- fon yulduzlari --- */
+      for (const b of bg) {
+        const tw = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(time * b.sp + b.tw));
+        ctx.fillStyle = `hsla(${hue}, 60%, 92%, ${tw * 0.5})`;
         ctx.beginPath();
-        ctx.moveTo(cx + ca * d1, cy + sa * d1 * 0.72);
-        ctx.lineTo(cx + ca * d2, cy + sa * d2 * 0.72);
-        ctx.stroke();
+        ctx.arc(b.x * w, b.y * h, b.s, 0, Math.PI * 2);
+        ctx.fill();
       }
 
-      // markazdagi yorugʻlik
-      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.28);
-      g.addColorStop(0, `hsla(${hue}, 100%, 85%, .28)`);
-      g.addColorStop(1, "transparent");
-      ctx.fillStyle = g;
+      /* --- uchuvchi yulduzlar --- */
+      ctx.lineCap = "round";
+      for (let i = 0; i < parts.length; i++) {
+        const p = parts[i];
+        p.z += p.v * speed;
+        if (p.z > 1) {
+          parts[i] = mk(true);
+          continue;
+        }
+
+        const k1 = Math.pow(p.z, 2.4);
+        const k2 = Math.pow(Math.max(0, p.z - p.l), 2.4);
+        const spread = 0.35 + p.r;
+        const ca = Math.cos(p.a);
+        const sa = Math.sin(p.a) * 0.72;
+
+        const hx = cx + ca * k1 * R * spread; // bosh (yulduz)
+        const hy = cy + sa * k1 * R * spread;
+        const tx = cx + ca * k2 * R * spread; // dum uchi
+        const ty = cy + sa * k2 * R * spread;
+
+        const fade = Math.min(1, p.z * 3) * (1 - Math.pow(p.z, 6));
+        const wdt = (p.meteor ? 1.4 : 0.5) + k1 * (p.meteor ? 4 : 2.2);
+        const light = p.meteor ? 92 : 82;
+
+        // dum — gradient bilan soʻnadi
+        const g = ctx.createLinearGradient(tx, ty, hx, hy);
+        g.addColorStop(0, `hsla(${hue}, 95%, ${light}%, 0)`);
+        g.addColorStop(0.65, `hsla(${hue}, 95%, ${light}%, ${fade * 0.35})`);
+        g.addColorStop(1, `hsla(${hue}, 100%, 97%, ${fade * 0.95})`);
+        ctx.strokeStyle = g;
+        ctx.lineWidth = wdt;
+        ctx.beginPath();
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(hx, hy);
+        ctx.stroke();
+
+        // bosh — yorugʻ nuqta
+        const hr = (p.meteor ? 2.2 : 1.1) + k1 * (p.meteor ? 5 : 2);
+        const hg = ctx.createRadialGradient(hx, hy, 0, hx, hy, hr * 2.6);
+        hg.addColorStop(0, `rgba(255,255,255,${fade})`);
+        hg.addColorStop(0.35, `hsla(${hue}, 100%, 88%, ${fade * 0.6})`);
+        hg.addColorStop(1, `hsla(${hue}, 100%, 70%, 0)`);
+        ctx.fillStyle = hg;
+        ctx.beginPath();
+        ctx.arc(hx, hy, hr * 2.6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // meteor uchun kesishuvchi nur (yulduz porlashi)
+        if (p.meteor && p.z > 0.35) {
+          const fl = hr * 3.4 * fade;
+          ctx.strokeStyle = `hsla(${hue}, 100%, 96%, ${fade * 0.55})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(hx - fl, hy);
+          ctx.lineTo(hx + fl, hy);
+          ctx.moveTo(hx, hy - fl * 0.7);
+          ctx.lineTo(hx, hy + fl * 0.7);
+          ctx.stroke();
+        }
+      }
+
+      /* --- markazdagi yorugʻlik --- */
+      const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.26);
+      cg.addColorStop(0, `hsla(${hue}, 100%, 85%, .3)`);
+      cg.addColorStop(1, "transparent");
+      ctx.fillStyle = cg;
       ctx.fillRect(0, 0, w, h);
 
       ctx.globalCompositeOperation = "source-over";
@@ -220,7 +296,7 @@ export function SpeedLines({
       cancelAnimationFrame(raf);
       ro.disconnect();
     };
-  }, [count, speed, hue]);
+  }, [count, speed, hue, meteorRate]);
 
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden" style={{ opacity }}>

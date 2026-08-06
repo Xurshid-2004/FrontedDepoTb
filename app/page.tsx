@@ -230,7 +230,7 @@ function ModuleCard({
           }}
         >
           <span className="absolute inset-x-0 top-0 h-[3px]" style={{ background: accent, opacity: active ? 1 : 0.3 }} />
-          {active && <SpeedLines count={70} opacity={0.16} speed={0.55} />}
+          {active && <SpeedLines count={80} opacity={0.2} speed={1.1} meteorRate={0.05} />}
           <p className="relative text-[10px] uppercase tracking-[0.32em]" style={{ color: accent }}>
             {kicker}
           </p>
