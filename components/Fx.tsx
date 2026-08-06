@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 /* ------------------------------------------------------------------
@@ -119,26 +119,112 @@ export function Tilt({
 }
 
 /* ------------------------------------------------------------------
-   SpeedLines — tezlik hissi (Afrosiyob)
+   SpeedLines — 3D perspektivali tezlik chiziqlari (canvas).
+   Chiziqlar markazdan (yoʻqolish nuqtasi) tashqariga qarab uchadi —
+   xuddi tunnel ichida tez ketayotgandek.
 ------------------------------------------------------------------ */
-export function SpeedLines({ count = 26, opacity = 0.5 }: { count?: number; opacity?: number }) {
+export function SpeedLines({
+  count = 160,
+  opacity = 0.6,
+  speed = 1,
+  hue = 199,
+}: {
+  count?: number;
+  opacity?: number;
+  speed?: number;
+  hue?: number;
+}) {
+  const ref = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    const cv = ref.current;
+    if (!cv) return;
+    const parent = cv.parentElement;
+    if (!parent) return;
+    const ctx = cv.getContext("2d");
+    if (!ctx) return;
+
+    let w = 0;
+    let h = 0;
+    let dpr = 1;
+    const resize = () => {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = parent.clientWidth;
+      h = parent.clientHeight;
+      cv.width = Math.max(1, Math.floor(w * dpr));
+      cv.height = Math.max(1, Math.floor(h * dpr));
+      cv.style.width = w + "px";
+      cv.style.height = h + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(parent);
+
+    type P = { a: number; r: number; z: number; v: number; l: number };
+    const parts: P[] = Array.from({ length: count }, () => ({
+      a: Math.random() * Math.PI * 2,
+      r: 0.06 + Math.random() * 0.9,
+      z: Math.random(),
+      v: 0.0035 + Math.random() * 0.011,
+      l: 0.05 + Math.random() * 0.16,
+    }));
+
+    let raf = 0;
+    const draw = () => {
+      ctx.clearRect(0, 0, w, h);
+      const cx = w / 2;
+      const cy = h / 2;
+      const R = Math.hypot(w, h) * 0.62;
+
+      ctx.globalCompositeOperation = "lighter";
+      ctx.lineCap = "round";
+
+      for (const p of parts) {
+        p.z += p.v * speed;
+        if (p.z > 1) {
+          p.z = 0;
+          p.a = Math.random() * Math.PI * 2;
+          p.r = 0.06 + Math.random() * 0.9;
+        }
+        // perspektiva: z oshgani sari markazdan uzoqlashadi (eksponensial)
+        const k = Math.pow(p.z, 2.4);
+        const k2 = Math.pow(Math.min(1, p.z + p.l), 2.4);
+        const d1 = k * R * (0.35 + p.r);
+        const d2 = k2 * R * (0.35 + p.r);
+        const ca = Math.cos(p.a);
+        const sa = Math.sin(p.a);
+
+        const alpha = Math.min(1, p.z * 2.4) * (1 - p.z * 0.25);
+        ctx.strokeStyle = `hsla(${hue}, 95%, 78%, ${alpha * 0.75})`;
+        ctx.lineWidth = 0.5 + k * 2.4;
+        ctx.beginPath();
+        ctx.moveTo(cx + ca * d1, cy + sa * d1 * 0.72);
+        ctx.lineTo(cx + ca * d2, cy + sa * d2 * 0.72);
+        ctx.stroke();
+      }
+
+      // markazdagi yorugʻlik
+      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.28);
+      g.addColorStop(0, `hsla(${hue}, 100%, 85%, .28)`);
+      g.addColorStop(1, "transparent");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.globalCompositeOperation = "source-over";
+      raf = requestAnimationFrame(draw);
+    };
+    raf = requestAnimationFrame(draw);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
+  }, [count, speed, hue]);
+
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden" style={{ opacity }}>
-      {Array.from({ length: count }).map((_, i) => {
-        const left = (i / count) * 100 + (i % 3) * 1.4;
-        const dur = 0.7 + ((i * 37) % 100) / 100;
-        const delay = ((i * 61) % 100) / 100;
-        return (
-          <span
-            key={i}
-            className="absolute top-[-30vh] h-[26vh] w-px bg-gradient-to-b from-transparent via-sky-300/70 to-transparent"
-            style={{
-              left: `${left}%`,
-              animation: `speedline ${dur}s linear ${delay}s infinite`,
-            }}
-          />
-        );
-      })}
+      <canvas ref={ref} className="absolute inset-0" />
     </div>
   );
 }

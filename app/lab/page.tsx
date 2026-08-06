@@ -9,7 +9,7 @@ import BookCard from "@/components/BookCard";
 import JournalTable from "@/components/JournalTable";
 import DownloadButton from "@/components/DownloadButton";
 import WorkerCoverflow from "@/components/WorkerCoverflow";
-import TrainEnter from "@/components/TrainEnter";
+import TrainScene from "@/components/TrainScene";
 import { Tilt, TouchRipple, SpeedLines } from "@/components/Fx";
 
 export default function Lab() {
@@ -21,7 +21,7 @@ export default function Lab() {
     <main className="relative min-h-dvh">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(1000px_500px_at_50%_-10%,rgba(27,111,224,.18),transparent_65%)]" />
 
-      <AnimatePresence>{train && <TrainEnter onFinish={() => setTrain(false)} />}</AnimatePresence>
+      {train && <TrainScene onFinish={() => setTrain(false)} />}
 
       <div className="relative mx-auto w-full max-w-[1180px] px-5 pb-28 pt-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
@@ -60,8 +60,8 @@ export default function Lab() {
 
           <Demo
             n="02"
-            title="Afrosiyob kirish oʻtishi"
-            note="Login tasdiqlangan zahoti: poyezd yaqinlashadi → eshiklar ochiladi → kamera ichkariga uchib kiradi → oq portlash → dashboard."
+            title="Afrosiyob kirish oʻtishi — haqiqiy 3D (WebGL)"
+            note="Three.js sahnasi: relslar va ustunlar yonidan uchib oʻtadi, Afrosiyob yaqinlashadi, kamera yon tomonga chiqadi, eshik sirgʻalib ochiladi va kamera ichkariga uchib kiradi → yorugʻlik tunneli → oq portlash. Davomiyligi ~4.4 s."
           >
             <button
               onClick={() => setTrain(true)}
@@ -158,11 +158,11 @@ export default function Lab() {
 
           <Demo
             n="09"
-            title="Tezlik chiziqlari (speed lines)"
-            note="Afrosiyob mavzusining takrorlanuvchi elementi — faol kartalar va oʻtishlarda ishlatiladi."
+            title="Tezlik chiziqlari — 3D perspektiva"
+            note="Canvas 2D, lekin perspektiv hisob bilan: chiziqlar yoʻqolish nuqtasidan tashqariga eksponensial tezlashib uchadi — tunnel ichida ketayotgandek. Faol kartalar va oʻtishlarda ishlatiladi."
           >
-            <div className="relative h-[200px] overflow-hidden rounded-xl border border-white/10 bg-[#060d18]">
-              <SpeedLines count={40} opacity={0.7} />
+            <div className="relative h-[260px] overflow-hidden rounded-xl border border-white/10 bg-[#050b14]">
+              <SpeedLines count={220} opacity={0.9} speed={1.15} />
             </div>
           </Demo>
         </div>

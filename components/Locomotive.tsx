@@ -3,15 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * Afrosiyob uslubidagi soddalashtirilgan lokomotiv "mascot".
- * - Faralar (koʻzlar) kursorni / barmoqni kuzatadi
- * - `blind` = true bo'lsa (PIN yoki parol kiritilmoqda) faralar yopiladi
- * - `happy` = true (muvaffaqiyatli kirish) — faralar yashil yonadi
+ * Afrosiyob (Talgo-250) uslubidagi lokomotiv "mascot".
+ * - Faralar kursorni / barmoqni kuzatadi (nur konusi ham buriladi)
+ * - `blind` = true  → faralar yopiladi (PIN/parol kiritilmoqda)
+ * - `happy` = true  → faralar yashil yonadi (muvaffaqiyatli kirish)
+ * SVG, lekin koʻp qatlamli gradient va soyalar bilan 3D taassurot beradi.
  */
 export default function Locomotive({
   blind = false,
   happy = false,
-  size = 190,
+  size = 220,
 }: {
   blind?: boolean;
   happy?: boolean;
@@ -25,106 +26,165 @@ export default function Locomotive({
       const el = ref.current;
       if (!el) return;
       const r = el.getBoundingClientRect();
-      const cx = r.left + r.width / 2;
-      const cy = r.top + r.height / 2;
-      const dx = (e.clientX - cx) / Math.max(r.width, 1);
-      const dy = (e.clientY - cy) / Math.max(r.height, 1);
-      const clamp = (v: number, m: number) => Math.max(-m, Math.min(m, v));
-      setP({ x: clamp(dx * 26, 7), y: clamp(dy * 26, 5) });
+      const dx = (e.clientX - (r.left + r.width / 2)) / Math.max(r.width, 1);
+      const dy = (e.clientY - (r.top + r.height / 2)) / Math.max(r.height, 1);
+      const c = (v: number, m: number) => Math.max(-m, Math.min(m, v));
+      setP({ x: c(dx * 34, 9), y: c(dy * 30, 6) });
     };
     window.addEventListener("pointermove", onMove, { passive: true });
     return () => window.removeEventListener("pointermove", onMove);
   }, []);
 
-  const beam = happy ? "#22c55e" : "#bfe9ff";
-  const beamGlow = happy ? "#22c55e" : "#38bdf8";
+  const lamp = happy ? "#7bf3a8" : "#e8f9ff";
+  const halo = happy ? "#22c55e" : "#7cd4ff";
 
   return (
     <svg
       ref={ref}
       width={size}
-      height={size * 0.78}
-      viewBox="0 0 240 188"
-      className="animate-floaty select-none"
+      height={size * 0.86}
+      viewBox="0 0 260 224"
+      className="animate-floaty select-none overflow-visible"
       aria-hidden
     >
       <defs>
-        <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#f4f9ff" />
-          <stop offset="52%" stopColor="#cfe0f2" />
-          <stop offset="100%" stopColor="#8aa2bd" />
+        {/* korpus: yuqoridan yorug', pastdan qorong'i */}
+        <linearGradient id="lc-body" x1="0.25" y1="0" x2="0.7" y2="1">
+          <stop offset="0%" stopColor="#ffffff" />
+          <stop offset="26%" stopColor="#eaf3fb" />
+          <stop offset="58%" stopColor="#c3d4e6" />
+          <stop offset="100%" stopColor="#7f95ad" />
         </linearGradient>
-        <linearGradient id="stripe" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#1b6fe0" />
-          <stop offset="100%" stopColor="#38bdf8" />
+        {/* yon qirradagi aks etish */}
+        <linearGradient id="lc-spec" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0" />
+          <stop offset="42%" stopColor="#ffffff" stopOpacity="0.85" />
+          <stop offset="60%" stopColor="#ffffff" stopOpacity="0" />
         </linearGradient>
-        <radialGradient id="lamp">
-          <stop offset="0%" stopColor={beam} stopOpacity="1" />
-          <stop offset="60%" stopColor={beamGlow} stopOpacity="0.5" />
-          <stop offset="100%" stopColor={beamGlow} stopOpacity="0" />
+        <linearGradient id="lc-glass" x1="0.2" y1="0" x2="0.8" y2="1">
+          <stop offset="0%" stopColor="#2b5f8f" />
+          <stop offset="35%" stopColor="#0d2138" />
+          <stop offset="100%" stopColor="#050e1a" />
+        </linearGradient>
+        <linearGradient id="lc-stripe" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#0b4ea8" />
+          <stop offset="45%" stopColor="#2f8ff0" />
+          <stop offset="100%" stopColor="#0b4ea8" />
+        </linearGradient>
+        <radialGradient id="lc-halo">
+          <stop offset="0%" stopColor={lamp} stopOpacity="0.95" />
+          <stop offset="45%" stopColor={halo} stopOpacity="0.42" />
+          <stop offset="100%" stopColor={halo} stopOpacity="0" />
         </radialGradient>
-        <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
-          <feGaussianBlur stdDeviation="7" />
+        <filter id="lc-blur" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur stdDeviation="9" />
+        </filter>
+        <filter id="lc-shadow" x="-40%" y="-40%" width="180%" height="180%">
+          <feDropShadow dx="0" dy="10" stdDeviation="10" floodColor="#020712" floodOpacity="0.75" />
         </filter>
       </defs>
 
-      {/* yer soyasi */}
-      <ellipse cx="120" cy="176" rx="78" ry="9" fill="#0a1220" opacity="0.85" />
+      {/* pastdagi soya */}
+      <ellipse cx="130" cy="204" rx="86" ry="10" fill="#020712" opacity="0.9" />
+      <ellipse cx="130" cy="204" rx="52" ry="6" fill="#0a1a2c" opacity="0.9" />
 
-      {/* korpus */}
-      <path
-        d="M42 150 C42 92 66 42 120 42 C174 42 198 92 198 150 Z"
-        fill="url(#body)"
-        stroke="#5f7997"
-        strokeWidth="1.5"
-      />
-
-      {/* old oyna */}
-      <path
-        d="M70 118 C72 82 92 58 120 58 C148 58 168 82 170 118 Z"
-        fill="#0b1a2c"
-        stroke="#33506f"
-        strokeWidth="2"
-      />
-      <path
-        d="M70 118 C72 82 92 58 120 58 C148 58 168 82 170 118 Z"
-        fill="url(#stripe)"
-        opacity="0.18"
-      />
-
-      {/* faralar nuri */}
+      {/* nur konuslari (faralardan) */}
       {!blind && (
-        <>
-          <circle cx={74 + p.x} cy={140 + p.y} r="26" fill="url(#lamp)" filter="url(#soft)" opacity="0.9" />
-          <circle cx={166 + p.x} cy={140 + p.y} r="26" fill="url(#lamp)" filter="url(#soft)" opacity="0.9" />
-        </>
+        <g filter="url(#lc-blur)" opacity="0.85">
+          <path
+            d={`M78 168 L${34 + p.x * 2} 224 L${118 + p.x * 2} 224 Z`}
+            fill="url(#lc-halo)"
+          />
+          <path
+            d={`M182 168 L${142 + p.x * 2} 224 L${226 + p.x * 2} 224 Z`}
+            fill="url(#lc-halo)"
+          />
+        </g>
       )}
 
-      {/* faralar korpusi */}
-      <g>
-        <rect x="60" y="130" width="30" height="20" rx="9" fill="#14243a" stroke="#3b5a7d" strokeWidth="1.5" />
-        <rect x="150" y="130" width="30" height="20" rx="9" fill="#14243a" stroke="#3b5a7d" strokeWidth="1.5" />
-        {blind ? (
-          <>
-            <path d="M63 141 h24" stroke="#7f96b1" strokeWidth="3.5" strokeLinecap="round" />
-            <path d="M153 141 h24" stroke="#7f96b1" strokeWidth="3.5" strokeLinecap="round" />
-          </>
-        ) : (
-          <>
-            <circle cx={75 + p.x} cy={140 + p.y} r="6.5" fill={beam} />
-            <circle cx={165 + p.x} cy={140 + p.y} r="6.5" fill={beam} />
-          </>
-        )}
+      <g filter="url(#lc-shadow)">
+        {/* asosiy korpus — Talgo burun silueti */}
+        <path
+          d="M34 186
+             C34 120 52 40 130 40
+             C208 40 226 120 226 186
+             C226 190 222 192 218 192
+             L42 192
+             C38 192 34 190 34 186 Z"
+          fill="url(#lc-body)"
+        />
+        {/* yuqori yorug' qirra */}
+        <path
+          d="M60 96 C74 56 98 44 130 44 C162 44 186 56 200 96 C176 70 154 60 130 60 C106 60 84 70 60 96 Z"
+          fill="#ffffff"
+          opacity="0.75"
+        />
+        {/* yon spekulyar chiziq */}
+        <path
+          d="M40 178 C40 116 58 52 130 52 C202 52 220 116 220 178"
+          fill="none"
+          stroke="url(#lc-spec)"
+          strokeWidth="3"
+          opacity="0.5"
+        />
+
+        {/* old oyna */}
+        <path
+          d="M66 132
+             C69 88 92 62 130 62
+             C168 62 191 88 194 132
+             C170 122 152 118 130 118
+             C108 118 90 122 66 132 Z"
+          fill="url(#lc-glass)"
+        />
+        {/* oynadagi aks */}
+        <path
+          d="M80 122 C86 92 102 74 128 71 C110 82 96 100 90 126 Z"
+          fill="#8fd0ff"
+          opacity="0.28"
+        />
+
+        {/* koʻk livreya chizigʻi */}
+        <path
+          d="M38 152 C60 142 96 137 130 137 C164 137 200 142 222 152 L222 163 C200 153 164 148 130 148 C96 148 60 153 38 163 Z"
+          fill="url(#lc-stripe)"
+        />
+
+        {/* faralar uyasi */}
+        <g>
+          <rect x="56" y="160" width="46" height="18" rx="9" fill="#0a1626" />
+          <rect x="158" y="160" width="46" height="18" rx="9" fill="#0a1626" />
+          <rect x="56" y="160" width="46" height="18" rx="9" fill="none" stroke="#48688c" strokeWidth="1.4" />
+          <rect x="158" y="160" width="46" height="18" rx="9" fill="none" stroke="#48688c" strokeWidth="1.4" />
+
+          {blind ? (
+            <>
+              <path d="M62 169 h34" stroke="#7c93ad" strokeWidth="4" strokeLinecap="round" />
+              <path d="M164 169 h34" stroke="#7c93ad" strokeWidth="4" strokeLinecap="round" />
+            </>
+          ) : (
+            <>
+              <ellipse cx={79 + p.x} cy={169 + p.y * 0.5} rx="14" ry="6" fill={lamp} />
+              <ellipse cx={181 + p.x} cy={169 + p.y * 0.5} rx="14" ry="6" fill={lamp} />
+              <ellipse cx={79 + p.x} cy={169 + p.y * 0.5} rx="6" ry="3" fill="#ffffff" />
+              <ellipse cx={181 + p.x} cy={169 + p.y * 0.5} rx="6" ry="3" fill="#ffffff" />
+            </>
+          )}
+        </g>
+
+        {/* pastki etak */}
+        <path d="M40 184 L220 184 L216 192 L44 192 Z" fill="#16273c" />
+        <rect x="118" y="180" width="24" height="12" rx="3" fill="#0c1929" />
       </g>
 
-      {/* yon chiziqlar */}
-      <path d="M44 156 H196" stroke="url(#stripe)" strokeWidth="7" strokeLinecap="round" />
-      <path d="M52 166 H188" stroke="#25405f" strokeWidth="4" strokeLinecap="round" opacity="0.7" />
-
-      {/* tepa antenna */}
-      <path d="M104 42 L120 22 L136 42" stroke="#7f9ab8" strokeWidth="3" fill="none" strokeLinecap="round" />
-      <circle cx="120" cy="20" r="3.4" fill={happy ? "#22c55e" : "#f2b544"}>
-        <animate attributeName="opacity" values="1;0.25;1" dur="2.2s" repeatCount="indefinite" />
+      {/* pantograf */}
+      <g stroke="#8ea6bf" strokeWidth="3" strokeLinecap="round" fill="none">
+        <path d="M112 40 L130 16" />
+        <path d="M148 40 L130 16" />
+        <path d="M112 16 H148" />
+      </g>
+      <circle cx="130" cy="12" r="4" fill={happy ? "#22c55e" : "#f2b544"}>
+        <animate attributeName="opacity" values="1;0.2;1" dur="2.4s" repeatCount="indefinite" />
       </circle>
     </svg>
   );

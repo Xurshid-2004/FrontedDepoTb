@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import LoginCard from "@/components/LoginCard";
-import TrainEnter from "@/components/TrainEnter";
+import TrainScene from "@/components/TrainScene";
 import BookCard from "@/components/BookCard";
 import JournalTable from "@/components/JournalTable";
 import DownloadButton from "@/components/DownloadButton";
@@ -25,9 +25,7 @@ export default function Home() {
         <div className="grid-floor absolute inset-x-[-40%] bottom-[-25%] h-[60%] origin-bottom opacity-[0.18]" style={{ transform: "rotateX(74deg)" }} />
       </div>
 
-      <AnimatePresence>
-        {stage === "entering" && <TrainEnter onFinish={() => setStage("app")} />}
-      </AnimatePresence>
+      {stage === "entering" && <TrainScene onFinish={() => setStage("app")} />}
 
       <AnimatePresence mode="wait">
         {stage === "auth" ? (
@@ -232,7 +230,7 @@ function ModuleCard({
           }}
         >
           <span className="absolute inset-x-0 top-0 h-[3px]" style={{ background: accent, opacity: active ? 1 : 0.3 }} />
-          {active && <SpeedLines count={14} opacity={0.18} />}
+          {active && <SpeedLines count={70} opacity={0.16} speed={0.55} />}
           <p className="relative text-[10px] uppercase tracking-[0.32em]" style={{ color: accent }}>
             {kicker}
           </p>

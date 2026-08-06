@@ -36,14 +36,14 @@ Brauzerda: http://localhost:3000
 | № | Effekt | Fayl | Qayerda ishlatiladi |
 |---|---|---|---|
 | 01 | Tubes Cursor — neon lentalar | `components/CursorTubes.tsx` | Butun web (desktop) |
-| 02 | Afrosiyob kirish oʻtishi | `components/TrainEnter.tsx` | Login tasdiqlangandan keyin |
+| 02 | Afrosiyob kirish oʻtishi — **haqiqiy 3D (Three.js)** | `components/TrainScene.tsx` | Login tasdiqlangandan keyin |
 | 03 | PIN / OTP animatsiyasi | `components/PinPad.tsx` | Kirish, muhim amallarni tasdiqlash |
 | 04 | Lokomotiv mascot | `components/Locomotive.tsx` | Login va PIN ekrani |
 | 05 | Kitob ochilishi (parchalanish + 3D) | `components/BookCard.tsx` | Yo D-26 jurnal kartalari |
 | 06 | Morflanuvchi yuklab olish tugmasi | `components/DownloadButton.tsx` | Hisobotlar |
 | 07 | 3D coverflow qidiruv | `components/WorkerCoverflow.tsx` | Mashinist yoʻriqchisi kabineti |
 | 08 | Tilt + Touch Ripple | `components/Fx.tsx` | Barcha kartalar |
-| 09 | Tezlik chiziqlari | `components/Fx.tsx` | Faol kartalar, oʻtishlar |
+| 09 | Tezlik chiziqlari — 3D perspektiva (canvas) | `components/Fx.tsx` | Faol kartalar, oʻtishlar |
 
 ---
 
@@ -53,10 +53,16 @@ Brauzerda: http://localhost:3000
 - **React 19**
 - **Tailwind CSS 4**
 - **Framer Motion 13**
-- Canvas 2D (kursor lentalari), CSS 3D transformlar (kitob, coverflow, poyezd)
+- **Three.js 0.185** — faqat Afrosiyob kirish sahnasi uchun (WebGL)
+- Canvas 2D (kursor lentalari, tezlik chiziqlari), CSS 3D transformlar (kitob, coverflow)
 
-WebGL ishlatilmagan — barcha effektlar Canvas 2D va CSS 3D orqali qilingan.
-Bu eski Android qurilmalarda ham ishlash imkonini beradi.
+WebGL faqat bitta joyda — kirish oʻtishida. Qolgan hamma effekt Canvas 2D va CSS 3D.
+WebGL mavjud boʻlmasa sahna oʻzini oʻzi oʻchiradi va toʻgʻridan-toʻgʻri dashboard ochiladi.
+
+### Foydali sozlama
+
+Kirish oʻtishini sekinlashtirib koʻrish uchun URL'ga `?slow=3` qoʻshing:
+`http://localhost:3000/lab?slow=3` — oʻtish 3 barobar sekin ishlaydi.
 
 ---
 
