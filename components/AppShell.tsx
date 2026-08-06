@@ -54,7 +54,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   if (!ready) {
     return (
       <div className="grid min-h-dvh place-items-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-400/30 border-t-sky-400" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-200 border-t-sky-600" />
       </div>
     );
   }
@@ -72,20 +72,20 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* SIDEBAR */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-[268px] border-r border-white/8 bg-[#070d17]/95 backdrop-blur-xl transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-[268px] border-r border-slate-200/80 bg-white/92 shadow-[8px_0_40px_-30px_rgba(13,42,85,.5)] backdrop-blur-xl transition-transform duration-300 lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div className="flex h-full flex-col">
-          <Link href="/dash" className="flex items-center gap-3 border-b border-white/8 px-5 py-5">
+          <Link href="/dash" className="flex items-center gap-3 border-b border-slate-200 px-5 py-5">
             <span className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-[#1b6fe0] to-[#38bdf8] text-[15px] font-black text-white">
               TB
             </span>
             <span>
-              <span className="block text-[13.5px] font-semibold leading-tight text-white">
+              <span className="block text-[13.5px] font-semibold leading-tight text-slate-900">
                 {db.depo.nomi}
               </span>
-              <span className="block text-[10.5px] text-slate-400">{db.depo.kod} · {db.depo.tashkilot}</span>
+              <span className="block text-[10.5px] text-slate-500">{db.depo.kod} · {db.depo.tashkilot}</span>
             </span>
           </Link>
 
@@ -99,8 +99,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   onClick={() => setOpen(false)}
                   className={`group relative flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[13px] transition-all ${
                     active
-                      ? "bg-sky-400/12 font-semibold text-white"
-                      : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
+                      ? "bg-gradient-to-r from-sky-100 to-sky-50 font-semibold text-sky-800"
+                      : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                   }`}
                 >
                   {active && (
@@ -112,7 +112,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   <span className="w-4 text-center opacity-70">{n.icon}</span>
                   <span className="flex-1">{n.label}</span>
                   {!!n.badge && (
-                    <span className="rounded-full bg-sky-400/20 px-1.5 py-0.5 text-[10px] font-bold text-sky-300">
+                    <span className="rounded-full bg-sky-200 px-1.5 py-0.5 text-[10px] font-bold text-sky-700">
                       {n.badge}
                     </span>
                   )}
@@ -121,7 +121,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
-          <div className="border-t border-white/8 p-3">
+          <div className="border-t border-slate-200 p-3">
             {me.roles.length > 1 || me.roles.includes("admin") ? (
               <div className="mb-3">
                 <p className="mb-1.5 px-1 text-[10px] uppercase tracking-wider text-slate-500">
@@ -130,7 +130,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <select
                   value={session?.roleAs ?? ""}
                   onChange={(e) => setRoleAs((e.target.value || null) as Role | null)}
-                  className="h-9 w-full rounded-lg border border-white/10 bg-[#0c1524] px-2.5 text-[12px] text-white outline-none"
+                  className="h-9 w-full rounded-lg border border-slate-200 bg-white px-2.5 text-[12px] text-slate-900 outline-none"
                 >
                   <option value="">Asl rollarim</option>
                   {(Object.keys(ROLE_LABEL) as Role[]).map((r) => (
@@ -142,15 +142,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </div>
             ) : null}
 
-            <div className="flex items-center gap-3 rounded-xl border border-white/8 p-2.5">
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-sky-400/15 text-[12px] font-bold text-sky-300">
+            <div className="flex items-center gap-3 rounded-xl border border-slate-200 p-2.5">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-sky-100 text-[12px] font-bold text-sky-700">
                 {me.familiya.slice(0, 2).toUpperCase()}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[12.5px] font-semibold text-white">
+                <p className="truncate text-[12.5px] font-semibold text-slate-900">
                   {me.familiya} {me.ism}
                 </p>
-                <p className="truncate text-[10.5px] text-slate-400">
+                <p className="truncate text-[10.5px] text-slate-500">
                   {roles.map((r) => ROLE_LABEL[r]).join(", ")}
                 </p>
               </div>
@@ -160,7 +160,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   router.replace("/");
                 }}
                 title="Chiqish"
-                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-white/10 text-slate-400 transition hover:border-red-400/50 hover:text-red-300"
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-slate-200 text-slate-500 transition hover:border-red-500 hover:text-red-600"
               >
                 ⏻
               </button>
@@ -170,26 +170,26 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {open && (
-        <div className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={() => setOpen(false)} />
+        <div className="fixed inset-0 z-40 bg-slate-900/30 lg:hidden" onClick={() => setOpen(false)} />
       )}
 
       {/* MAIN */}
       <div className="lg:pl-[268px]">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-white/8 bg-[#060b13]/85 px-4 backdrop-blur-xl md:px-7">
+        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-slate-200 bg-white/85 px-4 backdrop-blur-xl md:px-7">
           <button
             onClick={() => setOpen((v) => !v)}
-            className="grid h-9 w-9 place-items-center rounded-lg border border-white/10 text-slate-300 lg:hidden"
+            className="grid h-9 w-9 place-items-center rounded-lg border border-slate-200 text-slate-700 lg:hidden"
           >
             ☰
           </button>
-          <p className="flex-1 truncate text-[13px] text-slate-400">
+          <p className="flex-1 truncate text-[13px] text-slate-500">
             {nav.find((n) => path.startsWith(n.href))?.label ?? "TB tizimi"}
           </p>
 
           <div className="relative">
             <button
               onClick={() => setNotifOpen((v) => !v)}
-              className="relative grid h-9 w-9 place-items-center rounded-lg border border-white/10 text-slate-300 transition hover:border-sky-400/50 hover:text-white"
+              className="relative grid h-9 w-9 place-items-center rounded-lg border border-slate-200 text-slate-700 transition hover:border-sky-500 hover:text-slate-900"
             >
               ◔
               {unread > 0 && (
@@ -204,7 +204,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   initial={{ opacity: 0, y: -8, scale: 0.97 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -6, scale: 0.98 }}
-                  className="absolute right-0 top-11 z-50 max-h-[70vh] w-[340px] overflow-auto rounded-2xl border border-white/12 bg-[#0b1421] p-3 shadow-2xl"
+                  className="absolute right-0 top-11 z-50 max-h-[70vh] w-[340px] overflow-auto rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl"
                 >
                   <p className="mb-2 px-1 text-[11px] uppercase tracking-wider text-slate-500">
                     Bildirishnomalar
@@ -213,13 +213,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     <p className="px-1 py-6 text-center text-[12px] text-slate-500">Yangi xabar yoʻq</p>
                   )}
                   {myNotifs.map((n) => (
-                    <div key={n.id} className="rounded-xl px-2.5 py-2.5 hover:bg-white/[0.04]">
+                    <div key={n.id} className="rounded-xl px-2.5 py-2.5 hover:bg-slate-100">
                       <div className="flex items-start justify-between gap-2">
-                        <p className="text-[12.5px] font-semibold text-white">{n.sarlavha}</p>
+                        <p className="text-[12.5px] font-semibold text-slate-900">{n.sarlavha}</p>
                         {n.turi === "reject" && <Badge color="#ef4444">rad</Badge>}
                       </div>
-                      <p className="mt-1 text-[11.5px] leading-relaxed text-slate-400">{n.matn}</p>
-                      <p className="mt-1 text-[10px] text-slate-600">{fmtDT(n.sana)}</p>
+                      <p className="mt-1 text-[11.5px] leading-relaxed text-slate-500">{n.matn}</p>
+                      <p className="mt-1 text-[10px] text-slate-400">{fmtDT(n.sana)}</p>
                     </div>
                   ))}
                 </motion.div>
@@ -243,7 +243,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </motion.div>
         </main>
 
-        <footer className="border-t border-white/8 px-7 py-6 text-center text-[11.5px] text-slate-600">
+        <footer className="border-t border-slate-200 px-7 py-6 text-center text-[11.5px] text-slate-400">
           {db.depo.tashkilot} · {db.depo.nomi} ({db.depo.kod}) · TB tizimi prototipi ·{" "}
           {fio(me)}
         </footer>

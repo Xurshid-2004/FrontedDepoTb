@@ -16,7 +16,7 @@ export function Panel({
 }) {
   return (
     <div
-      className={`rounded-2xl border border-white/10 bg-white/[0.035] backdrop-blur-sm ${
+      className={`rounded-2xl border border-slate-200/90 bg-white card-shadow ${
         pad ? "p-5 md:p-6" : ""
       } ${className}`}
     >
@@ -37,10 +37,10 @@ export function Btn({ variant = "ghost", size = "md", className = "", ...p }: Bt
   const v = {
     primary:
       "bg-gradient-to-r from-[#1b6fe0] to-[#38bdf8] text-white shadow-[0_10px_30px_-12px_rgba(56,189,248,.9)] hover:brightness-110",
-    ghost: "border border-white/12 text-slate-200 hover:border-sky-400/60 hover:text-white",
-    danger: "border border-red-500/40 bg-red-500/10 text-red-300 hover:bg-red-500/20",
-    ok: "border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20",
-    gold: "border border-amber-400/40 bg-amber-400/10 text-amber-300 hover:bg-amber-400/20",
+    ghost: "border border-slate-200 text-slate-800 hover:border-sky-500 hover:text-slate-900",
+    danger: "border border-red-300 bg-red-50 text-red-600 hover:bg-red-100",
+    ok: "border border-emerald-300 bg-emerald-50 text-emerald-600 hover:bg-emerald-100",
+    gold: "border border-amber-300 bg-amber-50 text-amber-600 hover:bg-amber-400/20",
   }[variant];
   return <button {...p} className={`${base} ${sz} ${v} ${className}`} />;
 }
@@ -77,7 +77,7 @@ export function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-slate-400">
+      <span className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-slate-500">
         {label}
       </span>
       {children}
@@ -87,7 +87,7 @@ export function Field({
 }
 
 const inputCls =
-  "h-11 w-full rounded-xl border border-white/10 bg-white/[0.03] px-3.5 text-[14px] text-white outline-none transition focus:border-sky-400/70 focus:shadow-[0_0_0_4px_rgba(56,189,248,.12)] placeholder:text-slate-600";
+  "h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-[14px] text-slate-900 outline-none transition focus:border-sky-500 focus:shadow-[0_0_0_4px_rgba(56,189,248,.12)] placeholder:text-slate-400";
 
 export function Input(p: React.InputHTMLAttributes<HTMLInputElement>) {
   return <input {...p} className={`${inputCls} ${p.className ?? ""}`} />;
@@ -106,7 +106,7 @@ export function Select(p: React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
     <select
       {...p}
-      className={`${inputCls} appearance-none bg-[#0c1524] pr-9 ${p.className ?? ""}`}
+      className={`${inputCls} appearance-none bg-white pr-9 ${p.className ?? ""}`}
       style={{
         backgroundImage:
           "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")",
@@ -142,7 +142,7 @@ export function Modal({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-[90] grid place-items-center bg-black/70 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[90] grid place-items-center bg-slate-900/35 p-4 backdrop-blur-sm"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -155,13 +155,13 @@ export function Modal({
             exit={{ opacity: 0, y: 14, scale: 0.98 }}
             transition={{ type: "spring", stiffness: 260, damping: 26 }}
             style={{ maxWidth: width }}
-            className="max-h-[88vh] w-full overflow-auto rounded-2xl border border-white/12 bg-[#0b1421] p-6 shadow-2xl"
+            className="max-h-[88vh] w-full overflow-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
           >
             <div className="mb-5 flex items-start justify-between gap-4">
-              <h3 className="text-[17px] font-semibold text-white">{title}</h3>
+              <h3 className="text-[17px] font-semibold text-slate-900">{title}</h3>
               <button
                 onClick={onClose}
-                className="grid h-8 w-8 place-items-center rounded-lg border border-white/10 text-slate-400 transition hover:text-white"
+                className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 text-slate-500 transition hover:text-slate-900"
               >
                 ✕
               </button>
@@ -185,14 +185,14 @@ export function Table({
   min?: number;
 }) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-white/10">
+    <div className="overflow-x-auto rounded-xl border border-slate-200">
       <table className="w-full border-collapse text-left" style={{ minWidth: min }}>
         <thead>
-          <tr className="bg-white/[0.04]">
+          <tr className="bg-slate-100">
             {head.map((h, i) => (
               <th
                 key={i}
-                className="border-b border-white/10 px-3 py-2.5 text-[10.5px] font-semibold uppercase tracking-wider text-slate-400"
+                className="border-b border-slate-200 px-3 py-2.5 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500"
               >
                 {h}
               </th>
@@ -215,7 +215,7 @@ export function Td({
   colSpan?: number;
 }) {
   return (
-    <td colSpan={colSpan} className={`border-b border-white/[0.06] px-3 py-3 align-top text-[12.5px] text-slate-300 ${className}`}>
+    <td colSpan={colSpan} className={`border-b border-slate-200 px-3 py-3 align-top text-[12.5px] text-slate-700 ${className}`}>
       {children}
     </td>
   );
@@ -225,7 +225,7 @@ export function Tr({ children, onClick }: { children: React.ReactNode; onClick?:
   return (
     <tr
       onClick={onClick}
-      className={`transition-colors hover:bg-white/[0.03] ${onClick ? "cursor-pointer" : ""}`}
+      className={`transition-colors hover:bg-slate-50 ${onClick ? "cursor-pointer" : ""}`}
     >
       {children}
     </tr>
@@ -262,17 +262,17 @@ export function QrSig({
         width: size,
         margin: 0,
         errorCorrectionLevel: "M",
-        color: { dark: "#0b1421", light: "#e8f4ff" },
+        color: { dark: "#0d1b2a", light: "#ffffff" },
       }).catch(() => {});
     }
   }, [sigId, hash, size]);
 
   return (
-    <div className={`flex items-center gap-2.5 ${compact ? "" : "rounded-lg border border-white/10 bg-white/[0.03] p-2"}`}>
-      <canvas ref={ref} className="shrink-0 rounded-[3px] bg-[#e8f4ff] p-[3px]" width={size} height={size} />
+    <div className={`flex items-center gap-2.5 ${compact ? "" : "rounded-lg border border-slate-200 bg-white p-2"}`}>
+      <canvas ref={ref} className="shrink-0 rounded-[3px] bg-white p-[3px] ring-1 ring-slate-200" width={size} height={size} />
       <div className="min-w-0 leading-tight">
-        <p className="truncate text-[10.5px] text-slate-400">{lavozim}</p>
-        <p className="truncate text-[11.5px] font-semibold text-white">{fio}</p>
+        <p className="truncate text-[10.5px] text-slate-500">{lavozim}</p>
+        <p className="truncate text-[11.5px] font-semibold text-slate-900">{fio}</p>
         {sana && <p className="mt-0.5 text-[10px] tabular-nums text-slate-500">{sana}</p>}
       </div>
     </div>
@@ -282,7 +282,7 @@ export function QrSig({
 /* ---------------- Empty ---------------- */
 export function Empty({ text, icon = "○" }: { text: string; icon?: string }) {
   return (
-    <div className="grid place-items-center rounded-xl border border-dashed border-white/12 py-14">
+    <div className="grid place-items-center rounded-xl border border-dashed border-slate-200 py-14">
       <p className="text-center text-[13px] text-slate-500">
         <span className="mb-2 block text-2xl opacity-40">{icon}</span>
         {text}
@@ -304,8 +304,8 @@ export function PageHead({
   return (
     <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-white md:text-[28px]">{title}</h1>
-        {sub && <p className="mt-1.5 max-w-[720px] text-[13px] leading-relaxed text-slate-400">{sub}</p>}
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-[28px]">{title}</h1>
+        {sub && <p className="mt-1.5 max-w-[720px] text-[13px] leading-relaxed text-slate-500">{sub}</p>}
       </div>
       {right && <div className="flex flex-wrap items-center gap-2.5">{right}</div>}
     </div>
@@ -327,8 +327,8 @@ export function Stat({
   return (
     <Panel className="relative overflow-hidden">
       <span className="absolute inset-x-0 top-0 h-[3px]" style={{ background: color }} />
-      <p className="text-[11px] uppercase tracking-wider text-slate-400">{label}</p>
-      <p className="mt-2 text-[30px] font-bold leading-none tabular-nums text-white">{value}</p>
+      <p className="text-[11px] uppercase tracking-wider text-slate-500">{label}</p>
+      <p className="mt-2 text-[30px] font-bold leading-none tabular-nums text-slate-900">{value}</p>
       {hint && <p className="mt-2 text-[11.5px] text-slate-500">{hint}</p>}
     </Panel>
   );

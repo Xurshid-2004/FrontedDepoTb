@@ -139,12 +139,12 @@ export default function Hisobot() {
             {(data as { sana: string; w: string; pos: string; item: string; soni: number; narx: number }[]).map((r, i) => (
               <Tr key={i}>
                 <Td className="tabular-nums">{fmt(r.sana)}</Td>
-                <Td className="text-white">{r.w}</Td>
+                <Td className="text-slate-900">{r.w}</Td>
                 <Td>{r.pos}</Td>
                 <Td>{r.item}</Td>
                 <Td className="tabular-nums">{r.soni}</Td>
                 <Td className="tabular-nums">{money(r.narx)}</Td>
-                <Td className="tabular-nums text-white">{money(r.narx * r.soni)}</Td>
+                <Td className="tabular-nums text-slate-900">{money(r.narx * r.soni)}</Td>
               </Tr>
             ))}
           </Table>
@@ -157,12 +157,12 @@ export default function Hisobot() {
               if (!it) return null;
               return (
                 <Tr key={st.itemId}>
-                  <Td className="text-white">{it.nomi}</Td>
+                  <Td className="text-slate-900">{it.nomi}</Td>
                   <Td className="tabular-nums">{it.kod}</Td>
                   <Td>{it.unit}</Td>
                   <Td className="tabular-nums">{st.qoldiq}</Td>
                   <Td className="tabular-nums">{money(it.narx)}</Td>
-                  <Td className="tabular-nums text-white">{money(it.narx * st.qoldiq)}</Td>
+                  <Td className="tabular-nums text-slate-900">{money(it.narx * st.qoldiq)}</Td>
                 </Tr>
               );
             })}
@@ -173,7 +173,7 @@ export default function Hisobot() {
           <Table head={["Ishchi", "Tabel", "Lavozim", "Buyum", "Keyingi sana", "Holat"]} min={860}>
             {muddat.map(({ w, s }, i) => (
               <Tr key={i}>
-                <Td className="text-white">{fioShort(w)}</Td>
+                <Td className="text-slate-900">{fioShort(w)}</Td>
                 <Td className="tabular-nums">{w.tabel}</Td>
                 <Td>{positionById(db, w.positionId)?.nomi}</Td>
                 <Td>{itemById(db, s.itemId)?.nomi}</Td>
@@ -195,7 +195,7 @@ export default function Hisobot() {
               const rej = r.transitions.find((x) => x.to === "REJECTED");
               return (
                 <Tr key={r.id}>
-                  <Td className="tabular-nums text-white">{r.raqam}</Td>
+                  <Td className="tabular-nums text-slate-900">{r.raqam}</Td>
                   <Td className="tabular-nums">{fmt(r.yaratilgan)}</Td>
                   <Td>{w ? fioShort(w) : "—"}</Td>
                   <Td>{STATUS_LABEL[r.status]}</Td>
@@ -211,7 +211,7 @@ export default function Hisobot() {
             {(data as typeof db.moves).map((m) => (
               <Tr key={m.id}>
                 <Td className="tabular-nums">{fmt(m.sana)}</Td>
-                <Td className="text-white">{itemById(db, m.itemId)?.nomi}</Td>
+                <Td className="text-slate-900">{itemById(db, m.itemId)?.nomi}</Td>
                 <Td className="tabular-nums">+{m.soni}</Td>
                 <Td>{m.izoh}</Td>
               </Tr>
@@ -225,7 +225,7 @@ export default function Hisobot() {
               <Tr key={j.id}>
                 <Td>{j.bosqich}-bosqich</Td>
                 <Td className="tabular-nums">{fmt(j.sana)}</Td>
-                <Td className="text-white">{j.nomuvofiqlik}</Td>
+                <Td className="text-slate-900">{j.nomuvofiqlik}</Td>
                 <Td>{j.masul}</Td>
                 <Td className="tabular-nums">{fmt(j.muddat)}</Td>
                 <Td>
@@ -245,7 +245,7 @@ export default function Hisobot() {
               const tone = kipTone(k.tugash);
               return (
                 <Tr key={k.id}>
-                  <Td className="text-white">{w ? fioShort(w) : "—"}</Td>
+                  <Td className="text-slate-900">{w ? fioShort(w) : "—"}</Td>
                   <Td>{k.liniya}</Td>
                   <Td className="tabular-nums">{fmt(k.sana)}</Td>
                   <Td className="tabular-nums">{k.muddatOy} oy</Td>
@@ -264,7 +264,7 @@ export default function Hisobot() {
               const last = x.tarix[0];
               return (
                 <Tr key={i}>
-                  <Td className="text-white">{w ? fioShort(w) : "—"}</Td>
+                  <Td className="text-slate-900">{w ? fioShort(w) : "—"}</Td>
                   <Td>{x.raqam}-sonli</Td>
                   <Td><Badge color={x.olingan ? "#ef4444" : "#22c55e"}>{x.olingan ? "olingan" : "joyida"}</Badge></Td>
                   <Td>{last ? `${last.amal} · ${fmt(last.sana)}${last.sabab ? ` · ${last.sabab}` : ""}` : "—"}</Td>
@@ -282,7 +282,7 @@ export default function Hisobot() {
               const d = daysBetween(TODAY(), next);
               return (
                 <Tr key={e.workerId}>
-                  <Td className="text-white">{w ? fioShort(w) : "—"}</Td>
+                  <Td className="text-slate-900">{w ? fioShort(w) : "—"}</Td>
                   <Td className="tabular-nums">{w?.tabel}</Td>
                   <Td className="tabular-nums">{fmt(e.oxirgi)}</Td>
                   <Td className="tabular-nums">{e.davriylikOy} oy</Td>
@@ -302,10 +302,10 @@ export default function Hisobot() {
           <Table head={["Lavozim", "Xarajat", "Ulush"]} min={520}>
             {xarajat.map(([pos, sum]) => (
               <Tr key={pos}>
-                <Td className="text-white">{pos}</Td>
+                <Td className="text-slate-900">{pos}</Td>
                 <Td className="tabular-nums">{money(sum)}</Td>
                 <Td>
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-white/8">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
                     <span
                       className="block h-full rounded-full bg-amber-400"
                       style={{ width: `${jamiSumma ? (sum / jamiSumma) * 100 : 0}%` }}

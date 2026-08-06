@@ -60,7 +60,7 @@ export default function TalonPage() {
               const d = next ? daysBetween(TODAY(), next) : null;
               return (
                 <Tr key={w.id}>
-                  <Td className="font-medium text-white">
+                  <Td className="font-medium text-slate-900">
                     {fioShort(w)}
                     <span className="block text-[11px] text-slate-500">tabel {w.tabel}</span>
                   </Td>
@@ -109,7 +109,7 @@ export default function TalonPage() {
 
       <Modal open={!!act} onClose={() => setAct(null)} title={act?.olingan ? "Talonni qaytarish" : "Talonni olish"}>
         <div className="space-y-4">
-          <p className="text-[13px] text-slate-300">
+          <p className="text-[13px] text-slate-700">
             {act?.raqam}-sonli talon {act?.olingan ? "ishchiga qaytariladi" : "ishchidan olinadi"}. Amal tarixda saqlanadi va ishchiga bildirishnoma boradi.
           </p>
           {!act?.olingan && (

@@ -75,9 +75,9 @@ export default function KipPage() {
               {b.rows.map((w) => {
                 const k = kipOf(w.id)!;
                 return (
-                  <div key={w.id} className="rounded-lg bg-black/25 px-3 py-2">
-                    <p className="truncate text-[12.5px] font-medium text-white">{fioShort(w)}</p>
-                    <p className="truncate text-[11px] text-slate-400">{k.liniya} · {fmt(k.tugash)}</p>
+                  <div key={w.id} className="rounded-lg bg-white/70 px-3 py-2">
+                    <p className="truncate text-[12.5px] font-medium text-slate-900">{fioShort(w)}</p>
+                    <p className="truncate text-[11px] text-slate-500">{k.liniya} · {fmt(k.tugash)}</p>
                   </div>
                 );
               })}
@@ -93,7 +93,7 @@ export default function KipPage() {
             const tone = k ? kipTone(k.tugash) : null;
             return (
               <Tr key={w.id}>
-                <Td className="font-medium text-white">
+                <Td className="font-medium text-slate-900">
                   {fioShort(w)}
                   <span className="block text-[11px] text-slate-500">tabel {w.tabel}</span>
                 </Td>
@@ -131,7 +131,7 @@ export default function KipPage() {
               </Select>
             </Field>
           </div>
-          <p className="rounded-lg border border-sky-400/25 bg-sky-400/8 px-3.5 py-2.5 text-[12px] text-sky-200">
+          <p className="rounded-lg border border-sky-300 bg-sky-50 px-3.5 py-2.5 text-[12px] text-sky-700">
             4. Saqlaganingizda yozuv sizning QR imzoyingiz bilan tasdiqlanadi va ishchiga bildirishnoma yuboriladi.
           </p>
           <div className="flex justify-end gap-3">

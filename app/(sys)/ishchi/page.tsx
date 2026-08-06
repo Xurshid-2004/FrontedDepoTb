@@ -69,8 +69,8 @@ export default function Ishchi() {
         <Panel className="xl:col-span-2">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h3 className="text-[15px] font-semibold text-white">Menga tegishli buyumlar</h3>
-              <p className="mt-1 text-[12px] text-slate-400">
+              <h3 className="text-[15px] font-semibold text-slate-900">Menga tegishli buyumlar</h3>
+              <p className="mt-1 text-[12px] text-slate-500">
                 Faqat muddati kelgan buyumlarni tanlash mumkin
               </p>
             </div>
@@ -94,18 +94,18 @@ export default function Ishchi() {
                   onClick={() => toggle(s.itemId)}
                   title={chk.ok ? "Tanlash" : chk.sabab}
                   className={`flex w-full items-center gap-3 rounded-xl border px-3.5 py-3 text-left transition ${
-                    on ? "border-sky-400/70 bg-sky-400/10" : "border-white/8 hover:border-white/20"
+                    on ? "border-sky-500 bg-sky-50" : "border-slate-200 hover:border-slate-300"
                   } ${!chk.ok ? "cursor-not-allowed opacity-55" : ""}`}
                 >
                   <span
                     className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border text-[11px] ${
-                      on ? "border-sky-400 bg-sky-400 text-[#05090f]" : "border-white/20"
+                      on ? "border-sky-400 bg-sky-400 text-[#05090f]" : "border-slate-300"
                     }`}
                   >
                     {on ? "✓" : ""}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13px] font-medium text-white">{it?.nomi}</span>
+                    <span className="block truncate text-[13px] font-medium text-slate-900">{it?.nomi}</span>
                     <span className="block text-[11.5px] text-slate-500">
                       {s.norm.muddatOy === null ? "Ish. Chiqqun" : `${s.norm.muddatOy} oy`}
                       {it?.qishki ? " · qishki" : ""}
@@ -123,7 +123,7 @@ export default function Ishchi() {
 
         <div className="space-y-5">
           <Panel>
-            <h3 className="mb-4 text-[15px] font-semibold text-white">Ogohlantirish talonlari</h3>
+            <h3 className="mb-4 text-[15px] font-semibold text-slate-900">Ogohlantirish talonlari</h3>
             <div className="flex gap-3">
               {myTalons.map((x) => (
                 <div
@@ -147,14 +147,14 @@ export default function Ishchi() {
 
           {myKips.length > 0 && (
             <Panel>
-              <h3 className="mb-4 text-[15px] font-semibold text-white">KIP maʼlumotnomam</h3>
+              <h3 className="mb-4 text-[15px] font-semibold text-slate-900">KIP maʼlumotnomam</h3>
               <div className="space-y-2">
                 {myKips.slice(0, 4).map((k) => {
                   const tone = kipTone(k.tugash);
                   return (
-                    <div key={k.id} className="rounded-xl border border-white/8 px-3.5 py-2.5">
+                    <div key={k.id} className="rounded-xl border border-slate-200 px-3.5 py-2.5">
                       <div className="flex items-center justify-between gap-3">
-                        <span className="truncate text-[12.5px] text-white">{k.liniya}</span>
+                        <span className="truncate text-[12.5px] text-slate-900">{k.liniya}</span>
                         <Badge color={tone.color}>{tone.label}</Badge>
                       </div>
                       <p className="mt-1 text-[11px] text-slate-500">
@@ -170,7 +170,7 @@ export default function Ishchi() {
       </div>
 
       <div className="mt-6">
-        <h3 className="mb-3 text-[15px] font-semibold text-white">Mening arizalarim</h3>
+        <h3 className="mb-3 text-[15px] font-semibold text-slate-900">Mening arizalarim</h3>
         {myReqs.length === 0 ? (
           <Empty text="Hali ariza yubormagansiz" />
         ) : (
@@ -178,7 +178,7 @@ export default function Ishchi() {
             <Table head={["Raqam", "Buyumlar", "Holat", "Sana", ""]} min={720}>
               {myReqs.map((r) => (
                 <Tr key={r.id}>
-                  <Td className="font-semibold tabular-nums text-white">{r.raqam}</Td>
+                  <Td className="font-semibold tabular-nums text-slate-900">{r.raqam}</Td>
                   <Td>{r.lines.map((l) => itemById(db, l.itemId)?.nomi).join(", ")}</Td>
                   <Td><Badge color={STATUS_COLOR[r.status]}>{STATUS_LABEL[r.status]}</Badge></Td>
                   <Td className="tabular-nums">{fmt(r.yaratilgan)}</Td>

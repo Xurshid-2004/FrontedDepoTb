@@ -24,14 +24,14 @@ export default function Kartochka({ params }: { params: Promise<{ id: string }> 
       <PageHead title={`Shaxsiy kartochka — ${fio(w)}`} sub={`Shakl MB-6 · tabel ${w.tabel} · ${pos?.nomi}`} />
 
       <Panel className="mb-5">
-        <div className="mb-5 border-b border-white/10 pb-4 text-center">
+        <div className="mb-5 border-b border-slate-200 pb-4 text-center">
           <p className="text-[11px] uppercase tracking-[0.3em] text-slate-500">Shakl MB-6</p>
-          <h2 className="mt-2 text-lg font-semibold text-white">
+          <h2 className="mt-2 text-lg font-semibold text-slate-900">
             Maxsus kiyim, poyabzal va himoya vositalarini hisobga olish shaxsiy kartochkasi
           </h2>
         </div>
 
-        <p className="mb-3 text-[11px] uppercase tracking-wider text-slate-400">Old tomon</p>
+        <p className="mb-3 text-[11px] uppercase tracking-wider text-slate-500">Old tomon</p>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <F n="01" l="Korxona" v={db.depo.nomi} auto />
           <F n="02" l="Familiya" v={w.familiya} />
@@ -45,7 +45,7 @@ export default function Kartochka({ params }: { params: Promise<{ id: string }> 
           <F n="12" l="—" v="boʻsh qoladi" muted />
         </div>
 
-        <p className="mb-3 mt-6 text-[11px] uppercase tracking-wider text-slate-400">
+        <p className="mb-3 mt-6 text-[11px] uppercase tracking-wider text-slate-500">
           11 · 13 · 14 · 15 — lavozim normasi
         </p>
         <Table head={["11 · Maxsus kiyim nomi", "20 · Kod", "13 · Oʻlchov", "14 · Miqdori", "15 · Kiyish muddati", "Turi"]} min={800}>
@@ -53,7 +53,7 @@ export default function Kartochka({ params }: { params: Promise<{ id: string }> 
             const it = itemById(db, n.itemId);
             return (
               <Tr key={n.id}>
-                <Td className="text-white">{it?.nomi}</Td>
+                <Td className="text-slate-900">{it?.nomi}</Td>
                 <Td className="tabular-nums">{it?.kod}</Td>
                 <Td>{it?.unit}</Td>
                 <Td className="tabular-nums">1</Td>
@@ -64,7 +64,7 @@ export default function Kartochka({ params }: { params: Promise<{ id: string }> 
           })}
         </Table>
 
-        <p className="mb-3 mt-6 text-[11px] uppercase tracking-wider text-slate-400">16 · 17 · 18 — QR imzolar</p>
+        <p className="mb-3 mt-6 text-[11px] uppercase tracking-wider text-slate-500">16 · 17 · 18 — QR imzolar</p>
         <div className="grid gap-3 sm:grid-cols-3">
           <QrSig sigId={`c16-${card.id}`} hash={card.id + "16"} fio={tb ? fio(tb) : "—"} lavozim="16 · Mehnat muhofazasi" sana={fmt(card.ochilgan)} size={60} />
           <QrSig sigId={`c17-${card.id}`} hash={card.id + "17"} fio={sx ? fio(sx) : "—"} lavozim="17 · Sex boshligʻi" sana={fmt(card.ochilgan)} size={60} />
@@ -73,7 +73,7 @@ export default function Kartochka({ params }: { params: Promise<{ id: string }> 
       </Panel>
 
       <Panel>
-        <p className="mb-3 text-[11px] uppercase tracking-wider text-slate-400">Orqa tomon — «Berilgan»</p>
+        <p className="mb-3 text-[11px] uppercase tracking-wider text-slate-500">Orqa tomon — «Berilgan»</p>
         {card.berilgan.length === 0 ? (
           <Empty text="Hali buyum berilmagan" />
         ) : (
@@ -82,12 +82,12 @@ export default function Kartochka({ params }: { params: Promise<{ id: string }> 
               const it = itemById(db, b.itemId);
               return (
                 <Tr key={b.id}>
-                  <Td className="text-white">{it?.nomi}</Td>
+                  <Td className="text-slate-900">{it?.nomi}</Td>
                   <Td className="tabular-nums">{it?.kod}</Td>
                   <Td className="tabular-nums">{fmt(b.sana)}</Td>
                   <Td className="tabular-nums">{b.soni}</Td>
                   <Td className="tabular-nums">{b.yaroqlilik}%</Td>
-                  <Td className="text-slate-600 italic">boʻsh</Td>
+                  <Td className="text-slate-400 italic">boʻsh</Td>
                   <Td>
                     <QrSig sigId={b.imzoId ?? b.id} hash={b.id} fio={fio(w)} lavozim="25 · Ishchi" sana={fmt(b.sana)} size={48} compact />
                   </Td>
@@ -97,9 +97,9 @@ export default function Kartochka({ params }: { params: Promise<{ id: string }> 
           </Table>
         )}
 
-        <p className="mb-3 mt-6 text-[11px] uppercase tracking-wider text-slate-400">Orqa tomon — «Qaytarilgan»</p>
+        <p className="mb-3 mt-6 text-[11px] uppercase tracking-wider text-slate-500">Orqa tomon — «Qaytarilgan»</p>
         {card.qaytarilgan.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-white/12 py-8 text-center text-[12.5px] text-slate-500">
+          <div className="rounded-xl border border-dashed border-slate-200 py-8 text-center text-[12.5px] text-slate-500">
             Bu boʻlim faqat buyum qaytarilganda toʻldiriladi
           </div>
         ) : (
@@ -122,13 +122,13 @@ export default function Kartochka({ params }: { params: Promise<{ id: string }> 
 
 function F({ n, l, v, auto, muted }: { n: string; l: string; v: string; auto?: boolean; muted?: boolean }) {
   return (
-    <div className="rounded-xl border border-white/8 bg-white/[0.02] px-3.5 py-2.5">
+    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5">
       <p className="text-[10px] uppercase tracking-wider text-slate-500">
-        <span className="mr-1.5 text-sky-400/80">{n}</span>
+        <span className="mr-1.5 text-sky-600">{n}</span>
         {l}
       </p>
-      <p className={`mt-1 text-[13px] ${muted ? "text-slate-600 italic" : "font-medium text-white"}`}>{v}</p>
-      {auto && <p className="mt-0.5 text-[10px] text-emerald-400/70">avtomatik</p>}
+      <p className={`mt-1 text-[13px] ${muted ? "text-slate-400 italic" : "font-medium text-slate-900"}`}>{v}</p>
+      {auto && <p className="mt-0.5 text-[10px] text-emerald-600">avtomatik</p>}
     </div>
   );
 }

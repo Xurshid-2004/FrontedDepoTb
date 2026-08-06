@@ -9,7 +9,7 @@ import BookCard from "@/components/BookCard";
 import JournalTable from "@/components/JournalTable";
 import DownloadButton from "@/components/DownloadButton";
 import WorkerCoverflow from "@/components/WorkerCoverflow";
-import TrainScene from "@/components/TrainScene";
+import TrainIntro from "@/components/TrainIntro";
 import { Tilt, TouchRipple, SpeedLines } from "@/components/Fx";
 
 export default function Lab() {
@@ -19,25 +19,25 @@ export default function Lab() {
 
   return (
     <main className="relative min-h-dvh">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(1000px_500px_at_50%_-10%,rgba(27,111,224,.18),transparent_65%)]" />
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(1000px_500px_at_50%_-10%,rgba(27,111,224,.14),transparent_65%)]" />
 
-      {train && <TrainScene onFinish={() => setTrain(false)} />}
+      {train && <TrainIntro onFinish={() => setTrain(false)} />}
 
       <div className="relative mx-auto w-full max-w-[1180px] px-5 pb-28 pt-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-[11px] uppercase tracking-[0.35em] text-sky-300/80">TB tizimi</p>
-            <h1 className="mt-2 text-3xl font-bold tracking-tight text-white md:text-4xl">
+            <p className="text-[11px] uppercase tracking-[0.35em] text-sky-700">TB tizimi</p>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
               Effektlar galereyasi
             </h1>
-            <p className="mt-2 max-w-[640px] text-[13.5px] leading-relaxed text-slate-400">
+            <p className="mt-2 max-w-[640px] text-[13.5px] leading-relaxed text-slate-500">
               Har bir effekt alohida sinab koʻriladi. Yoqqanini qoldiramiz, yoqmaganini oʻchiramiz
               yoki qayta ishlaymiz.
             </p>
           </div>
           <Link
             href="/"
-            className="rounded-lg border border-white/12 px-4 py-2.5 text-[13px] text-slate-300 transition hover:border-sky-400/60 hover:text-white"
+            className="rounded-lg border border-slate-200 px-4 py-2.5 text-[13px] text-slate-700 transition hover:border-sky-500 hover:text-slate-900"
           >
             ← Haqiqiy oqimga qaytish
           </Link>
@@ -49,11 +49,11 @@ export default function Lab() {
             title="Tubes Cursor — neon lentalar"
             note="Faqat desktop. Sichqoncha ortidan 5 ta rangli lenta spring bilan quvlaydi, bosilganda kengayadi. Mobilda avtomatik oʻchadi."
           >
-            <div className="grid h-[220px] place-items-center rounded-xl border border-dashed border-white/12 bg-white/[0.02]">
-              <p className="text-center text-[13px] text-slate-400">
+            <div className="grid h-[220px] place-items-center rounded-xl border border-dashed border-slate-300 bg-slate-50">
+              <p className="text-center text-[13px] text-slate-500">
                 Sichqonchani shu maydonda harakatlantiring
                 <br />
-                <span className="text-slate-600">(effekt butun sahifa boʻylab ishlaydi)</span>
+                <span className="text-slate-400">(effekt butun sahifa boʻylab ishlaydi)</span>
               </p>
             </div>
           </Demo>
@@ -94,7 +94,7 @@ export default function Lab() {
           >
             <div className="flex flex-col items-center gap-5">
               <Locomotive blind={blind} size={230} />
-              <label className="flex cursor-pointer items-center gap-3 text-[13px] text-slate-300">
+              <label className="flex cursor-pointer items-center gap-3 text-[13px] text-slate-700">
                 <input
                   type="checkbox"
                   checked={blind}
@@ -148,7 +148,7 @@ export default function Lab() {
                 <Tilt key={t} max={14} className="h-[170px]">
                   <TouchRipple className="h-full rounded-2xl">
                     <div className="glass grid h-full place-items-center rounded-2xl">
-                      <p className="text-[15px] font-semibold text-white">{t}</p>
+                      <p className="text-[15px] font-semibold text-slate-900">{t}</p>
                     </div>
                   </TouchRipple>
                 </Tilt>
@@ -195,8 +195,8 @@ function Demo({
           {n}
         </span>
         <div>
-          <h2 className="text-[17px] font-semibold text-white">{title}</h2>
-          <p className="mt-1.5 max-w-[720px] text-[13px] leading-relaxed text-slate-400">{note}</p>
+          <h2 className="text-[17px] font-semibold text-slate-900">{title}</h2>
+          <p className="mt-1.5 max-w-[720px] text-[13px] leading-relaxed text-slate-500">{note}</p>
         </div>
       </div>
       {children}

@@ -96,7 +96,7 @@ export default function CursorTubes() {
     const draw = () => {
       t += 1;
       ctx.clearRect(0, 0, w, h);
-      ctx.globalCompositeOperation = "lighter";
+      ctx.globalCompositeOperation = "source-over";
 
       for (const tube of tubes) {
         // spring towards cursor
@@ -123,8 +123,8 @@ export default function CursorTubes() {
             ctx.quadraticCurveTo(p.x, p.y, (p.x + n.x) / 2, (p.y + n.y) / 2);
           }
           const hue = tube.hue + Math.sin(t / 60) * 18;
-          ctx.strokeStyle = `hsla(${hue}, 100%, ${glow ? 55 : 78}%, ${
-            (glow ? alpha * 0.55 : alpha) * boost
+          ctx.strokeStyle = `hsla(${hue}, 92%, ${glow ? 62 : 45}%, ${
+            (glow ? alpha * 0.16 : alpha * 0.95) * boost
           })`;
           ctx.lineWidth = (glow ? tube.width * 7 : tube.width) * boost;
           ctx.lineCap = "round";
@@ -133,17 +133,17 @@ export default function CursorTubes() {
         }
       }
 
-      // cursor core
-      ctx.globalCompositeOperation = "lighter";
-      const r = pressed ? 13 : 7;
-      const g = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, r * 3.4);
-      g.addColorStop(0, "rgba(255,255,255,0.95)");
-      g.addColorStop(0.35, "rgba(120,220,255,0.5)");
-      g.addColorStop(1, "rgba(120,220,255,0)");
-      ctx.fillStyle = g;
+      // kursor yadrosi — yorugʻ fon uchun toʻq nuqta + halqa
+      const r = pressed ? 9 : 5;
       ctx.beginPath();
-      ctx.arc(mouse.x, mouse.y, r * 3.4, 0, Math.PI * 2);
+      ctx.arc(mouse.x, mouse.y, r, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(13,27,42,0.9)";
       ctx.fill();
+      ctx.beginPath();
+      ctx.arc(mouse.x, mouse.y, r + 6, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(27,111,224,0.45)";
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
 
       ctx.globalCompositeOperation = "source-over";
       raf = requestAnimationFrame(draw);

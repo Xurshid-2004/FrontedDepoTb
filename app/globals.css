@@ -1,28 +1,29 @@
 @import "tailwindcss";
 
 @theme {
-  --color-ink: #05090f;
-  --color-panel: #0c1524;
-  --color-panel2: #111d31;
-  --color-line: #1e2d45;
-  --color-rail: #38bdf8;
-  --color-rail2: #1b6fe0;
-  --color-gold: #f2b544;
-  --color-ok: #22c55e;
-  --color-warn: #f59e0b;
-  --color-danger: #ef4444;
+  --color-ink: #0d1b2a;
+  --color-canvas: #eef3f9;
+  --color-surface: #ffffff;
+  --color-line: #dbe3ee;
+  --color-rail: #1b6fe0;
+  --color-rail2: #38bdf8;
+  --color-gold: #d9931f;
+  --color-ok: #16a34a;
+  --color-warn: #d97706;
+  --color-danger: #dc2626;
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html,
 body {
   height: 100%;
-  background: var(--color-ink);
-  color: #e6edf7;
+  background: linear-gradient(180deg, #f7fafd 0%, #eaf1f8 100%);
+  background-attachment: fixed;
+  color: #0d1b2a;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
@@ -33,40 +34,51 @@ body {
 
 /* ---------- utilities ---------- */
 .glass {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02));
-  backdrop-filter: blur(18px) saturate(140%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.86));
+  backdrop-filter: blur(18px) saturate(130%);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
+  border: 1px solid rgba(13, 27, 42, 0.08);
+  box-shadow: 0 18px 60px -28px rgba(13, 42, 85, 0.35);
+}
+
+.card-shadow {
+  box-shadow: 0 1px 2px rgba(13, 42, 85, 0.06), 0 14px 40px -22px rgba(13, 42, 85, 0.3);
 }
 
 .glow-rail {
-  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.25), 0 12px 60px -12px rgba(56, 189, 248, 0.55);
+  box-shadow: 0 0 0 1px rgba(27, 111, 224, 0.2), 0 16px 50px -18px rgba(27, 111, 224, 0.45);
 }
 
 .text-grad {
-  background: linear-gradient(120deg, #ffffff 0%, #9fd8ff 45%, #38bdf8 100%);
+  background: linear-gradient(120deg, #0d1b2a 0%, #1b6fe0 55%, #38bdf8 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
 .grid-floor {
-  background-image: linear-gradient(rgba(56, 189, 248, 0.14) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(56, 189, 248, 0.14) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(27, 111, 224, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(27, 111, 224, 0.1) 1px, transparent 1px);
   background-size: 56px 56px;
 }
 
+/* nozik qogʻoz donadorligi */
 .noise::after {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 60;
-  opacity: 0.045;
+  opacity: 0.025;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* hide native cursor on desktop where the tube cursor runs */
+/* koʻk sirt ustidagi matn uchun */
+.on-brand,
+.on-brand * {
+  color: #ffffff;
+}
+
 @media (hover: hover) and (pointer: fine) {
   body[data-tubes="on"],
   body[data-tubes="on"] * {
@@ -75,16 +87,6 @@ body {
 }
 
 /* ---------- keyframes ---------- */
-@keyframes railpulse {
-  0%,
-  100% {
-    opacity: 0.25;
-  }
-  50% {
-    opacity: 0.9;
-  }
-}
-
 @keyframes floaty {
   0%,
   100% {
@@ -109,21 +111,35 @@ body {
   }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -420px 0;
+  }
+  100% {
+    background-position: 420px 0;
+  }
+}
+
 .animate-floaty {
   animation: floaty 5s ease-in-out infinite;
 }
 
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 11px;
+  height: 11px;
 }
 ::-webkit-scrollbar-track {
-  background: #070d16;
+  background: #e6edf5;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1c2c44;
+  background: #c2d0e0;
   border-radius: 8px;
+  border: 2px solid #e6edf5;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #27405f;
+  background: #a8bbcf;
+}
+
+::selection {
+  background: rgba(27, 111, 224, 0.18);
 }

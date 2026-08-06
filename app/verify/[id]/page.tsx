@@ -30,7 +30,7 @@ export default function Verify({ params }: { params: Promise<{ id: string }> }) 
       <div className="relative w-full max-w-[520px]">
         <Panel>
           <div className="mb-6 text-center">
-            <span className="grid h-12 w-12 mx-auto place-items-center rounded-xl bg-gradient-to-br from-[#1b6fe0] to-[#38bdf8] text-[16px] font-black text-white">
+            <span className="grid h-12 w-12 mx-auto place-items-center rounded-xl bg-gradient-to-br from-[#1b6fe0] to-[#38bdf8] text-[16px] font-black text-slate-900">
               TB
             </span>
             <p className="mt-3 text-[11px] uppercase tracking-[0.3em] text-slate-500">
@@ -42,10 +42,10 @@ export default function Verify({ params }: { params: Promise<{ id: string }> }) 
             <p className="py-10 text-center text-[13px] text-slate-500">Tekshirilmoqda…</p>
           ) : known ? (
             <>
-              <div className="mb-6 rounded-2xl border border-emerald-500/35 bg-emerald-500/10 p-5 text-center">
+              <div className="mb-6 rounded-2xl border border-emerald-300 bg-emerald-50 p-5 text-center">
                 <p className="text-[26px]">✓</p>
-                <p className="mt-2 text-[16px] font-semibold text-emerald-300">Imzo HAQIQIY</p>
-                <p className="mt-1 text-[12px] text-emerald-200/70">
+                <p className="mt-2 text-[16px] font-semibold text-emerald-600">Imzo HAQIQIY</p>
+                <p className="mt-1 text-[12px] text-emerald-700">
                   Hujjat imzolangandan keyin oʻzgartirilmagan
                 </p>
               </div>
@@ -66,10 +66,10 @@ export default function Verify({ params }: { params: Promise<{ id: string }> }) 
               </p>
             </>
           ) : (
-            <div className="rounded-2xl border border-red-500/35 bg-red-500/10 p-5 text-center">
+            <div className="rounded-2xl border border-red-300 bg-red-50 p-5 text-center">
               <p className="text-[26px]">✕</p>
-              <p className="mt-2 text-[16px] font-semibold text-red-300">Imzo topilmadi</p>
-              <p className="mt-1 text-[12px] text-red-200/70">
+              <p className="mt-2 text-[16px] font-semibold text-red-600">Imzo topilmadi</p>
+              <p className="mt-1 text-[12px] text-red-600">
                 QR kod notoʻgʻri yoki hujjat oʻzgartirilgan boʻlishi mumkin
               </p>
             </div>
@@ -86,9 +86,9 @@ export default function Verify({ params }: { params: Promise<{ id: string }> }) 
 
 function Row({ l, v, mono }: { l: string; v: string; mono?: boolean }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-white/[0.06] pb-2.5">
+    <div className="flex items-start justify-between gap-4 border-b border-slate-200 pb-2.5">
       <span className="shrink-0 text-[12px] text-slate-500">{l}</span>
-      <span className={`text-right text-[12.5px] text-white ${mono ? "font-mono text-[11px] break-all" : ""}`}>{v}</span>
+      <span className={`text-right text-[12.5px] text-slate-900 ${mono ? "font-mono text-[11px] break-all" : ""}`}>{v}</span>
     </div>
   );
 }

@@ -141,12 +141,12 @@ function JournalBody({ bosqich, onSign }: { bosqich: 1 | 2; onSign: (id: string)
             <Td>
               {j.komissiya.map((k, i) => (
                 <div key={i} className="leading-tight">
-                  <span className="text-slate-200">{k.fio}</span>
+                  <span className="text-slate-800">{k.fio}</span>
                   <span className="block text-[11px] text-slate-500">{k.lavozim}</span>
                 </div>
               ))}
             </Td>
-            <Td className="text-slate-200">{j.nomuvofiqlik}</Td>
+            <Td className="text-slate-800">{j.nomuvofiqlik}</Td>
             <Td>{j.chora}</Td>
             <Td>
               {j.masul}

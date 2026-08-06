@@ -53,18 +53,18 @@ export default function Dash() {
       <div className="mb-7 grid gap-5 md:grid-cols-2">
         <Tilt max={8} className="h-full">
           <Link href="/tb" className="block h-full">
-            <div className="relative h-full overflow-hidden rounded-2xl border border-sky-400/40 bg-[linear-gradient(150deg,rgba(56,189,248,.13),rgba(12,21,36,.92))] p-6">
-              <SpeedLines count={60} opacity={0.14} speed={0.9} meteorRate={0.04} />
-              <span className="absolute inset-x-0 top-0 h-[3px] bg-sky-400" />
-              <p className="relative text-[10px] uppercase tracking-[0.32em] text-sky-300">Modul 1</p>
+            <div className="relative h-full overflow-hidden rounded-2xl bg-[linear-gradient(140deg,#1b6fe0_0%,#2f8ff0_45%,#38bdf8_100%)] p-6 shadow-[0_24px_60px_-26px_rgba(27,111,224,.85)]">
+              <SpeedLines count={70} opacity={0.3} speed={1.1} meteorRate={0.05} />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_12%,rgba(255,255,255,.35),transparent_55%)]" />
+              <p className="relative text-[10px] uppercase tracking-[0.32em] text-white/75">Modul 1</p>
               <h3 className="relative mt-3 text-[22px] font-bold text-white">TB — Texnika xavfsizligi</h3>
-              <p className="relative mt-2 text-[13px] text-slate-400">
+              <p className="relative mt-2 text-[13px] leading-relaxed text-white/80">
                 Maʼmuriy jamoatchilik nazoratining 1- va 2-bosqich jurnallari (Yo D-26)
               </p>
               <div className="relative mt-6 flex gap-7">
-                <Mini v={s.ochiqJurnal} l="Ochiq yozuv" />
-                <Mini v={s.muddatYaqin} l="Muddat yaqin" c="#f59e0b" />
-                <Mini v={s.muddatOtgan} l="Muddati oʻtgan" c="#ef4444" />
+                <Mini v={s.ochiqJurnal} l="Ochiq yozuv" c="#ffffff" />
+                <Mini v={s.muddatYaqin} l="Muddat yaqin" c="#ffe6a8" />
+                <Mini v={s.muddatOtgan} l="Muddati oʻtgan" c="#ffc9c9" />
               </div>
             </div>
           </Link>
@@ -72,18 +72,18 @@ export default function Dash() {
 
         <Tilt max={8} className="h-full">
           <Link href="/ombor" className="block h-full">
-            <div className="relative h-full overflow-hidden rounded-2xl border border-amber-400/40 bg-[linear-gradient(150deg,rgba(242,181,68,.12),rgba(12,21,36,.92))] p-6">
-              <SpeedLines count={60} opacity={0.12} speed={0.9} hue={40} meteorRate={0.04} />
-              <span className="absolute inset-x-0 top-0 h-[3px] bg-amber-400" />
-              <p className="relative text-[10px] uppercase tracking-[0.32em] text-amber-300">Modul 2</p>
+            <div className="relative h-full overflow-hidden rounded-2xl bg-[linear-gradient(140deg,#a9640f_0%,#d9931f_45%,#f2b544_100%)] p-6 shadow-[0_24px_60px_-26px_rgba(217,147,31,.85)]">
+              <SpeedLines count={70} opacity={0.28} speed={1.1} hue={44} meteorRate={0.05} />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_12%,rgba(255,255,255,.35),transparent_55%)]" />
+              <p className="relative text-[10px] uppercase tracking-[0.32em] text-white/75">Modul 2</p>
               <h3 className="relative mt-3 text-[22px] font-bold text-white">Omborxona</h3>
-              <p className="relative mt-2 text-[13px] text-slate-400">
+              <p className="relative mt-2 text-[13px] leading-relaxed text-white/85">
                 Maxsus kiyim, poyabzal va shaxsiy himoya vositalari aylanmasi
               </p>
               <div className="relative mt-6 flex gap-7">
-                <Mini v={s.faolAriza} l="Faol ariza" c="#f2b544" />
-                <Mini v={s.kelgan} l="Muddati kelgan" c="#f59e0b" />
-                <Mini v={s.otgan} l="Muddati oʻtgan" c="#ef4444" />
+                <Mini v={s.faolAriza} l="Faol ariza" c="#ffffff" />
+                <Mini v={s.kelgan} l="Muddati kelgan" c="#fff1cf" />
+                <Mini v={s.otgan} l="Muddati oʻtgan" c="#ffd4d4" />
               </div>
             </div>
           </Link>
@@ -102,7 +102,7 @@ export default function Dash() {
         {/* mening buyumlarim */}
         <Panel className="xl:col-span-1">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-[15px] font-semibold text-white">Mening buyumlarim</h3>
+            <h3 className="text-[15px] font-semibold text-slate-900">Mening buyumlarim</h3>
             <Link href="/ishchi"><Btn size="sm">Kabinet</Btn></Link>
           </div>
           {myItems.length === 0 ? (
@@ -114,9 +114,9 @@ export default function Dash() {
                 const c =
                   st.holat === "yashil" ? "#22c55e" : st.holat === "sariq" ? "#f59e0b" : st.holat === "qizil" ? "#ef4444" : "#38bdf8";
                 return (
-                  <div key={st.itemId} className="flex items-center gap-3 rounded-xl border border-white/8 px-3 py-2.5">
+                  <div key={st.itemId} className="flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5">
                     <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: c }} />
-                    <span className="min-w-0 flex-1 truncate text-[12.5px] text-slate-200">{it?.nomi}</span>
+                    <span className="min-w-0 flex-1 truncate text-[12.5px] text-slate-800">{it?.nomi}</span>
                     <span className="shrink-0 text-[11px] tabular-nums" style={{ color: c }}>
                       {st.holat === "chiqqun" ? "Ish. Chiqqun" : st.keyingi ? fmt(st.keyingi) : "muddati keldi"}
                     </span>
@@ -130,7 +130,7 @@ export default function Dash() {
         {/* jurnal muddatlari */}
         <Panel className="xl:col-span-2">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-[15px] font-semibold text-white">Bajarilishi kutilayotgan chora-tadbirlar</h3>
+            <h3 className="text-[15px] font-semibold text-slate-900">Bajarilishi kutilayotgan chora-tadbirlar</h3>
             <Link href="/tb"><Btn size="sm">Jurnallar</Btn></Link>
           </div>
           {jurnalYaqin.length === 0 ? (
@@ -143,7 +143,7 @@ export default function Dash() {
                 return (
                   <Tr key={j.id}>
                     <Td className="tabular-nums">{fmt(j.sana)}</Td>
-                    <Td className="text-slate-200">{j.nomuvofiqlik}</Td>
+                    <Td className="text-slate-800">{j.nomuvofiqlik}</Td>
                     <Td>{j.masul}</Td>
                     <Td className="tabular-nums">{fmt(j.muddat)}</Td>
                     <Td>
@@ -160,7 +160,7 @@ export default function Dash() {
         {pending.length > 0 && (
           <Panel className="xl:col-span-2">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-[15px] font-semibold text-white">Mening tasdigʻimni kutmoqda</h3>
+              <h3 className="text-[15px] font-semibold text-slate-900">Mening tasdigʻimni kutmoqda</h3>
               <Link href="/arizalar"><Btn size="sm" variant="primary">Koʻrib chiqish</Btn></Link>
             </div>
             <Table head={["Raqam", "Ishchi", "Buyumlar", "Summa", "Holat"]} min={640}>
@@ -169,7 +169,7 @@ export default function Dash() {
                 const sum = r.lines.reduce((a, l) => a + l.narx * l.soni, 0);
                 return (
                   <Tr key={r.id}>
-                    <Td className="font-semibold tabular-nums text-white">{r.raqam}</Td>
+                    <Td className="font-semibold tabular-nums text-slate-900">{r.raqam}</Td>
                     <Td>{w ? fioShort(w) : "—"}</Td>
                     <Td>{r.lines.map((l) => itemById(db, l.itemId)?.nomi).join(", ")}</Td>
                     <Td className="tabular-nums">{money(sum)}</Td>
@@ -187,7 +187,7 @@ export default function Dash() {
         {(can("kip.read") || myKip) && (
           <Panel>
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-[15px] font-semibold text-white">KIP muddatlari</h3>
+              <h3 className="text-[15px] font-semibold text-slate-900">KIP muddatlari</h3>
               {can("kip.write") && <Link href="/kip"><Btn size="sm">Kabinet</Btn></Link>}
             </div>
             {kipYaqin.length === 0 ? (
@@ -198,9 +198,9 @@ export default function Dash() {
                   const w = workerById(db, k.workerId);
                   const t = kipTone(k.tugash);
                   return (
-                    <div key={k.id} className="flex items-center gap-3 rounded-xl border border-white/8 px-3 py-2.5">
+                    <div key={k.id} className="flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5">
                       <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: t.color }} />
-                      <span className="min-w-0 flex-1 truncate text-[12.5px] text-slate-200">
+                      <span className="min-w-0 flex-1 truncate text-[12.5px] text-slate-800">
                         {w ? fioShort(w) : "—"}
                       </span>
                       <span className="shrink-0 text-[11px]" style={{ color: t.color }}>{t.label}</span>
@@ -216,13 +216,13 @@ export default function Dash() {
         {can("stock.read") && (
           <Panel>
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-[15px] font-semibold text-white">Eng kam qoldiq</h3>
+              <h3 className="text-[15px] font-semibold text-slate-900">Eng kam qoldiq</h3>
               <Link href="/ombor"><Btn size="sm">Ombor</Btn></Link>
             </div>
             <div className="space-y-2">
               {ombor.map(({ st, it }) => (
-                <div key={st.itemId} className="flex items-center gap-3 rounded-xl border border-white/8 px-3 py-2.5">
-                  <span className="min-w-0 flex-1 truncate text-[12.5px] text-slate-200">{it.nomi}</span>
+                <div key={st.itemId} className="flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5">
+                  <span className="min-w-0 flex-1 truncate text-[12.5px] text-slate-800">{it.nomi}</span>
                   <span
                     className="shrink-0 text-[12px] font-semibold tabular-nums"
                     style={{ color: st.qoldiq < 30 ? "#ef4444" : st.qoldiq < 80 ? "#f59e0b" : "#22c55e" }}
@@ -236,7 +236,7 @@ export default function Dash() {
         )}
       </div>
 
-      <p className="mt-8 text-center text-[11.5px] text-slate-600">
+      <p className="mt-8 text-center text-[11.5px] text-slate-400">
         Rolingiz: {roles.join(", ")}
       </p>
     </>
@@ -246,8 +246,8 @@ export default function Dash() {
 function Mini({ v, l, c = "#ffffff" }: { v: number; l: string; c?: string }) {
   return (
     <div>
-      <p className="text-[26px] font-bold leading-none tabular-nums" style={{ color: c }}>{v}</p>
-      <p className="mt-1.5 text-[11px] text-slate-400">{l}</p>
+      <p className="text-[28px] font-bold leading-none tabular-nums" style={{ color: c }}>{v}</p>
+      <p className="mt-1.5 text-[11px] text-white/75">{l}</p>
     </div>
   );
 }

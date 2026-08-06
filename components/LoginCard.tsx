@@ -72,13 +72,13 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                   exit={{ opacity: 0, y: -12 }}
                   transition={{ duration: 0.35 }}
                 >
-                  <p className="text-[11px] uppercase tracking-[0.35em] text-sky-300/80">
+                  <p className="text-[11px] uppercase tracking-[0.35em] text-sky-700">
                     TCH-6 · Buxoro lokomotiv deposi
                   </p>
-                  <h1 className="mt-3 text-3xl font-bold tracking-tight text-white">
+                  <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
                     {mode === "login" ? "Tizimga kirish" : "Roʻyxatdan oʻtish"}
                   </h1>
-                  <p className="mt-2 text-sm text-slate-400">
+                  <p className="mt-2 text-sm text-slate-500">
                     {mode === "login"
                       ? "Tabel raqamingizni kiriting"
                       : "Tabel raqami va F.I.Sh. kadrlar bazasi bilan solishtiriladi"}
@@ -116,26 +116,26 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                     type="button"
                     disabled={!canSubmit}
                     onClick={submit}
-                    className="group relative mt-8 flex h-12 w-full items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-[#1b6fe0] to-[#38bdf8] font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-35"
+                    className="group relative mt-8 flex h-12 w-full items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-[#1b6fe0] to-[#38bdf8] font-semibold text-slate-900 transition disabled:cursor-not-allowed disabled:opacity-35"
                   >
                     <span className="relative z-10">
                       {mode === "login" ? "Davom etish" : "Yuborish"}
                     </span>
-                    <span className="absolute inset-0 translate-y-full bg-white/20 transition-transform duration-300 group-hover:translate-y-0" />
+                    <span className="absolute inset-0 translate-y-full bg-slate-200 transition-transform duration-300 group-hover:translate-y-0" />
                   </button>
 
                   {err && (
-                    <p className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-[12px] text-red-300">
+                    <p className="mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-[12px] text-red-600">
                       {err}
                     </p>
                   )}
 
-                  <p className="mt-6 text-center text-[13px] text-slate-400">
+                  <p className="mt-6 text-center text-[13px] text-slate-500">
                     {mode === "login" ? "Hisobingiz yoʻqmi? " : "Hisobingiz bormi? "}
                     <button
                       type="button"
                       onClick={() => setMode(mode === "login" ? "register" : "login")}
-                      className="font-semibold text-sky-300 underline-offset-4 hover:underline"
+                      className="font-semibold text-sky-700 underline-offset-4 hover:underline"
                     >
                       {mode === "login" ? "Roʻyxatdan oʻtish" : "Kirish"}
                     </button>
@@ -157,7 +157,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                       setStage("form");
                       setBlind(false);
                     }}
-                    className="mt-8 block w-full text-center text-[12px] text-slate-500 hover:text-sky-300"
+                    className="mt-8 block w-full text-center text-[12px] text-slate-500 hover:text-sky-700"
                   >
                     ← Orqaga
                   </button>
@@ -180,7 +180,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                 ? "Xush kelibsiz!"
                 : "Yangi ishchimisiz?"}
             </p>
-            <p className="mt-2 max-w-[300px] text-center text-[13px] text-white/70">
+            <p className="mt-2 max-w-[300px] text-center text-[13px] text-white/80">
               {stage === "pin"
                 ? "PIN faqat sizning qurilmangizda saqlanadi"
                 : "Texnika xavfsizligi va omborxona — bitta tizimda"}
@@ -210,12 +210,12 @@ function Field({
   const [focus, setFocus] = useState(false);
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-slate-400">
+      <span className="mb-1.5 block text-[11px] font-medium uppercase tracking-wider text-slate-500">
         {label}
       </span>
       <div
-        className={`relative rounded-xl border bg-white/[0.03] transition-all duration-300 ${
-          focus ? "border-sky-400/70 shadow-[0_0_0_4px_rgba(56,189,248,.12)]" : "border-white/10"
+        className={`relative rounded-xl border bg-white transition-all duration-300 ${
+          focus ? "border-sky-500 shadow-[0_0_0_4px_rgba(56,189,248,.12)]" : "border-slate-200"
         }`}
       >
         <input
@@ -231,7 +231,7 @@ function Field({
             onFocusChange?.(false);
           }}
           onChange={(e) => onChange(e.target.value)}
-          className="h-12 w-full bg-transparent px-4 text-[15px] text-white outline-none placeholder:text-slate-600"
+          className="h-12 w-full bg-transparent px-4 text-[15px] text-slate-900 outline-none placeholder:text-slate-400"
         />
         <span
           className={`absolute inset-x-3 bottom-0 h-px origin-left bg-gradient-to-r from-sky-400 to-transparent transition-transform duration-500 ${

@@ -54,7 +54,7 @@ export default function Ombor() {
             key={k}
             onClick={() => setTab(k)}
             className={`rounded-full px-4 py-2 text-[12.5px] font-medium transition ${
-              tab === k ? "bg-amber-400/15 text-amber-200 ring-1 ring-amber-400/50" : "border border-white/10 text-slate-400 hover:text-white"
+              tab === k ? "bg-amber-100 text-amber-700 ring-1 ring-amber-500" : "border border-slate-200 text-slate-500 hover:text-slate-900"
             }`}
           >
             {k === "qoldiq" ? "Qoldiq" : "Kirim / chiqim"}
@@ -69,13 +69,13 @@ export default function Ombor() {
               const c = st.qoldiq < 30 ? "#ef4444" : st.qoldiq < 80 ? "#f59e0b" : "#22c55e";
               return (
                 <Tr key={it.id}>
-                  <Td className="font-medium text-white">{it.nomi}</Td>
+                  <Td className="font-medium text-slate-900">{it.nomi}</Td>
                   <Td className="tabular-nums">{it.kod}</Td>
                   <Td>{it.unit}</Td>
                   <Td>{it.qishki ? <Badge color="#38bdf8">qishki</Badge> : <Badge color="#64748b">asosiy</Badge>}</Td>
                   <Td><span className="font-semibold tabular-nums" style={{ color: c }}>{st.qoldiq}</span></Td>
                   <Td className="tabular-nums">{money(it.narx)}</Td>
-                  <Td className="tabular-nums text-white">{money(it.narx * st.qoldiq)}</Td>
+                  <Td className="tabular-nums text-slate-900">{money(it.narx * st.qoldiq)}</Td>
                 </Tr>
               );
             })}
@@ -87,7 +87,7 @@ export default function Ombor() {
               return (
                 <Tr key={m.id}>
                   <Td className="tabular-nums">{fmt(m.sana)}</Td>
-                  <Td className="text-white">{it?.nomi}</Td>
+                  <Td className="text-slate-900">{it?.nomi}</Td>
                   <Td>
                     <Badge color={m.turi === "kirim" ? "#22c55e" : "#f59e0b"}>{m.turi}</Badge>
                   </Td>
@@ -101,10 +101,10 @@ export default function Ombor() {
       </Panel>
 
       {can("report.download") && (
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-5 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-5 rounded-2xl border border-slate-200 bg-white p-5">
           <div>
-            <p className="text-[14px] font-semibold text-white">Ombor qoldigʻi hisoboti</p>
-            <p className="mt-1 text-[12px] text-slate-400">{rows.length} pozitsiya · PDF</p>
+            <p className="text-[14px] font-semibold text-slate-900">Ombor qoldigʻi hisoboti</p>
+            <p className="mt-1 text-[12px] text-slate-500">{rows.length} pozitsiya · PDF</p>
           </div>
           <DownloadButton />
         </div>

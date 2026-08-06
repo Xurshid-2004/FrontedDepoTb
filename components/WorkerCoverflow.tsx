@@ -54,8 +54,8 @@ export default function WorkerCoverflow() {
   return (
     <div className="w-full">
       {/* qidiruv */}
-      <div className="mx-auto flex max-w-[520px] items-center gap-3 rounded-full border border-white/12 bg-white/[0.04] px-5 py-3 backdrop-blur">
-        <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-sky-300" fill="none" stroke="currentColor" strokeWidth="2.2">
+      <div className="mx-auto flex max-w-[520px] items-center gap-3 rounded-full border border-slate-200 bg-slate-100 px-5 py-3 backdrop-blur">
+        <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-sky-700" fill="none" stroke="currentColor" strokeWidth="2.2">
           <circle cx="11" cy="11" r="7" />
           <path d="M20 20l-3.6-3.6" strokeLinecap="round" />
         </svg>
@@ -66,9 +66,9 @@ export default function WorkerCoverflow() {
             setIdx(0);
           }}
           placeholder="F.I.Sh., tabel raqami yoki kolonna boʻyicha qidirish"
-          className="h-6 w-full bg-transparent text-[14px] text-white outline-none placeholder:text-slate-500"
+          className="h-6 w-full bg-transparent text-[14px] text-slate-900 outline-none placeholder:text-slate-500"
         />
-        <span className="shrink-0 rounded-full bg-sky-400/15 px-2.5 py-0.5 text-[11px] font-semibold text-sky-300 tabular-nums">
+        <span className="shrink-0 rounded-full bg-sky-100 px-2.5 py-0.5 text-[11px] font-semibold text-sky-700 tabular-nums">
           {list.length}
         </span>
       </div>
@@ -92,11 +92,11 @@ export default function WorkerCoverflow() {
                 onClick={() => setIdx(i)}
                 className="absolute h-[300px] w-[214px] overflow-hidden rounded-2xl border text-left"
                 style={{
-                  borderColor: isActive ? tone.ring : "rgba(255,255,255,.09)",
+                  borderColor: isActive ? tone.ring : "rgba(13,27,42,.10)",
                   background: isActive
-                    ? "linear-gradient(160deg,#12293f,#0a1626)"
-                    : "linear-gradient(160deg,#0d1b2c,#080f1a)",
-                  boxShadow: isActive ? `0 26px 70px -22px ${tone.ring}` : "none",
+                    ? "linear-gradient(160deg,#ffffff,#f1f6fc)"
+                    : "linear-gradient(160deg,#f8fafd,#eef3f9)",
+                  boxShadow: isActive ? `0 26px 70px -26px ${tone.ring}` : "0 4px 18px -14px rgba(13,42,85,.5)",
                   transformStyle: "preserve-3d",
                 }}
                 animate={{
@@ -121,15 +121,15 @@ export default function WorkerCoverflow() {
                     <p className="mt-4 text-[10px] uppercase tracking-[0.28em] text-slate-500">
                       Tabel {w.tabel}
                     </p>
-                    <p className="mt-1.5 text-[14px] font-semibold leading-snug text-white">{w.fio}</p>
-                    <p className="mt-2 text-[11.5px] leading-relaxed text-slate-400">{w.position}</p>
+                    <p className="mt-1.5 text-[14px] font-semibold leading-snug text-slate-900">{w.fio}</p>
+                    <p className="mt-2 text-[11.5px] leading-relaxed text-slate-500">{w.position}</p>
                   </div>
                   <div>
                     <p className="text-[10.5px] text-slate-500">{w.kolonna}</p>
                     <p className="mt-2 text-[12px] font-semibold" style={{ color: tone.color }}>
                       KIP: {tone.label}
                     </p>
-                    <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-white/8">
+                    <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-slate-200">
                       <span
                         className="block h-full rounded-full"
                         style={{
@@ -157,7 +157,7 @@ export default function WorkerCoverflow() {
         <div className="mt-2 flex items-center justify-center gap-2">
           <button
             onClick={() => setIdx((v) => Math.max(0, v - 1))}
-            className="grid h-7 w-7 place-items-center rounded-full border border-white/12 text-slate-400 transition hover:border-sky-400/60 hover:text-white"
+            className="grid h-7 w-7 place-items-center rounded-full border border-slate-200 text-slate-500 transition hover:border-sky-500 hover:text-slate-900"
           >
             ‹
           </button>
@@ -174,7 +174,7 @@ export default function WorkerCoverflow() {
           ))}
           <button
             onClick={() => setIdx((v) => Math.min(list.length - 1, v + 1))}
-            className="grid h-7 w-7 place-items-center rounded-full border border-white/12 text-slate-400 transition hover:border-sky-400/60 hover:text-white"
+            className="grid h-7 w-7 place-items-center rounded-full border border-slate-200 text-slate-500 transition hover:border-sky-500 hover:text-slate-900"
           >
             ›
           </button>

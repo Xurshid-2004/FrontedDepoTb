@@ -75,8 +75,8 @@ export default function Arizalar() {
             onClick={() => setF(x.k)}
             className={`rounded-full px-4 py-2 text-[12.5px] font-medium transition ${
               f === x.k
-                ? "bg-sky-400/15 text-sky-200 ring-1 ring-sky-400/50"
-                : "border border-white/10 text-slate-400 hover:text-white"
+                ? "bg-sky-100 text-sky-700 ring-1 ring-sky-500"
+                : "border border-slate-200 text-slate-500 hover:text-slate-900"
             }`}
           >
             {x.l}
@@ -96,8 +96,8 @@ export default function Arizalar() {
               const mine = r.workerId === me.id;
               return (
                 <Tr key={r.id}>
-                  <Td className="font-semibold tabular-nums text-white">
-                    <Link href={`/arizalar/${r.id}`} className="hover:text-sky-300">{r.raqam}</Link>
+                  <Td className="font-semibold tabular-nums text-slate-900">
+                    <Link href={`/arizalar/${r.id}`} className="hover:text-sky-700">{r.raqam}</Link>
                   </Td>
                   <Td>
                     {w ? fioShort(w) : "—"}
@@ -136,7 +136,7 @@ export default function Arizalar() {
 
       <Modal open={!!rejFor} onClose={() => setRejFor(null)} title="Arizani rad etish">
         <div className="space-y-4">
-          <p className="rounded-lg border border-red-500/25 bg-red-500/10 px-3.5 py-2.5 text-[12.5px] text-red-200">
+          <p className="rounded-lg border border-red-300 bg-red-50 px-3.5 py-2.5 text-[12.5px] text-red-700">
             Rad etilgan ariza butunlay yopiladi va qayta koʻrib chiqilmaydi. Ishchiga sizning
             F.I.Sh. va sabab bilan bildirishnoma yuboriladi.
           </p>

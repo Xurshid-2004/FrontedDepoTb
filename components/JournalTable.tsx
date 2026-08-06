@@ -50,16 +50,16 @@ const tone = {
 
 export default function JournalTable() {
   return (
-    <div className="overflow-x-auto rounded-xl border border-white/10">
+    <div className="overflow-x-auto rounded-xl border border-slate-200">
       <table className="w-full min-w-[820px] border-collapse text-left">
         <thead>
-          <tr className="bg-white/[0.04]">
+          <tr className="bg-slate-100">
             {COLS.map((c, i) => (
               <th
                 key={c}
-                className="border-b border-white/10 px-3 py-2.5 text-[10.5px] font-semibold uppercase tracking-wider text-slate-400"
+                className="border-b border-slate-200 px-3 py-2.5 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500"
               >
-                <span className="mr-1.5 text-sky-400/70">{i + 1}</span>
+                <span className="mr-1.5 text-sky-600">{i + 1}</span>
                 {c}
               </th>
             ))}
@@ -74,14 +74,14 @@ export default function JournalTable() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.45 + i * 0.09 }}
-                className="align-top transition-colors hover:bg-white/[0.03]"
+                className="align-top transition-colors hover:bg-slate-50"
               >
-                <td className="border-b border-white/6 px-3 py-3 text-[12px] tabular-nums text-slate-300">{r.d}</td>
-                <td className="whitespace-pre-line border-b border-white/6 px-3 py-3 text-[12px] text-slate-300">{r.k}</td>
-                <td className="border-b border-white/6 px-3 py-3 text-[12px] text-slate-200">{r.n}</td>
-                <td className="border-b border-white/6 px-3 py-3 text-[12px] text-slate-300">{r.c}</td>
-                <td className="border-b border-white/6 px-3 py-3 text-[12px] text-slate-300">{r.r}</td>
-                <td className="border-b border-white/6 px-3 py-3 text-[12px] tabular-nums text-slate-300">{r.m}</td>
+                <td className="border-b border-white/6 px-3 py-3 text-[12px] tabular-nums text-slate-700">{r.d}</td>
+                <td className="whitespace-pre-line border-b border-white/6 px-3 py-3 text-[12px] text-slate-700">{r.k}</td>
+                <td className="border-b border-white/6 px-3 py-3 text-[12px] text-slate-800">{r.n}</td>
+                <td className="border-b border-white/6 px-3 py-3 text-[12px] text-slate-700">{r.c}</td>
+                <td className="border-b border-white/6 px-3 py-3 text-[12px] text-slate-700">{r.r}</td>
+                <td className="border-b border-white/6 px-3 py-3 text-[12px] tabular-nums text-slate-700">{r.m}</td>
                 <td className="border-b border-white/6 px-3 py-3">
                   <div className="flex items-center gap-2">
                     <span

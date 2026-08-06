@@ -57,10 +57,10 @@ export default function ArizaDetail({ params }: { params: Promise<{ id: string }
                   >
                     {done ? "✓" : i + 1}
                   </span>
-                  <p className="text-[11.5px] font-medium text-white">{n.l}</p>
+                  <p className="text-[11.5px] font-medium text-slate-900">{n.l}</p>
                   <p className="text-[10px] text-slate-500">maydon {n.f}</p>
                 </div>
-                {i < CHAIN.length - 1 && <div className="mx-1 hidden h-px w-8 bg-white/12 sm:block lg:w-14" />}
+                {i < CHAIN.length - 1 && <div className="mx-1 hidden h-px w-8 bg-slate-200 sm:block lg:w-14" />}
               </div>
             );
           })}
@@ -69,10 +69,10 @@ export default function ArizaDetail({ params }: { params: Promise<{ id: string }
 
       {/* hujjat */}
       <Panel>
-        <div className="mb-6 border-b border-white/10 pb-4 text-center">
+        <div className="mb-6 border-b border-slate-200 pb-4 text-center">
           <p className="text-[11px] uppercase tracking-[0.3em] text-slate-500">Форма МУ№27</p>
-          <h2 className="mt-2 text-lg font-semibold text-white">ТРЕБОВАНИЕ</h2>
-          <p className="mt-1 text-[12px] text-slate-400">на выдачу спецодежды, инвентаря и инструмента</p>
+          <h2 className="mt-2 text-lg font-semibold text-slate-900">ТРЕБОВАНИЕ</h2>
+          <p className="mt-1 text-[12px] text-slate-500">на выдачу спецодежды, инвентаря и инструмента</p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -87,15 +87,15 @@ export default function ArizaDetail({ params }: { params: Promise<{ id: string }
 
         {/* 06-10, 15 */}
         <div className="mt-6">
-          <p className="mb-2 text-[11px] uppercase tracking-wider text-slate-400">
+          <p className="mb-2 text-[11px] uppercase tracking-wider text-slate-500">
             06 · Buyumlar roʻyxati · 08 oʻlchov birligi · 09/10 soni · 15 narx
           </p>
-          <div className="overflow-x-auto rounded-xl border border-white/10">
+          <div className="overflow-x-auto rounded-xl border border-slate-200">
             <table className="w-full min-w-[620px] border-collapse text-left">
               <thead>
-                <tr className="bg-white/[0.04]">
+                <tr className="bg-slate-100">
                   {["06 · Nomi", "20 · Kod", "08 · Oʻlchov", "09 · Soni", "10 · Berildi", "15 · Narx", "Summa"].map((h) => (
-                    <th key={h} className="border-b border-white/10 px-3 py-2 text-[10.5px] font-semibold uppercase tracking-wider text-slate-400">
+                    <th key={h} className="border-b border-slate-200 px-3 py-2 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500">
                       {h}
                     </th>
                   ))}
@@ -107,19 +107,19 @@ export default function ArizaDetail({ params }: { params: Promise<{ id: string }
                   const berildi = stage >= 4;
                   return (
                     <tr key={i}>
-                      <td className="border-b border-white/[0.06] px-3 py-2.5 text-[12.5px] text-white">{it?.nomi}</td>
-                      <td className="border-b border-white/[0.06] px-3 py-2.5 text-[12px] tabular-nums text-slate-400">{it?.kod}</td>
-                      <td className="border-b border-white/[0.06] px-3 py-2.5 text-[12px] text-slate-300">{l.unit}</td>
-                      <td className="border-b border-white/[0.06] px-3 py-2.5 text-[12px] tabular-nums text-slate-300">{l.soni}</td>
-                      <td className="border-b border-white/[0.06] px-3 py-2.5 text-[12px] tabular-nums text-slate-300">{berildi ? l.soni : "—"}</td>
-                      <td className="border-b border-white/[0.06] px-3 py-2.5 text-[12px] tabular-nums text-slate-300">{money(l.narx)}</td>
-                      <td className="border-b border-white/[0.06] px-3 py-2.5 text-[12px] font-semibold tabular-nums text-white">{money(l.narx * l.soni)}</td>
+                      <td className="border-b border-slate-200 px-3 py-2.5 text-[12.5px] text-slate-900">{it?.nomi}</td>
+                      <td className="border-b border-slate-200 px-3 py-2.5 text-[12px] tabular-nums text-slate-500">{it?.kod}</td>
+                      <td className="border-b border-slate-200 px-3 py-2.5 text-[12px] text-slate-700">{l.unit}</td>
+                      <td className="border-b border-slate-200 px-3 py-2.5 text-[12px] tabular-nums text-slate-700">{l.soni}</td>
+                      <td className="border-b border-slate-200 px-3 py-2.5 text-[12px] tabular-nums text-slate-700">{berildi ? l.soni : "—"}</td>
+                      <td className="border-b border-slate-200 px-3 py-2.5 text-[12px] tabular-nums text-slate-700">{money(l.narx)}</td>
+                      <td className="border-b border-slate-200 px-3 py-2.5 text-[12px] font-semibold tabular-nums text-slate-900">{money(l.narx * l.soni)}</td>
                     </tr>
                   );
                 })}
                 <tr>
-                  <td colSpan={6} className="px-3 py-2.5 text-right text-[12px] text-slate-400">Jami</td>
-                  <td className="px-3 py-2.5 text-[13px] font-bold tabular-nums text-white">{money(sum)}</td>
+                  <td colSpan={6} className="px-3 py-2.5 text-right text-[12px] text-slate-500">Jami</td>
+                  <td className="px-3 py-2.5 text-[13px] font-bold tabular-nums text-slate-900">{money(sum)}</td>
                 </tr>
               </tbody>
             </table>
@@ -128,7 +128,7 @@ export default function ArizaDetail({ params }: { params: Promise<{ id: string }
 
         {/* imzolar */}
         <div className="mt-7">
-          <p className="mb-3 text-[11px] uppercase tracking-wider text-slate-400">QR imzolar</p>
+          <p className="mb-3 text-[11px] uppercase tracking-wider text-slate-500">QR imzolar</p>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {CHAIN.map((n) => {
               const s = sigOf(n.f);
@@ -144,9 +144,9 @@ export default function ArizaDetail({ params }: { params: Promise<{ id: string }
                   size={62}
                 />
               ) : (
-                <div key={n.f} className="rounded-lg border border-dashed border-white/12 p-3">
+                <div key={n.f} className="rounded-lg border border-dashed border-slate-200 p-3">
                   <p className="text-[10.5px] text-slate-500">{n.f} · {n.l}</p>
-                  <p className="mt-1 text-[12px] text-slate-600">imzo kutilmoqda</p>
+                  <p className="mt-1 text-[12px] text-slate-400">imzo kutilmoqda</p>
                 </div>
               );
             })}
@@ -155,16 +155,16 @@ export default function ArizaDetail({ params }: { params: Promise<{ id: string }
 
         {/* tarix */}
         <div className="mt-7">
-          <p className="mb-3 text-[11px] uppercase tracking-wider text-slate-400">Harakatlar tarixi</p>
+          <p className="mb-3 text-[11px] uppercase tracking-wider text-slate-500">Harakatlar tarixi</p>
           <div className="space-y-2">
             {r.transitions.map((tr, i) => {
               const u = workerById(db, tr.userId);
               return (
-                <div key={i} className="flex flex-wrap items-center gap-3 rounded-xl border border-white/8 px-3.5 py-2.5">
+                <div key={i} className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 px-3.5 py-2.5">
                   <Badge color={STATUS_COLOR[tr.to]}>{STATUS_LABEL[tr.to]}</Badge>
-                  <span className="text-[12.5px] text-slate-300">{u ? fio(u) : "tizim"}</span>
+                  <span className="text-[12.5px] text-slate-700">{u ? fio(u) : "tizim"}</span>
                   <span className="text-[11.5px] tabular-nums text-slate-500">{fmtDT(tr.sana)}</span>
-                  {tr.izoh && <span className="w-full text-[12px] text-amber-300/90">Sabab: {tr.izoh}</span>}
+                  {tr.izoh && <span className="w-full text-[12px] text-amber-700">Sabab: {tr.izoh}</span>}
                 </div>
               );
             })}
@@ -177,13 +177,13 @@ export default function ArizaDetail({ params }: { params: Promise<{ id: string }
 
 function F({ n, l, v, auto, muted }: { n: string; l: string; v: string; auto?: boolean; muted?: boolean }) {
   return (
-    <div className="rounded-xl border border-white/8 bg-white/[0.02] px-3.5 py-2.5">
+    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5">
       <p className="text-[10px] uppercase tracking-wider text-slate-500">
-        <span className="mr-1.5 text-sky-400/80">{n}</span>
+        <span className="mr-1.5 text-sky-600">{n}</span>
         {l}
       </p>
-      <p className={`mt-1 text-[13px] ${muted ? "text-slate-600 italic" : "font-medium text-white"}`}>{v}</p>
-      {auto && <p className="mt-0.5 text-[10px] text-emerald-400/70">avtomatik</p>}
+      <p className={`mt-1 text-[13px] ${muted ? "text-slate-400 italic" : "font-medium text-slate-900"}`}>{v}</p>
+      {auto && <p className="mt-0.5 text-[10px] text-emerald-600">avtomatik</p>}
     </div>
   );
 }

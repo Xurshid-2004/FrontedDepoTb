@@ -72,8 +72,8 @@ export default function Admin() {
             onClick={() => setTab(x.k)}
             className={`rounded-full px-4 py-2 text-[12.5px] font-medium transition ${
               tab === x.k
-                ? "bg-sky-400/15 text-sky-200 ring-1 ring-sky-400/50"
-                : "border border-white/10 text-slate-400 hover:text-white"
+                ? "bg-sky-100 text-sky-700 ring-1 ring-sky-500"
+                : "border border-slate-200 text-slate-500 hover:text-slate-900"
             }`}
           >
             {x.l}
@@ -96,7 +96,7 @@ export default function Admin() {
             <Table head={["Tabel", "F.I.Sh.", "Lavozim", "Sex", "Kolonna", "Rollar", "Holat", ""]} min={1060}>
               {workers.map((w) => (
                 <Tr key={w.id}>
-                  <Td className="tabular-nums text-white">{w.tabel}</Td>
+                  <Td className="tabular-nums text-slate-900">{w.tabel}</Td>
                   <Td>{fio(w)}</Td>
                   <Td>{positionById(db, w.positionId)?.nomi}</Td>
                   <Td>{w.sex}</Td>
@@ -125,7 +125,7 @@ export default function Admin() {
               const st = db.stock.find((s) => s.itemId === i.id);
               return (
                 <Tr key={i.id}>
-                  <Td className="text-white">{i.nomi}</Td>
+                  <Td className="text-slate-900">{i.nomi}</Td>
                   <Td className="tabular-nums">{i.kod}</Td>
                   <Td>{i.unit}</Td>
                   <Td>{i.qishki ? <Badge color="#38bdf8">qishki</Badge> : <Badge color="#64748b">asosiy</Badge>}</Td>
@@ -156,7 +156,7 @@ export default function Admin() {
                 const it = itemById(db, n.itemId);
                 return (
                   <Tr key={n.id}>
-                    <Td className="text-white">{it?.nomi}</Td>
+                    <Td className="text-slate-900">{it?.nomi}</Td>
                     <Td className="tabular-nums">{n.muddatOy === null ? "Ish. Chiqqun" : `${n.muddatOy} oy`}</Td>
                     <Td>{n.qishki ? <Badge color="#38bdf8">qishki</Badge> : <Badge color="#64748b">asosiy</Badge>}</Td>
                     <Td className="tabular-nums">{money(it?.narx ?? 0)}</Td>
@@ -176,13 +176,13 @@ export default function Admin() {
           <Table head={["Ruxsat", ...(Object.keys(ROLE_LABEL) as Role[]).map((r) => ROLE_LABEL[r].split(" ")[0])]} min={1100}>
             {ALL_PERMS.map((p) => (
               <Tr key={p}>
-                <Td className="text-white">{PERM_LABEL[p]}</Td>
+                <Td className="text-slate-900">{PERM_LABEL[p]}</Td>
                 {(Object.keys(ROLE_LABEL) as Role[]).map((r) => (
                   <Td key={r} className="text-center">
                     {ROLE_PERMS[r].includes(p) ? (
-                      <span className="text-emerald-400">+</span>
+                      <span className="text-emerald-600">+</span>
                     ) : (
-                      <span className="text-slate-700">—</span>
+                      <span className="text-slate-300">—</span>
                     )}
                   </Td>
                 ))}
@@ -195,7 +195,7 @@ export default function Admin() {
       {tab === "sozlama" && (
         <div className="grid gap-5 md:grid-cols-2">
           <Panel>
-            <h3 className="mb-4 text-[15px] font-semibold text-white">Depo</h3>
+            <h3 className="mb-4 text-[15px] font-semibold text-slate-900">Depo</h3>
             <div className="space-y-3">
               <S l="Tashkilot" v={db.depo.tashkilot} />
               <S l="Depo nomi" v={db.depo.nomi} />
@@ -207,7 +207,7 @@ export default function Admin() {
             </div>
           </Panel>
           <Panel>
-            <h3 className="mb-4 text-[15px] font-semibold text-white">Tizim qoidalari</h3>
+            <h3 className="mb-4 text-[15px] font-semibold text-slate-900">Tizim qoidalari</h3>
             <div className="space-y-3">
               <S l="Требование raqami" v="TCH6-YYYY-NNNNN (avtomatik)" />
               <S l="TB imtixon davriyligi" v="12 oy (individual belgilash mumkin)" />
@@ -232,7 +232,7 @@ export default function Admin() {
                 return (
                   <Tr key={a.id}>
                     <Td className="tabular-nums">{fmtDT(a.sana)}</Td>
-                    <Td className="text-white">{u ? fioShort(u) : a.userId}</Td>
+                    <Td className="text-slate-900">{u ? fioShort(u) : a.userId}</Td>
                     <Td>{a.obyekt}</Td>
                     <Td>{a.amal}</Td>
                     <Td>{a.izoh ?? "—"}</Td>
@@ -301,9 +301,9 @@ export default function Admin() {
 
 function S({ l, v }: { l: string; v: string }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-white/[0.06] pb-2.5">
+    <div className="flex items-start justify-between gap-4 border-b border-slate-200 pb-2.5">
       <span className="shrink-0 text-[12px] text-slate-500">{l}</span>
-      <span className="text-right text-[12.5px] text-white">{v}</span>
+      <span className="text-right text-[12.5px] text-slate-900">{v}</span>
     </div>
   );
 }
