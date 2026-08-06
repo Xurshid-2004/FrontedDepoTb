@@ -104,45 +104,78 @@ export default function TrainScene({ onFinish }: { onFinish: () => void }) {
     const train = new THREE.Group();
     scene.add(train);
 
-    // korpus — aylanma profil (Talgo-250 uslubidagi oqimli burun)
+    // korpus — aylanma profil (Talgo-250 «Afrosiyob» oqimli burun)
     const profile: THREE.Vector2[] = [
       new THREE.Vector2(0.02, 0),
-      new THREE.Vector2(0.34, 0.35),
-      new THREE.Vector2(0.68, 0.85),
-      new THREE.Vector2(1.02, 1.6),
-      new THREE.Vector2(1.28, 2.6),
-      new THREE.Vector2(1.44, 3.9),
-      new THREE.Vector2(1.52, 5.4),
+      new THREE.Vector2(0.30, 0.30),
+      new THREE.Vector2(0.62, 0.75),
+      new THREE.Vector2(0.96, 1.45),
+      new THREE.Vector2(1.24, 2.45),
+      new THREE.Vector2(1.42, 3.7),
+      new THREE.Vector2(1.51, 5.2),
       new THREE.Vector2(1.55, 8),
       new THREE.Vector2(1.55, 30),
       new THREE.Vector2(1.5, 31),
     ];
-    const bodyGeo = new THREE.LatheGeometry(profile, 56);
+    const bodyGeo = new THREE.LatheGeometry(profile, 64);
+    // transformni geometriyaga singdiramiz — shunda y haqiqiy balandlik boʻladi
+    bodyGeo.rotateX(Math.PI / 2);
+    bodyGeo.scale(1, 0.84, 1);
+    bodyGeo.computeVertexNormals();
+
+    // AFROSIYOB LIVREYASI: tepasi toʻq koʻk, pasti oq-kumush
+    {
+      const pos = bodyGeo.attributes.position;
+      const colors = new Float32Array(pos.count * 3);
+      const blue = new THREE.Color(0x1a4f9c);
+      const blueDark = new THREE.Color(0x123a75);
+      const white = new THREE.Color(0xeef4fa);
+      const silver = new THREE.Color(0xc3cedb);
+      const c = new THREE.Color();
+      for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i);
+        const y = pos.getY(i);
+        const z = pos.getZ(i);
+        const split = 0.3 - Math.max(0, 3.2 - z) * 0.055;
+        if (y > split + 0.06) {
+          c.copy(blue).lerp(blueDark, Math.min(1, (y - split) / 1.4));
+        } else if (y > split - 0.06) {
+          c.set(0x0a1f3d);
+        } else {
+          c.copy(white).lerp(silver, Math.min(1, (split - y) / 1.6));
+        }
+        const edge = Math.min(1, Math.abs(x) / 1.55);
+        c.offsetHSL(0, 0, edge * 0.05);
+        colors[i * 3] = c.r;
+        colors[i * 3 + 1] = c.g;
+        colors[i * 3 + 2] = c.b;
+      }
+      bodyGeo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    }
+
     const bodyMat = new THREE.MeshStandardMaterial({
-      color: 0xe8eef6,
-      metalness: 0.62,
-      roughness: 0.28,
+      vertexColors: true,
+      metalness: 0.55,
+      roughness: 0.26,
     });
     const body = new THREE.Mesh(bodyGeo, bodyMat);
-    body.rotation.x = Math.PI / 2; // Y oʻqidan Z oʻqiga
-    body.scale.set(1, 1, 0.84); // vertikal siqish (rotate'dan keyin y→z)
     train.add(body);
 
-    // oyna kamari — faqat ikki yon tomonda (tom va pol oq qoladi)
+    // oyna kamari — faqat ikki yon tomonda
     const bandMat = new THREE.MeshStandardMaterial({
-      color: 0x08131f,
-      metalness: 0.9,
-      roughness: 0.12,
+      color: 0x081726,
+      metalness: 0.92,
+      roughness: 0.1,
       side: THREE.DoubleSide,
     });
-    for (const th of [-0.46, Math.PI - 0.46]) {
+    for (const th of [-0.42, Math.PI - 0.42]) {
       const band = new THREE.Mesh(
-        new THREE.CylinderGeometry(1.565, 1.565, 17, 40, 1, true, th, 0.92),
+        new THREE.CylinderGeometry(1.565, 1.565, 17, 40, 1, true, th, 0.84),
         bandMat
       );
       band.rotation.x = Math.PI / 2;
       band.scale.set(1, 1, 0.84);
-      band.position.set(0, 0.34, 16.5);
+      band.position.set(0, 0.3, 16.5);
       train.add(band);
     }
 
@@ -154,11 +187,21 @@ export default function TrainScene({ onFinish }: { onFinish: () => void }) {
       metalness: 0.4,
       roughness: 0.35,
     });
-    const stripe = new THREE.Mesh(new THREE.CylinderGeometry(1.575, 1.575, 26, 56, 1, true), stripeMat);
+    const stripe = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.572, 1.572, 24, 48, 1, true, -0.5, 1.0),
+      stripeMat
+    );
     stripe.rotation.x = Math.PI / 2;
-    stripe.scale.set(1, 1, 0.3);
-    stripe.position.set(0, -0.62, 15);
-    train.add(stripe);
+    stripe.scale.set(1, 1, 0.84);
+    stripe.position.set(0, -0.55, 16);
+    const stripe2 = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.572, 1.572, 24, 48, 1, true, Math.PI - 0.5, 1.0),
+      stripeMat
+    );
+    stripe2.rotation.x = Math.PI / 2;
+    stripe2.scale.set(1, 1, 0.84);
+    stripe2.position.set(0, -0.55, 16);
+    train.add(stripe, stripe2);
 
     // burun oynasi
     const wsMat = new THREE.MeshStandardMaterial({
@@ -166,32 +209,67 @@ export default function TrainScene({ onFinish }: { onFinish: () => void }) {
       metalness: 0.95,
       roughness: 0.06,
     });
-    const windshield = new THREE.Mesh(new THREE.SphereGeometry(1.15, 32, 24), wsMat);
-    windshield.scale.set(1, 0.5, 1.5);
-    windshield.position.set(0, 0.5, 2.6);
+    const windshield = new THREE.Mesh(new THREE.SphereGeometry(1.2, 40, 28), wsMat);
+    windshield.scale.set(1, 0.44, 1.35);
+    windshield.position.set(0, 0.62, 2.55);
     train.add(windshield);
+
+    // marshrut tablosi (oyna ustidagi yorugʻ yoʻlak)
+    const tabloMat = new THREE.MeshStandardMaterial({
+      color: 0x0b1c33,
+      emissive: 0x5fd0ff,
+      emissiveIntensity: 0.5,
+      metalness: 0.6,
+      roughness: 0.3,
+    });
+    const tablo = new THREE.Mesh(new THREE.BoxGeometry(1.34, 0.2, 0.1), tabloMat);
+    tablo.position.set(0, 1.16, 2.62);
+    tablo.rotation.x = -0.28;
+    train.add(tablo);
 
     // faralar
     const lampMat = new THREE.MeshBasicMaterial({ color: 0xd7f2ff });
-    const lampL = new THREE.Mesh(new THREE.SphereGeometry(0.2, 18, 14), lampMat);
-    lampL.position.set(-0.72, -0.5, 1.35);
+    const lampGeo = new THREE.SphereGeometry(0.18, 20, 14);
+    const lampL = new THREE.Mesh(lampGeo, lampMat);
+    lampL.scale.set(1.9, 0.75, 1);
+    lampL.position.set(-0.6, -0.62, 1.44);
     const lampR = lampL.clone();
-    lampR.position.x = 0.72;
+    lampR.position.x = 0.6;
     train.add(lampL, lampR);
 
-    const gl1 = makeGlow(3.6, 0xbfe9ff, 0.95);
+    // qizil signal chiroqlari
+    const redMat = new THREE.MeshBasicMaterial({ color: 0xff4d4d });
+    const redL = new THREE.Mesh(new THREE.SphereGeometry(0.11, 14, 10), redMat);
+    redL.scale.set(1.5, 0.8, 1);
+    redL.position.set(-1.02, -0.5, 1.2);
+    const redR = redL.clone();
+    redR.position.x = 1.02;
+    train.add(redL, redR);
+    const rg1 = makeGlow(1.5, 0xff4d4d, 0.8);
+    rg1.position.copy(redL.position);
+    const rg2 = makeGlow(1.5, 0xff4d4d, 0.8);
+    rg2.position.copy(redR.position);
+    train.add(rg1, rg2);
+
+    // markazdagi qora panjara
+    const grillMat = new THREE.MeshStandardMaterial({ color: 0x1a2634, metalness: 0.7, roughness: 0.45 });
+    const grill = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.34, 0.12), grillMat);
+    grill.position.set(0, -0.36, 1.5);
+    train.add(grill);
+
+    const gl1 = makeGlow(3.2, 0xbfe9ff, 0.95);
     gl1.position.copy(lampL.position);
-    const gl2 = makeGlow(3.6, 0xbfe9ff, 0.95);
+    const gl2 = makeGlow(3.2, 0xbfe9ff, 0.95);
     gl2.position.copy(lampR.position);
     train.add(gl1, gl2);
 
     const beamL = new THREE.SpotLight(0xcfeeff, 60, 60, 0.42, 0.7, 1.4);
-    beamL.position.set(-0.72, -0.4, 1.4);
-    beamL.target.position.set(-1.4, -1, -22);
+    beamL.position.set(-0.6, -0.55, 1.5);
+    beamL.target.position.set(-1.4, -1.2, -22);
     train.add(beamL, beamL.target);
     const beamR = new THREE.SpotLight(0xcfeeff, 60, 60, 0.42, 0.7, 1.4);
-    beamR.position.set(0.72, -0.4, 1.4);
-    beamR.target.position.set(1.4, -1, -22);
+    beamR.position.set(0.6, -0.55, 1.5);
+    beamR.target.position.set(1.4, -1.2, -22);
     train.add(beamR, beamR.target);
 
     // etak / bogilar
@@ -203,7 +281,7 @@ export default function TrainScene({ onFinish }: { onFinish: () => void }) {
     }
 
     // tomdagi pantograf
-    const panMat = new THREE.MeshStandardMaterial({ color: 0x6d8399, metalness: 0.8, roughness: 0.35 });
+    const panMat = new THREE.MeshStandardMaterial({ color: 0x9db2c7, metalness: 0.85, roughness: 0.3 });
     const panBase = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.16, 1.1), panMat);
     panBase.position.set(0, 1.3, 12);
     train.add(panBase);
