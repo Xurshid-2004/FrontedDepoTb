@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Locomotive from "./Locomotive";
 import PinPad from "./PinPad";
 import { TouchRipple } from "./Fx";
+import { useStore } from "@/lib/store";
 
 type Mode = "login" | "register";
 type Stage = "form" | "pin";
@@ -12,14 +13,26 @@ type Stage = "form" | "pin";
 const EASE = [0.76, 0, 0.24, 1] as const;
 
 export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
+  const { login } = useStore();
   const [mode, setMode] = useState<Mode>("login");
   const [stage, setStage] = useState<Stage>("form");
   const [tabel, setTabel] = useState("");
   const [fio, setFio] = useState("");
   const [blind, setBlind] = useState(false);
+  const [err, setErr] = useState("");
 
   const canSubmit =
     stage === "form" && tabel.trim().length >= 3 && (mode === "login" || fio.trim().length >= 3);
+
+  const submit = () => {
+    const w = login(tabel);
+    if (!w) {
+      setErr("Bunday tabel raqami kadrlar bazasida topilmadi");
+      return;
+    }
+    setErr("");
+    setStage("pin");
+  };
 
   return (
     <TouchRipple className="relative w-full max-w-[980px] rounded-[28px]">
@@ -102,7 +115,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                   <button
                     type="button"
                     disabled={!canSubmit}
-                    onClick={() => setStage("pin")}
+                    onClick={submit}
                     className="group relative mt-8 flex h-12 w-full items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-[#1b6fe0] to-[#38bdf8] font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-35"
                   >
                     <span className="relative z-10">
@@ -110,6 +123,12 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                     </span>
                     <span className="absolute inset-0 translate-y-full bg-white/20 transition-transform duration-300 group-hover:translate-y-0" />
                   </button>
+
+                  {err && (
+                    <p className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-[12px] text-red-300">
+                      {err}
+                    </p>
+                  )}
 
                   <p className="mt-6 text-center text-[13px] text-slate-400">
                     {mode === "login" ? "Hisobingiz yoʻqmi? " : "Hisobingiz bormi? "}
