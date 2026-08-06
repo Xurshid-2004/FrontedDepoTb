@@ -92,21 +92,25 @@ bugun — apelsin `#f97316`, oʻtib ketgan — toʻq qizil `#b91c1c`.
 
 ---
 
-## Afrosiyob videosi
+## Afrosiyob videolari
 
-Kirish oʻtishi haqiqiy video asosida ishlaydi. Videoni shu yerga qoʻying:
+| Fayl | Nima | Qayerda |
+|---|---|---|
+| `public/afrosiyob.mp4` | Poyezd yaqinlashadi (dasht, kunduzi) | Kirish oʻtishi 1-qism, login foni, dashboard hero |
+| `public/afrosiyob-ichi.mp4` | Eshik ochiladi → vagon ichiga kirish | Kirish oʻtishi 2-qism |
+| `public/hero.jpg` · `poster.jpg` · `ichi.jpg` | Videolardan olingan kadrlar | Poster va statik fonlar |
 
-```
-public/afrosiyob.mp4
-```
+Kirish oʻtishi ~7.6 s: yaqinlashish → eshik → ichkari → oq portlash.
+Oʻng yuqorida "Oʻtkazib yuborish" tugmasi bor.
 
-Talablar: kunduzgi yorqin syomka, poyezd harakatda, 6–12 soniya, 1080p+, H.264 `.mp4`.
-
-Fayl boʻlmasa tizim avtomatik ravishda Three.js 3D sahnasiga tushadi — sayt hech qachon buzilmaydi.
+Videolar oʻchirilsa tizim avtomatik ravishda Three.js 3D sahnasiga tushadi —
+sayt hech qachon buzilmaydi.
 
 ---
 
 ## Tema
 
-Sayt **yorqin kunduzgi** temada: oq panellar, toʻq matn, koʻk va oltin urgʻular.
+Sayt **yorqin kunduzgi** temada. Palitra Afrosiyob videosidan olingan:
+poʻlat koʻk osmon (`#1c5c9e`, `#4a9fd8`) va dasht qumi (`#b8895a`, `#c98a2e`).
+Sahifa foni ham osmondan qumga oʻtuvchi ufq gradienti.
 Ranglar `app/globals.css` dagi `@theme` blokida markazlashtirilgan.

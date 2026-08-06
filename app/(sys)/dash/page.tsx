@@ -44,10 +44,49 @@ export default function Dash() {
 
   return (
     <>
-      <PageHead
-        title={`Assalomu alaykum, ${me.ism}`}
-        sub={`${db.depo.nomi} · ${db.depo.kod} · bugun ${fmt(TODAY())}`}
-      />
+      {/* kinematik hero — Afrosiyob kadri */}
+      <div className="relative mb-8 overflow-hidden rounded-3xl">
+        <div className="relative h-[210px] w-full overflow-hidden md:h-[260px]">
+          <video
+            src="/afrosiyob.mp4"
+            poster="/hero.jpg"
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 h-full w-full object-cover"
+            style={{ filter: "saturate(1.12) contrast(1.04)" }}
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(11,32,58,.92)_0%,rgba(16,52,90,.72)_38%,rgba(28,92,158,.25)_70%,transparent_100%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_88%_18%,rgba(255,238,205,.35),transparent_55%)]" />
+
+          <div className="relative flex h-full flex-col justify-center px-6 md:px-9">
+            <p className="text-[10.5px] uppercase tracking-[0.42em] text-white/70">
+              {db.depo.tashkilot} · {db.depo.kod}
+            </p>
+            <h1 className="mt-2.5 text-[26px] font-bold tracking-tight text-white drop-shadow-[0_4px_18px_rgba(0,0,0,.5)] md:text-[34px]">
+              Assalomu alaykum, {me.ism}
+            </h1>
+            <p className="mt-2 text-[13px] text-white/80">
+              {db.depo.nomi} · bugun {fmt(TODAY())}
+            </p>
+
+            <div className="mt-5 flex flex-wrap gap-2">
+              <span className="rounded-full border border-white/25 bg-white/12 px-3 py-1.5 text-[11.5px] font-medium text-white backdrop-blur">
+                {roles.map((r) => r.replace(/_/g, " ")).join(" · ")}
+              </span>
+              {pending.length > 0 && (
+                <span className="rounded-full border border-amber-200/50 bg-amber-400/25 px-3 py-1.5 text-[11.5px] font-semibold text-amber-50 backdrop-blur">
+                  {pending.length} ta tasdiq kutmoqda
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* pastki yorugʻ chiziq */}
+          <div className="absolute inset-x-0 bottom-0 h-[3px] bg-[linear-gradient(90deg,transparent,#4a9fd8,#c98a2e,transparent)]" />
+        </div>
+      </div>
 
       {/* modul kartalari */}
       <div className="mb-7 grid gap-5 md:grid-cols-2">
@@ -236,8 +275,8 @@ export default function Dash() {
         )}
       </div>
 
-      <p className="mt-8 text-center text-[11.5px] text-slate-400">
-        Rolingiz: {roles.join(", ")}
+      <p className="mt-10 text-center text-[11.5px] text-slate-400">
+        {db.depo.tashkilot} · {db.depo.nomi} ({db.depo.kod})
       </p>
     </>
   );

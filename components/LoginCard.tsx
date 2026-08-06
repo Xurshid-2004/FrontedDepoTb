@@ -36,7 +36,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
 
   return (
     <TouchRipple className="relative w-full max-w-[980px] rounded-[28px]">
-      <div className="glass relative w-full overflow-hidden rounded-[28px] shadow-[0_50px_140px_-40px_rgba(56,189,248,.45)]">
+      <div className="glass-strong relative w-full overflow-hidden rounded-[28px]">
         {/* diagonal koʻk panel — login/registratsiya almashganda sirg'aladi */}
         <motion.div
           aria-hidden
@@ -45,15 +45,22 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
           transition={{ duration: 0.85, ease: EASE }}
         >
           <div
-            className="h-full w-full bg-gradient-to-br from-[#1b6fe0] via-[#2f8ff0] to-[#38bdf8]"
+            className="h-full w-full overflow-hidden"
             style={{
               clipPath:
                 mode === "login"
                   ? "polygon(18% 0, 100% 0, 100% 100%, 0 100%)"
                   : "polygon(0 0, 100% 0, 82% 100%, 0 100%)",
             }}
-          />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(255,255,255,.35),transparent_55%)]" />
+          >
+            <img
+              src="/ichi.jpg"
+              alt=""
+              className="animate-kenburns h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-[linear-gradient(140deg,rgba(28,92,158,.92)_0%,rgba(35,120,190,.86)_45%,rgba(74,159,216,.8)_100%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_18%,rgba(255,255,255,.42),transparent_58%)]" />
+          </div>
         </motion.div>
 
         <div className="relative grid min-h-[520px] md:grid-cols-2">

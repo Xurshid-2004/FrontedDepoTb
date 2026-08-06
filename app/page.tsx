@@ -18,10 +18,22 @@ export default function Home() {
 
   return (
     <main className="relative min-h-dvh overflow-hidden">
-      <div className="pointer-events-none fixed inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(1100px_560px_at_50%_-8%,rgba(27,111,224,.16),transparent_62%)]" />
+      {/* AFROSIYOB fon videosi */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <video
+          src="/afrosiyob.mp4"
+          poster="/hero.jpg"
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="absolute inset-0 h-full w-full scale-105 object-cover"
+          style={{ filter: "saturate(1.1) brightness(1.04)" }}
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(238,242,247,.86)_0%,rgba(240,244,249,.9)_45%,rgba(243,239,232,.94)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(900px_520px_at_50%_20%,rgba(255,255,255,.5),transparent_70%)]" />
         <div
-          className="grid-floor absolute inset-x-[-40%] bottom-[-25%] h-[60%] origin-bottom opacity-[0.35]"
+          className="grid-floor absolute inset-x-[-40%] bottom-[-25%] h-[55%] origin-bottom opacity-[0.3]"
           style={{ transform: "rotateX(74deg)" }}
         />
       </div>
@@ -36,7 +48,7 @@ export default function Home() {
             transition={{ duration: 0.45 }}
             className="relative grid min-h-dvh place-items-center px-4 py-10"
           >
-            <div className="w-full max-w-[980px]">
+            <div className="w-full max-w-[1000px]">
               <LoginCard onAuthed={() => setStage("entering")} />
 
               <div className="mt-7 rounded-2xl border border-slate-200 bg-white p-4 card-shadow">

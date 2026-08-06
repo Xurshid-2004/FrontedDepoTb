@@ -1,13 +1,16 @@
 @import "tailwindcss";
 
 @theme {
-  --color-ink: #0d1b2a;
-  --color-canvas: #eef3f9;
+  /* palitra Afrosiyob videosidan olingan: dasht qumi + poʻlat koʻk osmon */
+  --color-ink: #16212e;
+  --color-canvas: #eef2f7;
   --color-surface: #ffffff;
-  --color-line: #dbe3ee;
-  --color-rail: #1b6fe0;
-  --color-rail2: #38bdf8;
-  --color-gold: #d9931f;
+  --color-line: #dde4ed;
+  --color-rail: #1c5c9e;
+  --color-rail2: #4a9fd8;
+  --color-sky: #7f9fbe;
+  --color-sand: #b8895a;
+  --color-gold: #c98a2e;
   --color-ok: #16a34a;
   --color-warn: #d97706;
   --color-danger: #dc2626;
@@ -21,7 +24,7 @@
 html,
 body {
   height: 100%;
-  background: linear-gradient(180deg, #f7fafd 0%, #eaf1f8 100%);
+  background: linear-gradient(180deg, #f2f7fc 0%, #eaf0f7 42%, #f3efe8 100%);
   background-attachment: fixed;
   color: #0d1b2a;
   font-family: var(--font-sans);
@@ -57,10 +60,30 @@ body {
 }
 
 .grid-floor {
-  background-image: linear-gradient(rgba(27, 111, 224, 0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(27, 111, 224, 0.1) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(28, 92, 158, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(28, 92, 158, 0.09) 1px, transparent 1px);
   background-size: 56px 56px;
 }
+
+/* dasht ufqi — video paletiga mos yumshoq gradient */
+.horizon {
+  background: linear-gradient(180deg, #cfe0ef 0%, #e6eef6 45%, #efe6d8 100%);
+}
+
+/* video ustidagi shisha karta */
+.glass-strong {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(26px) saturate(140%);
+  -webkit-backdrop-filter: blur(26px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 40px 120px -40px rgba(10, 30, 55, 0.6);
+}
+
+@keyframes kenburns {
+  0% { transform: scale(1.06) translate3d(0, 0, 0); }
+  100% { transform: scale(1.16) translate3d(-1.5%, -1%, 0); }
+}
+.animate-kenburns { animation: kenburns 22s ease-in-out infinite alternate; }
 
 /* nozik qogʻoz donadorligi */
 .noise::after {
