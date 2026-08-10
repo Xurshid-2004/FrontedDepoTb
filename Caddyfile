@@ -1,0 +1,49 @@
+# =====================================================================
+# TB tizimi — reverse proxy (Caddy)
+#
+# TLS sertifikat avtomatik olinadi (Let's Encrypt).
+# {$TB_DOMAIN} — .env.production dagi domen, masalan tb.example.uz
+# Domen hali yoʻq boʻlsa :80 qoldiring va IP orqali kiring.
+#
+# Marshrutlash:
+#   /api/documents/*  → Next.js   (PDF/DOCX generatori shu yerda qoladi)
+#   /api/*            → Django    (asosiy backend)
+#   /admin/*          → Django    (boshqaruv paneli)
+#   qolgani           → Next.js   (sahifalar)
+# =====================================================================
+
+{$TB_DOMAIN:":80"} {
+	encode gzip zstd
+
+	# Xavfsizlik sarlavhalari
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options    "nosniff"
+		X-Frame-Options           "SAMEORIGIN"
+		Referrer-Policy           "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# Yuklamalar uchun kattaroq limit (yuz suratlari, Excel import)
+	request_body {
+		max_size 25MB
+	}
+
+	# --- 1. Hujjat generatori Next.js'da qoladi ---
+	# (blankalar piksel aniqligida pdf-lib bilan chiziladi)
+	@pdf path /api/documents/*
+	handle @pdf {
+		reverse_proxy web:3000
+	}
+
+	# --- 2. Django: API, admin panel, statik fayllari ---
+	@django path /api/* /admin /admin/* /django-static/* /health
+	handle @django {
+		reverse_proxy api:8000
+	}
+
+	# --- 3. Qolgan hamma narsa — Next.js sahifalari ---
+	handle {
+		reverse_proxy web:3000
+	}
+}

@@ -182,6 +182,10 @@ export function Table({
 }: {
   head: React.ReactNode[];
   children: React.ReactNode;
+  /** Eng kichik kenglik — ustunlar qisilib ketmasligi uchun.
+   *  Katta ekranda jadval joyga sigʻadi va scroll paydo boʻlmaydi;
+   *  telefonda esa gorizontal scroll qoladi, chunki 8 ta ustunni
+   *  380 px ga siqish oʻqib boʻlmaydigan natija beradi. */
   min?: number;
 }) {
   return (

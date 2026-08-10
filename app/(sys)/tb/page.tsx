@@ -7,9 +7,10 @@ import {
   Badge, Btn, Empty, Field, Input, Modal, PageHead, Panel, Table, Td, Textarea, Tr, QrSig, useToast,
 } from "@/components/ui";
 import BookCard from "@/components/BookCard";
+import IncidentFeed from "@/components/IncidentFeed";
 
 export default function TbPage() {
-  const { db, me, can, addJournal, signJournal } = useStore();
+  const { db, me, can, canFeature, addJournal, signJournal, addIncident } = useStore();
   const t = useToast();
   const [addFor, setAddFor] = useState<1 | 2 | null>(null);
   const [signFor, setSignFor] = useState<string | null>(null);
@@ -43,6 +44,11 @@ export default function TbPage() {
       <PageHead
         title="TB — Nazorat jurnallari"
         sub="Maʼmuriy jamoatchilik nazoratining birinchi va ikkinchi bosqichi (shakl Yo D-26). Ikkala jurnal butunlay alohida yuritiladi."
+        right={canFeature("doc.kitobcha") ? (
+          <a href="/hujjatlar/kitobcha.html" target="_blank" rel="noopener noreferrer">
+            <Btn size="sm" variant="primary">Jamoatchilik nazorati kitobchasi ↗</Btn>
+          </a>
+        ) : undefined}
       />
 
       <div className="grid gap-5 md:grid-cols-2">
@@ -63,6 +69,21 @@ export default function TbPage() {
         <div className="mt-6 flex flex-wrap gap-3">
           <Btn variant="primary" onClick={() => setAddFor(1)}>+ 1-bosqichga yozuv</Btn>
           <Btn variant="primary" onClick={() => setAddFor(2)}>+ 2-bosqichga yozuv</Btn>
+        </div>
+      )}
+
+      {can("incident.tb.read") && (
+        <div className="mt-6">
+          <IncidentFeed
+            db={db}
+            entries={db.incidents.filter((i) => i.turi === "tb")}
+            canWrite={can("incident.tb.write")}
+            onAdd={(matn) => addIncident("tb", matn)}
+            title="TB — baxtsiz xodisalar"
+            subtitle="Tizimda roʻy bergan baxtsiz xodisalar haqida xabar — hammaga koʻrinadi"
+            placeholder="Baxtsiz xodisa haqida qisqacha yozing..."
+            accent="#ef4444"
+          />
         </div>
       )}
 

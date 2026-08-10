@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
 import {
   dashboardStats, daysBetween, fmt, fioShort, itemStates, kipTone,
@@ -11,10 +12,17 @@ import { Badge, Btn, Empty, PageHead, Panel, Stat, Table, Td, Tr } from "@/compo
 import { Tilt, SpeedLines } from "@/components/Fx";
 
 export default function Dash() {
-  const { db, me, roles, can } = useStore();
+  const { db, me, roles, can, canFeature } = useStore();
   const s = useMemo(() => dashboardStats(db), [db]);
+  const router = useRouter();
 
-  if (!me) return null;
+  // Ishchi uchun bosh sahifa — «Mening kabinetim»
+  const pureIshchi = !!me && roles.length === 1 && roles[0] === "ishchi";
+  useEffect(() => {
+    if (pureIshchi) router.replace("/ishchi");
+  }, [pureIshchi, router]);
+
+  if (!me || pureIshchi) return null;
 
   const myItems = itemStates(db, me);
   const myKip = db.kips.filter((k) => k.workerId === me.id).sort((a, b) => (a.tugash < b.tugash ? 1 : -1))[0];
@@ -48,7 +56,7 @@ export default function Dash() {
       <div className="relative mb-8 overflow-hidden rounded-3xl">
         <div className="relative h-[210px] w-full overflow-hidden md:h-[260px]">
           <video
-            src="/afrosiyob.mp4"
+            src="/kirish.mp4"
             poster="/hero.jpg"
             autoPlay
             muted
@@ -89,7 +97,9 @@ export default function Dash() {
       </div>
 
       {/* modul kartalari */}
+      {(canFeature("card.mehnat") || canFeature("card.ombor")) && (
       <div className="mb-7 grid gap-5 md:grid-cols-2">
+        {canFeature("card.mehnat") && (
         <Tilt max={8} className="h-full">
           <Link href="/tb" className="block h-full">
             <div className="relative h-full overflow-hidden rounded-2xl bg-[linear-gradient(140deg,#1b6fe0_0%,#2f8ff0_45%,#38bdf8_100%)] p-6 shadow-[0_24px_60px_-26px_rgba(27,111,224,.85)]">
@@ -108,7 +118,9 @@ export default function Dash() {
             </div>
           </Link>
         </Tilt>
+        )}
 
+        {canFeature("card.ombor") && (
         <Tilt max={8} className="h-full">
           <Link href="/ombor" className="block h-full">
             <div className="relative h-full overflow-hidden rounded-2xl bg-[linear-gradient(140deg,#a9640f_0%,#d9931f_45%,#f2b544_100%)] p-6 shadow-[0_24px_60px_-26px_rgba(217,147,31,.85)]">
@@ -127,14 +139,22 @@ export default function Dash() {
             </div>
           </Link>
         </Tilt>
+        )}
       </div>
+      )}
 
       {/* statistika */}
       <div className="mb-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Stat label="Faol ishchilar" value={db.workers.filter((w) => w.faol).length} />
-        <Stat label="Ombordagi buyum turi" value={db.items.length} color="#f2b544" />
+        {canFeature("card.faolIshchilar") && (
+          <Stat label="Faol ishchilar" value={db.workers.filter((w) => w.faol).length} />
+        )}
+        {canFeature("card.buyumTuri") && (
+          <Stat label="Ombordagi buyum turi" value={db.items.length} color="#f2b544" />
+        )}
         <Stat label="Mening tasdigʻimni kutmoqda" value={pending.length} color="#a78bfa" hint={pending.length ? "Arizalar boʻlimiga oʻting" : "Hozircha yoʻq"} />
-        <Stat label="KIP — muddati yaqin/oʻtgan" value={s.kipYaqin + s.kipOtgan} color="#ef4444" />
+        {canFeature("card.kip") && (
+          <Stat label="KIP — muddati yaqin/oʻtgan" value={s.kipYaqin + s.kipOtgan} color="#ef4444" />
+        )}
       </div>
 
       <div className="grid gap-5 xl:grid-cols-3">
@@ -167,6 +187,7 @@ export default function Dash() {
         </Panel>
 
         {/* jurnal muddatlari */}
+        {canFeature("card.choraTadbir") && (
         <Panel className="xl:col-span-2">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-[15px] font-semibold text-slate-900">Bajarilishi kutilayotgan chora-tadbirlar</h3>
@@ -194,6 +215,7 @@ export default function Dash() {
             </Table>
           )}
         </Panel>
+        )}
 
         {/* mening tasdigʻimni kutayotgan arizalar */}
         {pending.length > 0 && (

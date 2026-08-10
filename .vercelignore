@@ -1,0 +1,32 @@
+# =====================================================================
+# Vercel'ga YUKLANMAYDIGAN fayllar.
+#
+# Vercel faqat Next.js ilovasini quradi. Django va FaceID xizmatlari
+# Render'da turadi — ularni yuklashning maʼnosi yoʻq va virtual
+# muhitlar (.venv) yuzlab megabayt joy egallaydi.
+# =====================================================================
+
+# --- boshqa xizmatlar (Render'da) ---
+Bacend/
+face-service/
+app_flutter/
+
+# --- maxfiy ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --- lokal ---
+.venv/
+venv/
+__pycache__/
+*.sqlite3
+
+# --- hujjat va skriptlar ---
+*.ps1
+deploy.sh
+arxiv/
+HISOBOT_*.md
+HOLAT_*.md

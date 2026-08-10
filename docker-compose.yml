@@ -1,0 +1,150 @@
+# =====================================================================
+# TB tizimi — SELF-HOST toʻliq stack
+#
+# Ishga tushirish:
+#   docker compose --env-file .env.production up -d --build
+#
+# FaceID xizmatini yoqish (RAM 8 GB boʻlganda):
+#   docker compose --env-file .env.production --profile face up -d --build
+#
+# Xizmatlar:
+#   db    — PostgreSQL 16 + pgvector
+#   api   — Django backend (asosiy: maʼlumot, mantiq, ruxsatlar, admin panel)
+#   web   — Next.js (sahifalar + hujjat generatori)
+#   caddy — HTTPS/reverse proxy (Let's Encrypt avtomatik)
+#   face  — FaceID xizmati (faqat --profile face bilan)
+# =====================================================================
+services:
+
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: tb-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tb}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD .env.production da boʻlishi shart}
+      POSTGRES_DB: ${POSTGRES_DB:-tb}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tb} -d ${POSTGRES_DB:-tb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [tb]
+
+  # ---------------------------------------------------------------
+  # Django — asosiy backend
+  # Migratsiyalar va boshlangʻich maʼlumot avtomatik bajariladi
+  # (Bacend/docker-entrypoint.sh).
+  # ---------------------------------------------------------------
+  api:
+    build:
+      context: ./Bacend
+    container_name: tb-api
+    restart: unless-stopped
+    environment:
+      DJANGO_DEBUG: "0"
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?DJANGO_SECRET_KEY majburiy}
+      JWT_SECRET: ${JWT_SECRET:-}
+      JWT_ACCESS_MIN: ${JWT_ACCESS_MIN:-30}
+      JWT_REFRESH_DAYS: ${JWT_REFRESH_DAYS:-30}
+      DATABASE_URL: postgres://${POSTGRES_USER:-tb}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-tb}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-*}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-}
+      NEXT_PUBLIC_DEPO_KOD: ${NEXT_PUBLIC_DEPO_KOD:-TCH-6}
+      # Boʻsh boʻlsa yuz tanish OʻCHIQ — tizim faqat PIN bilan ishlaydi.
+      # `--profile face` bilan yoqqanda .env.production ga yozing:
+      #     FACE_SERVICE_URL=http://face:8000
+      # (Bu yerda qatʼiy yozib qoʻyilsa, profil oʻchiq boʻlganda ham
+      #  kirish oynasi kamerani soʻrab, keyin PIN'ga qaytardi.)
+      FACE_SERVICE_URL: ${FACE_SERVICE_URL:-}
+      FACE_SERVICE_TOKEN: ${FACE_SERVICE_TOKEN:-}
+      FACE_THRESHOLD: ${FACE_THRESHOLD:-0.62}
+      TZ: ${TZ:-Asia/Tashkent}
+      TB_SEED: ${TB_SEED:-1}
+    volumes:
+      - api-media:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [tb]
+
+  # ---------------------------------------------------------------
+  # Next.js — sahifalar va hujjat (PDF/DOCX) generatori
+  # ---------------------------------------------------------------
+  web:
+    build:
+      context: .
+      # NEXT_PUBLIC_* build vaqtida mijoz bundle'iga qotiriladi —
+      # shuning uchun runtime env emas, aynan build.args orqali beriladi.
+      args:
+        NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-}
+        NEXT_PUBLIC_DEPO_KOD: ${NEXT_PUBLIC_DEPO_KOD:-TCH-6}
+        NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-}
+        NEXT_PUBLIC_DEMO: ${NEXT_PUBLIC_DEMO:-0}
+    container_name: tb-web
+    restart: unless-stopped
+    environment:
+      # Hujjat marshruti Django'ga ichki tarmoq orqali murojaat qiladi
+      DJANGO_URL: http://api:8000
+      NEXT_PUBLIC_BASE_URL: ${NEXT_PUBLIC_BASE_URL:-}
+      SIGN_PRIVATE_KEY: ${SIGN_PRIVATE_KEY:-}
+      SIGN_PUBLIC_KEY: ${SIGN_PUBLIC_KEY:-}
+      TZ: ${TZ:-Asia/Tashkent}
+    depends_on:
+      - api
+    networks: [tb]
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: tb-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      TB_DOMAIN: ${TB_DOMAIN:-:80}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - web
+      - api
+    networks: [tb]
+
+  face:
+    build: ./face-service
+    container_name: tb-face
+    restart: unless-stopped
+    profiles: ["face"]          # standart holatda ishga tushmaydi (RAM tejash)
+    environment:
+      FACE_TOKEN: ${FACE_SERVICE_TOKEN}
+      FACE_THRESHOLD: ${FACE_THRESHOLD:-0.62}
+    volumes:
+      # insightface modelni $HOME/.insightface ga yuklaydi (INSIGHTFACE_HOME
+      # eʼtiborsiz qoladi). Volume aynan shu yoʻlga ulanmasa, 281 MB model
+      # har rebuild'da qaytadan yuklanardi.
+      - face-models:/root/.insightface
+    # Model xotirada ~1.5 GB egallaydi — chegara qoʻymasak konteyner
+    # butun serverni siqib qoʻyishi mumkin.
+    mem_limit: ${FACE_MEM_LIMIT:-3g}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    networks: [tb]
+
+volumes:
+  db-data:
+  api-media:
+  face-models:
+  caddy-data:
+  caddy-config:
+
+networks:
+  tb:

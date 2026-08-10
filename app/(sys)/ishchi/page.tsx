@@ -8,9 +8,12 @@ import {
   STATUS_COLOR, STATUS_LABEL, TODAY,
 } from "@/lib/logic";
 import { Badge, Btn, Empty, PageHead, Panel, Stat, Table, Td, Tr, useToast } from "@/components/ui";
+import IncidentFeed from "@/components/IncidentFeed";
+import FaceCapture from "@/components/FaceCapture";
+import { api, ApiError } from "@/lib/api";
 
 export default function Ishchi() {
-  const { db, me, createRequest } = useStore();
+  const { db, me, createRequest, can } = useStore();
   const t = useToast();
   const [sel, setSel] = useState<string[]>([]);
 
@@ -122,6 +125,8 @@ export default function Ishchi() {
         </Panel>
 
         <div className="space-y-5">
+          <FaceIdPanel />
+
           <Panel>
             <h3 className="mb-4 text-[15px] font-semibold text-slate-900">Ogohlantirish talonlari</h3>
             <div className="flex gap-3">
@@ -189,6 +194,99 @@ export default function Ishchi() {
           </Panel>
         )}
       </div>
+
+      {(can("incident.tb.read") || can("incident.avariya.read")) && (
+        <div className="mt-6 grid gap-5 md:grid-cols-2">
+          {can("incident.tb.read") && (
+            <IncidentFeed
+              db={db}
+              entries={db.incidents.filter((i) => i.turi === "tb")}
+              canWrite={false}
+              title="TB — baxtsiz xodisalar"
+              subtitle="TB xodimi kiritgan xabarlar"
+              placeholder=""
+              accent="#ef4444"
+            />
+          )}
+          {can("incident.avariya.read") && (
+            <IncidentFeed
+              db={db}
+              entries={db.incidents.filter((i) => i.turi === "avariya")}
+              canWrite={false}
+              title="Mashinist yoʻriqchisi — avariyalar"
+              subtitle="Mashinist yoʻriqchisi kiritgan xabarlar"
+              placeholder=""
+              accent="#f2b544"
+            />
+          )}
+        </div>
+      )}
     </>
+  );
+}
+
+/* ================= FACE ID ================= */
+/** Roʻyxatdan oʻtishda kamera boʻlmagan ishchi yuzini shu yerdan qoʻshadi. */
+function FaceIdPanel() {
+  const { me, reset } = useStore();
+  const t = useToast();
+  const [ochiq, setOchiq] = useState(false);
+  const [band, setBand] = useState(false);
+  const [xato, setXato] = useState("");
+
+  if (!me) return null;
+  const bor = !!me.faceBor;
+
+  const saqla = async (frames: string[]) => {
+    setBand(true);
+    setXato("");
+    try {
+      await api.setMyFace(frames);
+      await reset();
+      setOchiq(false);
+      t.show(bor ? "Face ID yangilandi" : "Face ID qoʻshildi — endi yuz bilan kirasiz");
+    } catch (e) {
+      setXato(e instanceof ApiError ? e.message : "Saqlanmadi");
+    } finally {
+      setBand(false);
+    }
+  };
+
+  return (
+    <Panel>
+      {t.node}
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h3 className="text-[15px] font-semibold text-slate-900">Face ID</h3>
+        <Badge color={bor ? "#22c55e" : "#94a3b8"}>{bor ? "sozlangan" : "sozlanmagan"}</Badge>
+      </div>
+
+      {ochiq ? (
+        <>
+          <FaceCapture
+            title={bor ? "Yuzni yangilash" : "Yuzni qayd etish"}
+            hint="Kameraga toʻgʻri qarang — bir necha kadr olinadi"
+            ishlayotgan={band}
+            xato={xato}
+            onCapture={saqla}
+            onSkip={() => {
+              setOchiq(false);
+              setXato("");
+            }}
+            skipLabel="Bekor qilish"
+          />
+        </>
+      ) : (
+        <>
+          <p className="mb-3 text-[12px] leading-relaxed text-slate-500">
+            {bor
+              ? "Tizimga tabel raqamingiz va yuzingiz bilan kirasiz. PIN zaxira yoʻl sifatida ishlaydi."
+              : "Yuzingizni qayd etsangiz, kirishda PIN terish shart boʻlmaydi. Surat emas, faqat raqamli belgi saqlanadi."}
+          </p>
+          <Btn size="sm" variant={bor ? "ghost" : "primary"} onClick={() => setOchiq(true)}>
+            {bor ? "Yuzni yangilash" : "Face ID qoʻshish"}
+          </Btn>
+        </>
+      )}
+    </Panel>
   );
 }

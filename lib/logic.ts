@@ -64,6 +64,28 @@ export function normsFor(db: DB, positionId: string): Norm[] {
   return db.norms.filter((n) => n.positionId === positionId);
 }
 
+/** Ishchining barcha lavozim id'lari — bitta ham, bir nechta ham boʻlishi mumkin. */
+export function workerPositionIds(w: Worker): string[] {
+  if (w.positionIds && w.positionIds.length) return Array.from(new Set(w.positionIds));
+  return [w.positionId];
+}
+
+/** Ishchi ega boʻlgan barcha lavozim normalari (bir nechta lavozim boʻlsa — birlashtiriladi,
+ *  bitta buyum bir nechta lavozimda boʻlsa — eng qisqa muddatlisi olinadi). */
+export function normsForWorker(db: DB, w: Worker): Norm[] {
+  const byItem = new Map<string, Norm>();
+  for (const pid of workerPositionIds(w)) {
+    for (const n of normsFor(db, pid)) {
+      const cur = byItem.get(n.itemId);
+      if (!cur) { byItem.set(n.itemId, n); continue; }
+      const curMuddat = cur.muddatOy === null ? Infinity : cur.muddatOy;
+      const newMuddat = n.muddatOy === null ? Infinity : n.muddatOy;
+      if (newMuddat < curMuddat) byItem.set(n.itemId, n);
+    }
+  }
+  return Array.from(byItem.values());
+}
+
 /** oxirgi berilgan sana */
 export function lastIssue(card: Card | undefined, itemId: string): string | undefined {
   if (!card) return undefined;
@@ -82,7 +104,7 @@ export type ItemState = {
 
 export function itemStates(db: DB, worker: Worker, at: Date = TODAY()): ItemState[] {
   const card = db.cards.find((c) => c.workerId === worker.id);
-  return normsFor(db, worker.positionId).map((norm) => {
+  return normsForWorker(db, worker).map((norm) => {
     const oxirgi = lastIssue(card, norm.itemId);
     if (norm.muddatOy === null) {
       return { itemId: norm.itemId, norm, oxirgi, holat: "chiqqun" as const };
@@ -271,6 +293,13 @@ export function itemById(db: DB, id: string) {
 }
 export function positionById(db: DB, id: string) {
   return db.positions.find((p) => p.id === id);
+}
+/** Ishchining barcha lavozim nomlari, vergul bilan ajratilgan. */
+export function positionNames(db: DB, w: Worker) {
+  return workerPositionIds(w)
+    .map((id) => positionById(db, id)?.nomi)
+    .filter(Boolean)
+    .join(", ");
 }
 export function reqById(db: DB, id: string) {
   return db.requests.find((r) => r.id === id);

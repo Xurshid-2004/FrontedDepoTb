@@ -21,14 +21,14 @@ type Tube = {
 };
 
 const TUBE_CONF = [
-  { hue: 195, lag: 0.22, width: 3.2 },
-  { hue: 285, lag: 0.17, width: 2.6 },
-  { hue: 330, lag: 0.13, width: 2.2 },
-  { hue: 45, lag: 0.1, width: 1.8 },
-  { hue: 150, lag: 0.075, width: 1.5 },
+  { hue: 195, lag: 0.26, width: 4.4 },
+  { hue: 285, lag: 0.2, width: 3.6 },
+  { hue: 330, lag: 0.155, width: 3.0 },
+  { hue: 45, lag: 0.12, width: 2.4 },
+  { hue: 150, lag: 0.09, width: 2.0 },
 ];
 
-const TRAIL = 34;
+const TRAIL = 42;
 
 export default function CursorTubes() {
   const ref = useRef<HTMLCanvasElement | null>(null);
@@ -110,8 +110,9 @@ export default function CursorTubes() {
         if (tube.pts.length > TRAIL) tube.pts.shift();
 
         const speed = Math.min(Math.hypot(tube.vx, tube.vy), 60);
-        const boost = pressed ? 1.9 : 1;
-        const alpha = active ? 0.14 + speed / 90 : 0.05;
+        const boost = pressed ? 2.1 : 1;
+        // Boʻsh turganда ham koʻrinib tursin, harakatда yorqinroq
+        const alpha = active ? 0.48 + speed / 55 : 0.3;
 
         for (let pass = 0; pass < 2; pass++) {
           const glow = pass === 0;
@@ -123,8 +124,8 @@ export default function CursorTubes() {
             ctx.quadraticCurveTo(p.x, p.y, (p.x + n.x) / 2, (p.y + n.y) / 2);
           }
           const hue = tube.hue + Math.sin(t / 60) * 18;
-          ctx.strokeStyle = `hsla(${hue}, 92%, ${glow ? 62 : 45}%, ${
-            (glow ? alpha * 0.16 : alpha * 0.95) * boost
+          ctx.strokeStyle = `hsla(${hue}, 95%, ${glow ? 62 : 48}%, ${
+            (glow ? alpha * 0.22 : alpha * 0.98) * boost
           })`;
           ctx.lineWidth = (glow ? tube.width * 7 : tube.width) * boost;
           ctx.lineCap = "round";
@@ -133,17 +134,15 @@ export default function CursorTubes() {
         }
       }
 
-      // kursor yadrosi — yorugʻ fon uchun toʻq nuqta + halqa
-      const r = pressed ? 9 : 5;
-      ctx.beginPath();
-      ctx.arc(mouse.x, mouse.y, r, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(13,27,42,0.9)";
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(mouse.x, mouse.y, r + 6, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(27,111,224,0.45)";
-      ctx.lineWidth = 1.4;
-      ctx.stroke();
+      // Sichqoncha kursori tizimniki — ustiga nuqta chizilmaydi.
+      // Faqat bosilganda yengil halqa chiqadi (bosilganini bildirish uchun).
+      if (pressed) {
+        ctx.beginPath();
+        ctx.arc(mouse.x, mouse.y, 14, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(27,111,224,0.35)";
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+      }
 
       ctx.globalCompositeOperation = "source-over";
       raf = requestAnimationFrame(draw);
@@ -165,7 +164,7 @@ export default function CursorTubes() {
     <canvas
       ref={ref}
       aria-hidden
-      className="pointer-events-none fixed inset-0 z-50 hidden md:block"
+      className="pointer-events-none fixed inset-0 z-20 hidden md:block"
     />
   );
 }

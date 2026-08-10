@@ -1,201 +1,502 @@
 "use client";
 
+/* ------------------------------------------------------------------
+   Kirish va roʻyxatdan oʻtish.
+
+   OQIMLAR
+   -------
+   Kirish:      tabel → (yuz bor boʻlsa) Face ID → mos kelmasa PIN
+   Roʻyxat:     tabel → Face ID (ixtiyoriy) → yangi PIN → tizimga kiradi
+
+   Har bir qaror SERVERDA qabul qilinadi (/auth/check). Brauzer
+   ishchilar roʻyxatini ham, PIN hash'ini ham, yuz vektorini ham
+   hech qachon koʻrmaydi.
+
+   Roʻyxatdan faqat kadrlar bazasida BOR tabel raqami oʻta oladi —
+   yaʼni admin qoʻshgan yoki ommaviy import qilgan ishchi.
+------------------------------------------------------------------ */
+
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Locomotive from "./Locomotive";
 import PinPad from "./PinPad";
+import FaceCapture from "./FaceCapture";
 import { TouchRipple } from "./Fx";
 import { useStore } from "@/lib/store";
+import { api, ApiError, type TabelHolat } from "@/lib/api";
 
 type Mode = "login" | "register";
-type Stage = "form" | "pin";
+type Stage = "form" | "face" | "pin";
 
 const EASE = [0.76, 0, 0.24, 1] as const;
 
 export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
-  const { login } = useStore();
+  const { login, faceLogin, register } = useStore();
+
   const [mode, setMode] = useState<Mode>("login");
   const [stage, setStage] = useState<Stage>("form");
   const [tabel, setTabel] = useState("");
-  const [fio, setFio] = useState("");
   const [blind, setBlind] = useState(false);
+
+  /** Serverning tabel haqidagi javobi — keyingi qadam shunga qarab tanlanadi */
+  const [holat, setHolat] = useState<TabelHolat | null>(null);
+  /** Roʻyxatdan oʻtishda olingan yuz kadrlari (boʻsh boʻlishi mumkin) */
+  const [kadrlar, setKadrlar] = useState<string[]>([]);
+
   const [err, setErr] = useState("");
+  const [info, setInfo] = useState("");
+  const [faceErr, setFaceErr] = useState("");
+  const [pinErr, setPinErr] = useState("");
+  const [tekshirmoqda, setTekshirmoqda] = useState(false);
+  const [faceBand, setFaceBand] = useState(false);
 
-  const canSubmit =
-    stage === "form" && tabel.trim().length >= 3 && (mode === "login" || fio.trim().length >= 3);
+  const canSubmit = stage === "form" && !tekshirmoqda && tabel.trim().length >= 3;
 
-  const submit = () => {
-    const w = login(tabel);
-    if (!w) {
-      setErr("Bunday tabel raqami kadrlar bazasida topilmadi");
+  const boshdan = (m: Mode) => {
+    setMode(m);
+    setStage("form");
+    setHolat(null);
+    setKadrlar([]);
+    setErr("");
+    setInfo("");
+    setFaceErr("");
+    setPinErr("");
+    setBlind(false);
+  };
+
+  /* ---------------- 1-qadam: tabel raqamini tekshirish ---------------- */
+
+  const submit = async () => {
+    setTekshirmoqda(true);
+    setErr("");
+    setInfo("");
+    try {
+      const r = await api.tabelTekshir(tabel);
+
+      if (!r.bor) {
+        setErr(
+          mode === "register"
+            ? "Bu tabel raqami kadrlar bazasida yoʻq. Depo kadrlar boʻlimiga murojaat qiling — avval siz bazaga kiritilishingiz kerak"
+            : "Bunday tabel raqami kadrlar bazasida topilmadi"
+        );
+        return;
+      }
+
+      setHolat(r);
+
+      if (mode === "login") {
+        // Hali roʻyxatdan oʻtmagan — roʻyxat oqimiga oʻtkazamiz
+        if (r.royxatKerak) {
+          setMode("register");
+          setInfo(
+            `${r.fio} — siz hali roʻyxatdan oʻtmagansiz. Yuzingizni qayd etib, PIN oʻrnating`
+          );
+          setStage(r.faceYoqilgan ? "face" : "pin");
+          return;
+        }
+        // Yuz sozlangan boʻlsa avval Face ID, boʻlmasa toʻgʻridan PIN
+        setStage(r.faceBor && r.faceYoqilgan ? "face" : "pin");
+        return;
+      }
+
+      // --- roʻyxatdan oʻtish ---
+      if (!r.royxatKerak) {
+        setErr(
+          "Bu tabel raqami allaqachon roʻyxatdan oʻtgan. «Kirish» boʻlimidan foydalaning"
+        );
+        return;
+      }
+      setInfo(`${r.fio} — maʼlumot tasdiqlandi`);
+      setStage(r.faceYoqilgan ? "face" : "pin");
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Serverga ulanib boʻlmadi");
+    } finally {
+      setTekshirmoqda(false);
+    }
+  };
+
+  const onEnter = () => {
+    if (canSubmit) void submit();
+  };
+
+  /* ---------------- 2-qadam: yuz ---------------- */
+
+  const yuzOlindi = async (frames: string[]) => {
+    setFaceErr("");
+
+    // Roʻyxatdan oʻtishda kadrlar saqlanadi, tekshiruv PIN bilan birga ketadi
+    if (mode === "register") {
+      setKadrlar(frames);
+      setStage("pin");
       return;
     }
-    setErr("");
-    setStage("pin");
+
+    // Kirishda — darrov serverda solishtiriladi
+    setFaceBand(true);
+    try {
+      const r = await faceLogin(tabel.trim(), frames);
+      if (r.ok) {
+        onAuthed();
+        return;
+      }
+      setFaceErr(r.xato ?? "Yuz mos kelmadi");
+    } finally {
+      setFaceBand(false);
+    }
   };
+
+  /* ---------------- 3-qadam: PIN ---------------- */
+
+  /** Roʻyxatdan oʻtish: PIN toʻlgach hisob yaratiladi */
+  const royxatTasdiq = async (pin: string): Promise<boolean> => {
+    const r = await register(tabel.trim(), pin, kadrlar);
+    if (r.ok) {
+      if (r.faceXabar) setInfo(r.faceXabar);
+      return true;
+    }
+    setPinErr(r.xato ?? "Roʻyxatdan oʻtilmadi");
+    return false;
+  };
+
+  /** Kirish: PIN serverda tekshiriladi */
+  const kirishTasdiq = async (pin: string): Promise<boolean> => {
+    try {
+      // Admin majburiy almashtirishga qoʻygan boʻlsa — avval yangisi oʻrnatiladi
+      if (holat?.pinKerak) {
+        await api.setPin(tabel.trim(), pin);
+        return true;
+      }
+      return (await login(tabel.trim(), pin)) === "ok";
+    } catch (e) {
+      setPinErr(e instanceof ApiError ? e.message : "Xato yuz berdi");
+      return false;
+    }
+  };
+
+  const royxat = mode === "register";
 
   return (
     <TouchRipple className="relative w-full max-w-[980px] rounded-[28px]">
       <div className="glass-strong relative w-full overflow-hidden rounded-[28px]">
-        {/* diagonal koʻk panel — login/registratsiya almashganda sirg'aladi */}
+        {/* diagonal koʻk panel — login/registratsiya almashganda sirgʻaladi */}
         <motion.div
           aria-hidden
           className="pointer-events-none absolute inset-y-0 hidden w-[62%] md:block"
-          animate={{ left: mode === "login" ? "48%" : "-10%" }}
+          initial={{ left: royxat ? "-10%" : "48%" }}
+          animate={{ left: royxat ? "-10%" : "48%" }}
           transition={{ duration: 0.85, ease: EASE }}
         >
           <div
             className="h-full w-full overflow-hidden"
             style={{
-              clipPath:
-                mode === "login"
-                  ? "polygon(18% 0, 100% 0, 100% 100%, 0 100%)"
-                  : "polygon(0 0, 100% 0, 82% 100%, 0 100%)",
+              clipPath: royxat
+                ? "polygon(0 0, 100% 0, 82% 100%, 0 100%)"
+                : "polygon(18% 0, 100% 0, 100% 100%, 0 100%)",
             }}
           >
-            <img
-              src="/ichi.jpg"
-              alt=""
-              className="animate-kenburns h-full w-full object-cover"
-            />
+            <img src="/ichi.jpg" alt="" className="animate-kenburns h-full w-full object-cover" />
             <div className="absolute inset-0 bg-[linear-gradient(140deg,rgba(28,92,158,.92)_0%,rgba(35,120,190,.86)_45%,rgba(74,159,216,.8)_100%)]" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_18%,rgba(255,255,255,.42),transparent_58%)]" />
           </div>
         </motion.div>
 
-        <div className="relative grid min-h-[520px] md:grid-cols-2">
+        {/* Karta ekranga QATʼIY sigʻadi — sahifada ham, karta ichida ham
+            scroll boʻlmaydi. Balandlik shu yerda cheklanadi, mazmun esa
+            ichkarida moslashadi (kamera qolgan joyni egallab, kerak
+            boʻlsa kichrayadi). */}
+        <div className="relative grid h-[min(680px,calc(100dvh-7rem))] overflow-hidden md:grid-cols-2">
           {/* CHAP: forma */}
           <motion.div
-            className="order-2 flex flex-col justify-center px-7 py-10 md:order-1 md:px-12"
-            animate={{ x: mode === "login" ? 0 : "100%", opacity: 1 }}
+            className="order-2 flex flex-col px-7 py-6 md:order-1 md:px-11 md:py-7"
+            animate={{ x: royxat ? "100%" : 0, opacity: 1 }}
             transition={{ duration: 0.85, ease: EASE }}
           >
-            <AnimatePresence mode="wait">
-              {stage === "form" ? (
+            {/* --- tashkilot sarlavhasi --- */}
+            <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#1b6fe0] to-[#38bdf8] text-[14px] font-black text-white">
+                TB
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-[13px] font-bold leading-tight text-slate-900">
+                  Oʻzbekiston temir yoʻllari AJ
+                </p>
+                <p className="truncate text-[11px] leading-tight text-slate-500">
+                  Buxoro lokomotiv deposi · TCH-6
+                </p>
+              </div>
+            </div>
+
+            {/* --- qadamlar --- */}
+            <Qadamlar joriy={stage} royxat={royxat} />
+
+            {/* Bosqichlar oddiy shartli render bilan almashadi.
+                AnimatePresence + mode="wait" bu yerda keraksiz murakkablik
+                edi: kirish oynasi hech qanday holatda boʻsh qolmasligi
+                kerak, animatsiya esa shunchaki bezak.
+
+                min-h-0 — flex bolasining standart `min-height:auto` qiymati
+                kichrayishga yoʻl qoʻymaydi va mazmun tashqariga chiqib
+                ketadi. Shusiz kamera kartani cho'zib yuborardi. */}
+            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pt-1">
+              {/* ---------- 1: TABEL ---------- */}
+              {stage === "form" && (
                 <motion.div
                   key="form"
-                  initial={{ opacity: 0, y: 16 }}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.35 }}
+                  transition={{ duration: 0.25 }}
                 >
                   <p className="text-[11px] uppercase tracking-[0.35em] text-sky-700">
                     TCH-6 · Buxoro lokomotiv deposi
                   </p>
                   <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
-                    {mode === "login" ? "Tizimga kirish" : "Roʻyxatdan oʻtish"}
+                    {royxat ? "Roʻyxatdan oʻtish" : "Tizimga kirish"}
                   </h1>
                   <p className="mt-2 text-sm text-slate-500">
-                    {mode === "login"
-                      ? "Tabel raqamingizni kiriting"
-                      : "Tabel raqami va F.I.Sh. kadrlar bazasi bilan solishtiriladi"}
+                    {royxat
+                      ? "Tabel raqamingiz kadrlar bazasi bilan solishtiriladi"
+                      : "Tabel raqamingizni kiriting"}
                   </p>
 
-                  <div className="mt-8 space-y-4">
+                  <div className="mt-8">
                     <Field
                       label="Tabel raqami"
                       value={tabel}
                       onChange={setTabel}
                       placeholder="masalan: 10427"
                       inputMode="numeric"
+                      autoFocus
+                      onEnter={onEnter}
                     />
-                    <AnimatePresence>
-                      {mode === "register" && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          transition={{ duration: 0.3 }}
-                        >
-                          <Field
-                            label="F.I.Sh."
-                            value={fio}
-                            onChange={setFio}
-                            placeholder="Abduvaliyev Ohun Olimjon oʻgʻli"
-                            onFocusChange={setBlind}
-                          />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
                   </div>
 
                   <button
                     type="button"
                     disabled={!canSubmit}
                     onClick={submit}
-                    className="group relative mt-8 flex h-12 w-full items-center justify-center overflow-hidden rounded-xl bg-gradient-to-r from-[#1b6fe0] to-[#38bdf8] font-semibold text-slate-900 transition disabled:cursor-not-allowed disabled:opacity-35"
+                    className="relative mt-8 flex h-12 w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#1b6fe0] to-[#38bdf8] font-semibold text-slate-900 disabled:cursor-not-allowed disabled:opacity-35"
                   >
-                    <span className="relative z-10">
-                      {mode === "login" ? "Davom etish" : "Yuborish"}
-                    </span>
-                    <span className="absolute inset-0 translate-y-full bg-slate-200 transition-transform duration-300 group-hover:translate-y-0" />
+                    {tekshirmoqda ? "Tekshirilmoqda…" : "Davom etish"}
                   </button>
 
-                  {err && (
-                    <p className="mt-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-[12px] text-red-600">
-                      {err}
-                    </p>
-                  )}
+                  {err && <Xabar turi="err">{err}</Xabar>}
 
-                  <p className="mt-6 text-center text-[13px] text-slate-500">
-                    {mode === "login" ? "Hisobingiz yoʻqmi? " : "Hisobingiz bormi? "}
+                  {/* Rejimni almashtirish — koʻzga tashlanadigan qilib ajratilgan */}
+                  <div className="mt-7 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3.5 text-center">
+                    <p className="text-[14px] font-medium text-slate-700">
+                      {royxat ? "Hisobingiz bormi?" : "Hisobingiz yoʻqmi?"}
+                    </p>
                     <button
                       type="button"
-                      onClick={() => setMode(mode === "login" ? "register" : "login")}
-                      className="font-semibold text-sky-700 underline-offset-4 hover:underline"
+                      onClick={() => boshdan(royxat ? "login" : "register")}
+                      className="mt-1.5 text-[15.5px] font-bold text-sky-700 underline decoration-sky-300 decoration-2 underline-offset-4 transition hover:text-sky-900 hover:decoration-sky-600"
                     >
-                      {mode === "login" ? "Roʻyxatdan oʻtish" : "Kirish"}
+                      {royxat ? "Tizimga kirish" : "Roʻyxatdan oʻtish"}
                     </button>
-                  </p>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="pin"
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.35 }}
-                  onFocus={() => setBlind(true)}
-                >
-                  <PinPad onDone={onAuthed} />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStage("form");
-                      setBlind(false);
-                    }}
-                    className="mt-8 block w-full text-center text-[12px] text-slate-500 hover:text-sky-700"
-                  >
-                    ← Orqaga
-                  </button>
+                  </div>
                 </motion.div>
               )}
-            </AnimatePresence>
+
+              {/* ---------- 2: YUZ ---------- */}
+              {stage === "face" && (
+                <motion.div
+                  key="face"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25 }}
+                  /* Kamera qolgan balandlikni egallashi uchun bu bosqich
+                     toʻliq flex ustun boʻlishi kerak */
+                  className="flex min-h-0 flex-1 flex-col"
+                >
+                  {info && <Xabar turi="info">{info}</Xabar>}
+                  <FaceCapture
+                    title={royxat ? "Face ID qayd etish" : "Face ID bilan kirish"}
+                    hint={
+                      royxat
+                        ? "Yuzingiz keyingi kirishlarda shu surat bilan solishtiriladi"
+                        : "Kameraga toʻgʻri qarang — bir necha kadr olinadi"
+                    }
+                    ishlayotgan={faceBand}
+                    xato={faceErr}
+                    onCapture={yuzOlindi}
+                    onSkip={() => {
+                      setFaceErr("");
+                      if (royxat) setKadrlar([]);
+                      setStage("pin");
+                    }}
+                    skipLabel={
+                      royxat ? "Face ID'ni keyinroq qoʻshaman" : "PIN kod bilan kirish"
+                    }
+                  />
+                </motion.div>
+              )}
+
+              {/* ---------- 3: PIN ---------- */}
+              {stage === "pin" && (
+                <motion.div
+                  key="pin"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25 }}
+                  onFocus={() => setBlind(true)}
+                >
+                  {info && <Xabar turi="info">{info}</Xabar>}
+
+                  <PinPad
+                    key={`${tabel}-${mode}-${kadrlar.length}`}
+                    label={royxat ? "Yangi PIN oʻrnating" : holat?.pinKerak ? "Yangi PIN oʻrnating" : "PIN kodni kiriting"}
+                    hint={
+                      royxat
+                        ? kadrlar.length
+                          ? "Face ID ishlamagan holatda shu PIN bilan kirasiz"
+                          : "Har kirishda shu kod soʻraladi"
+                        : holat?.pinKerak
+                          ? "Administrator PIN'ni almashtirishni soʻragan"
+                          : "Har kirishda shu kod soʻraladi"
+                    }
+                    /* PIN SERVERDA tekshiriladi — brauzerda hash yoʻq */
+                    verify={royxat ? royxatTasdiq : kirishTasdiq}
+                    onError={() =>
+                      setPinErr((p) => p || (royxat ? "Roʻyxatdan oʻtilmadi" : "PIN notoʻgʻri — qayta urining"))
+                    }
+                    onDone={onAuthed}
+                  />
+
+                  {pinErr && <Xabar turi="err">{pinErr}</Xabar>}
+
+                  {/* Yuz bosqichiga qaytish — kadr sifati yomon boʻlsa */}
+                  {royxat && holat?.faceYoqilgan && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPinErr("");
+                        setStage("face");
+                      }}
+                      className="mt-5 block w-full text-center text-[12.5px] font-medium text-sky-700 underline-offset-4 hover:underline"
+                    >
+                      {kadrlar.length ? "Yuzni qayta olish" : "Face ID qoʻshish"}
+                    </button>
+                  )}
+
+                  <Orqaga onClick={() => boshdan(mode)} />
+                </motion.div>
+              )}
+            </div>
+
+            {/* --- xavfsizlik eslatmasi --- */}
+            <div className="mt-6 border-t border-slate-200 pt-3.5">
+              <p className="flex items-center justify-center gap-1.5 text-[11px] text-slate-500">
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0" aria-hidden>
+                  <path
+                    d="M12 2l7 3v6c0 4.5-3 8.6-7 11-4-2.4-7-6.5-7-11V5l7-3z"
+                    fill="none"
+                    stroke="#22c55e"
+                    strokeWidth="1.8"
+                    strokeLinejoin="round"
+                  />
+                  <path d="M9 12l2 2 4-4" fill="none" stroke="#22c55e" strokeWidth="1.8"
+                    strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                Himoyalangan ulanish · barcha kirish urinishlari qayd etiladi
+              </p>
+              <p className="mt-1 text-center text-[11px] text-slate-400">
+                Kirishda muammo boʻlsa — depo kadrlar boʻlimiga murojaat qiling
+              </p>
+            </div>
           </motion.div>
 
           {/* OʻNG: mascot */}
           <motion.div
-            className="order-1 flex flex-col items-center justify-center px-7 py-10 md:order-2"
-            animate={{ x: mode === "login" ? 0 : "-100%" }}
+            className="order-1 flex flex-col items-center justify-center px-7 py-6 md:order-2 md:py-10"
+            animate={{ x: royxat ? "-100%" : 0 }}
             transition={{ duration: 0.85, ease: EASE }}
           >
-            <Locomotive blind={blind || stage === "pin"} size={220} />
-            <p className="mt-6 max-w-[280px] text-center text-lg font-semibold text-white">
+            <div className="origin-center scale-[0.68] md:scale-100">
+              <Locomotive blind={blind || stage === "pin"} size={220} />
+            </div>
+            <p className="mt-3 max-w-[280px] text-center text-lg font-semibold text-white md:mt-6">
               {stage === "pin"
                 ? "Faralar oʻchdi — kodingizni koʻrmayapman"
-                : mode === "login"
-                ? "Xush kelibsiz!"
-                : "Yangi ishchimisiz?"}
+                : stage === "face"
+                  ? "Kameraga tabassum qiling"
+                  : royxat
+                    ? "Yangi ishchimisiz?"
+                    : "Xush kelibsiz!"}
             </p>
             <p className="mt-2 max-w-[300px] text-center text-[13px] text-white/80">
               {stage === "pin"
-                ? "PIN faqat sizning qurilmangizda saqlanadi"
-                : "Texnika xavfsizligi va omborxona — bitta tizimda"}
+                ? "PIN shifrlangan holda saqlanadi — hech kim koʻra olmaydi"
+                : stage === "face"
+                  ? "Surat emas, faqat raqamli belgi saqlanadi"
+                  : "Texnika xavfsizligi va omborxona — bitta tizimda"}
             </p>
           </motion.div>
         </div>
       </div>
     </TouchRipple>
+  );
+}
+
+/* ================= yordamchi koʻrinishlar ================= */
+
+/** Qadamlar chizigʻi — foydalanuvchi qayerdaligini va nima qolganini koʻradi */
+function Qadamlar({ joriy, royxat }: { joriy: Stage; royxat: boolean }) {
+  const qadam: { k: Stage; l: string }[] = [
+    { k: "form", l: "Tabel raqami" },
+    { k: "face", l: royxat ? "Yuzni qayd etish" : "Shaxsni tasdiqlash" },
+    { k: "pin", l: royxat ? "PIN oʻrnatish" : "Kirish" },
+  ];
+  const n = qadam.findIndex((q) => q.k === joriy);
+
+  return (
+    <ol className="flex items-center gap-1.5 py-4" aria-label="Kirish bosqichlari">
+      {qadam.map((q, i) => {
+        const otgan = i < n;
+        const faol = i === n;
+        return (
+          <li key={q.k} className="flex flex-1 items-center gap-1.5">
+            <div className="min-w-0 flex-1">
+              <div
+                className={`h-1 rounded-full transition-colors ${
+                  otgan ? "bg-sky-500" : faol ? "bg-sky-400" : "bg-slate-200"
+                }`}
+              />
+              <p
+                className={`mt-1.5 truncate text-[10.5px] transition-colors ${
+                  faol ? "font-semibold text-sky-700" : otgan ? "text-slate-500" : "text-slate-400"
+                }`}
+              >
+                {i + 1}. {q.l}
+              </p>
+            </div>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function Xabar({ turi, children }: { turi: "err" | "info"; children: React.ReactNode }) {
+  const uslub =
+    turi === "err"
+      ? "border-red-300 bg-red-50 text-red-600"
+      : "border-sky-300 bg-sky-50 text-sky-800";
+  return (
+    <p className={`mt-4 rounded-lg border px-3 py-2 text-[12.5px] leading-relaxed ${uslub}`}>
+      {children}
+    </p>
+  );
+}
+
+function Orqaga({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="mt-6 block w-full text-center text-[12px] text-slate-500 transition hover:text-sky-700"
+    >
+      ← Boshqa tabel raqami
+    </button>
   );
 }
 
@@ -206,6 +507,8 @@ function Field({
   placeholder,
   inputMode,
   onFocusChange,
+  onEnter,
+  autoFocus,
 }: {
   label: string;
   value: string;
@@ -213,6 +516,8 @@ function Field({
   placeholder?: string;
   inputMode?: "numeric" | "text";
   onFocusChange?: (v: boolean) => void;
+  onEnter?: () => void;
+  autoFocus?: boolean;
 }) {
   const [focus, setFocus] = useState(false);
   return (
@@ -229,6 +534,13 @@ function Field({
           value={value}
           inputMode={inputMode}
           placeholder={placeholder}
+          autoFocus={autoFocus}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              onEnter?.();
+            }
+          }}
           onFocus={() => {
             setFocus(true);
             onFocusChange?.(true);

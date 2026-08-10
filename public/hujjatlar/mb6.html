@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MB-6 Shaxsiy Karta - Elektron Shakl</title>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- QRCode.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        /* Base Styling */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Times New Roman', Times, serif;
+        }
+
+        body {
+            background-color: #f1f5f9;
+            color: #0f172a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+
+        /* Top Control Bar */
+        .controls-bar {
+            width: 100%;
+            max-width: 1050px;
+            background: #ffffff;
+            margin: 20px 0;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 10px;
+            z-index: 1000;
+        }
+
+        .controls-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 9px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: system-ui, -apple-system, sans-serif;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(37, 99, 235, 0.2);
+        }
+
+        .btn:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: #64748b;
+            box-shadow: 0 2px 5px rgba(100, 116, 139, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background-color: #475569;
+        }
+
+        .btn-success {
+            background-color: #059669;
+            box-shadow: 0 2px 5px rgba(5, 150, 105, 0.2);
+        }
+
+        .btn-success:hover {
+            background-color: #047857;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            box-shadow: none;
+        }
+
+        .btn-outline:hover {
+            background-color: #f8fafc;
+            border-color: #94a3b8;
+        }
+
+        .card-view-mode {
+            display: flex;
+            background: #e2e8f0;
+            padding: 3px;
+            border-radius: 8px;
+        }
+
+        .card-view-btn {
+            border: none;
+            background: transparent;
+            padding: 6px 14px;
+            font-size: 13px;
+            font-family: system-ui, sans-serif;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #475569;
+            transition: all 0.2s;
+        }
+
+        .card-view-btn.active {
+            background: #ffffff;
+            color: #1e293b;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        /* Perspective Stage for 3D Flip */
+        .stage-container {
+            width: 1000px;
+            perspective: 1500px;
+            margin-top: 10px;
+        }
+
+        .document-card {
+            width: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .document-card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        /* Front & Back Faces */
+        .card-face {
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid #000;
+            padding: 35px 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            backface-visibility: hidden;
+            border-radius: 2px;
+            position: relative;
+        }
+
+        .card-face.card-back {
+            transform: rotateY(180deg);
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* Show both mode layout */
+        .stage-container.show-both {
+            perspective: none;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .stage-container.show-both .document-card {
+            transform: none !important;
+            transform-style: flat;
+        }
+
+        .stage-container.show-both .card-face.card-back {
+            position: relative;
+            transform: none;
+        }
+
+        /* Document Form Styling */
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .header-left {
+            flex: 1;
+        }
+
+        .header-right-note {
+            width: 320px;
+            text-align: right;
+            font-size: 13px;
+        }
+
+        .doc-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin: 15px 0 20px 0;
+            letter-spacing: 0.5px;
+        }
+
+        /* Form Controls inside Document */
+        input[type="text"], input[type="date"], input[type="number"] {
+            border: none;
+            border-bottom: 1px dotted #000;
+            outline: none;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 14px;
+            padding: 2px 5px;
+            background: transparent;
+            color: #000;
+            width: 100%;
+        }
+
+        input[type="text"]:focus, input[type="date"]:focus {
+            background-color: #f0f9ff;
+            border-bottom: 1px solid #2563eb;
+        }
+
+        /* Main Employee Meta Info Grid */
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .meta-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .field-row {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .field-label {
+            white-space: nowrap;
+            font-weight: normal;
+        }
+
+        .field-row input {
+            flex: 1;
+        }
+
+        /* Sizes Table */
+        .sizes-table, .standard-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .sizes-table th, .sizes-table td,
+        .standard-table th, .standard-table td {
+            border: 1px solid #000;
+            padding: 5px 8px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .sizes-table th {
+            background-color: #f8fafc;
+            font-weight: bold;
+        }
+
+        .standard-table th {
+            text-align: center;
+            font-weight: bold;
+            background-color: #f8fafc;
+        }
+
+        .standard-table td input {
+            border: none;
+            border-bottom: none;
+            padding: 2px 0;
+            text-align: center;
+        }
+
+        /* QR Code Block */
+        .qr-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 1px dashed #64748b;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            background-color: #fafafa;
+        }
+
+        #qrcode {
+            margin-bottom: 5px;
+        }
+
+        .qr-text {
+            font-size: 10px;
+            color: #475569;
+            text-align: center;
+            font-family: system-ui, sans-serif;
+        }
+
+        /* Section Subheaders */
+        .section-header {
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+            margin: 15px 0 10px 0;
+        }
+
+        /* Signatures Area */
+        .signatures-area {
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            font-size: 14px;
+        }
+
+        .sig-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        .sig-line {
+            flex: 1;
+            margin: 0 10px;
+            border-bottom: 1px solid #000;
+        }
+
+        /* Action Row inside Tables */
+        .table-row-actions {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+        }
+
+        .btn-row-action {
+            background: transparent;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 12px;
+            padding: 2px 5px;
+        }
+
+        .btn-row-action:hover {
+            color: #b91c1c;
+        }
+
+        /* Watermark & Flip Hint */
+        .flip-hint {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: #0284c7;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-family: system-ui, sans-serif;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+
+        .flip-hint:hover {
+            background: #0369a1;
+            transform: scale(1.05);
+        }
+
+        /* Dynamic Table Control Buttons */
+        .table-controls {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Print Optimization */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .controls-bar, .flip-hint, .table-controls, .table-row-actions-col, .btn-row-action {
+                display: none !important;
+            }
+
+            .stage-container {
+                width: 100% !important;
+                perspective: none !important;
+                margin: 0 !important;
+            }
+
+            .document-card {
+                transform: none !important;
+                transform-style: flat !important;
+            }
+
+            .card-face {
+                box-shadow: none !important;
+                border: 1px solid #000 !important;
+                padding: 20mm 15mm !important;
+                page-break-after: always;
+                width: 100% !important;
+                border-radius: 0 !important;
+            }
+
+            .card-face.card-back {
+                position: relative !important;
+                transform: none !important;
+            }
+
+            input[type="text"], input[type="date"], input[type="number"] {
+                border-bottom: none !important;
+                background: transparent !important;
+            }
+
+            /* Hide placeholder texts when printing */
+            ::placeholder {
+                color: transparent !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Controls Bar -->
+    <div class="controls-bar">
+        <div class="controls-group">
+            <button class="btn btn-success" onclick="window.print()">
+                <i class="fa-solid fa-print"></i> Chop etish (Print)
+            </button>
+            <button class="btn btn-secondary" onclick="toggleCardFlip()">
+                <i class="fa-solid fa-rotate"></i> Orqaga o'girish (Flip)
+            </button>
+            <button class="btn btn-outline" onclick="fillSampleData()">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Namuna ma'lumot
+            </button>
+            <button class="btn btn-outline" onclick="clearForm()">
+                <i class="fa-solid fa-eraser"></i> Tozalash
+            </button>
+        </div>
+
+        <div class="controls-group">
+            <div class="card-view-mode">
+                <button class="card-view-btn active" id="btn3d" onclick="setViewMode('3d')">
+                    <i class="fa-solid fa-cube"></i> 3D Ko'rinish
+                </button>
+                <button class="card-view-btn" id="btnBoth" onclick="setViewMode('both')">
+                    <i class="fa-solid fa-grip-vertical"></i> Ikkala tomon
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Stage Container -->
+    <div class="stage-container" id="stageContainer">
+        <div class="document-card" id="documentCard">
+            
+            <!-- FRONT SIDE (Old tomoni) -->
+            <div class="card-face card-front">
+                <div class="flip-hint" onclick="toggleCardFlip()">
+                    <i class="fa-solid fa-arrows-rotate"></i> Orqa tomoni
+                </div>
+
+                <!-- Header Info -->
+                <div class="header-section">
+                    <div class="header-left">
+                        <div style="font-size: 12px; margin-bottom: 5px; max-width: 450px;">
+                            Jamiyatning barcha tashkilotlariga muassasalararo namunaviy shakl № MB-6
+                        </div>
+                        <div class="field-row" style="max-width: 450px;">
+                            <input type="text" id="korxonaName" placeholder="Korxona, tashkilot nomini kiriting..." style="font-weight: bold; font-size: 15px;">
+                            <span class="field-label" style="font-size: 12px; font-style: italic;">korxona, tashkilot</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Document Title -->
+                <div class="doc-title">
+                    Maxsus kiyim, poyabzallar va shaxsiy himoya vositalarini hisobga olish<br>
+                    SHAXSIY KARTASI № <input type="text" id="kartaNo" style="width: 100px; text-align: center; font-weight: bold; font-size: 18px;" placeholder="____">
+                </div>
+
+                <!-- Employee Information & Sizes Grid -->
+                <div class="meta-grid">
+                    <!-- Left: Employee Details -->
+                    <div class="meta-fields">
+                        <div class="field-row">
+                            <span class="field-label">Familiyasi:</span>
+                            <input type="text" id="familiya">
+                        </div>
+                        <div class="field-row">
+                            <span class="field-label">Ismi:</span>
+                            <input type="text" id="ismi">
+                        </div>
+                        <div class="field-row">
+                            <span class="field-label">Otasining ismi:</span>
+                            <input type="text" id="otasiningIsmi">
+                        </div>
+                        <div class="field-row">
+                            <span class="field-label">Tabel raqami:</span>
+                            <input type="text" id="tabelRaqami" style="width: 150px; flex: none;">
+                            <span class="field-label" style="margin-left: 10px;">Sex, bo'lim:</span>
+                            <input type="text" id="sexBolim">
+                        </div>
+                        <div class="field-row">
+                            <span class="field-label">Kasbi lavozimi:</span>
+                            <input type="text" id="kasbiLavozimi">
+                        </div>
+                        <div class="field-row">
+                            <span class="field-label">Ishga kirgan sanasi:</span>
+                            <input type="date" id="ishgaKirganSana" style="width: 160px; flex: none;">
+                        </div>
+                        <div class="field-row">
+                            <span class="field-label">Kasbini o'zgargan sanasi:</span>
+                            <input type="date" id="kasbOzgarganSana" style="width: 160px; flex: none;">
+                        </div>
+                        <div class="field-row">
+                            <span class="field-label">Ish joyi:</span>
+                            <input type="text" id="ishJoyi">
+                        </div>
+                    </div>
+
+                    <!-- Right: Sizes & QR Verification Code -->
+                    <div>
+                        <!-- QR Code box -->
+                        <div class="qr-section">
+                            <div id="qrcode"></div>
+                            <div class="qr-text">Elektron kartani tasdiqlash QR-kodi</div>
+                        </div>
+
+                        <!-- Sizes Table -->
+                        <table class="sizes-table">
+                            <tr>
+                                <th style="width: 60%;">Jinsi:</th>
+                                <td><input type="text" id="jinsi" style="text-align: center;"></td>
+                            </tr>
+                            <tr>
+                                <th>Bo'yi:</th>
+                                <td><input type="text" id="boyi" style="text-align: center;"></td>
+                            </tr>
+                            <tr>
+                                <th>Kiyim o'lchami:</th>
+                                <td><input type="text" id="kiyimOlchami" style="text-align: center;"></td>
+                            </tr>
+                            <tr>
+                                <th>Poyabzal o'lchami:</th>
+                                <td><input type="text" id="poyabzalOlchami" style="text-align: center;"></td>
+                            </tr>
+                            <tr>
+                                <th>Bosh kiyim o'lchami:</th>
+                                <td><input type="text" id="boshKiyimOlchami" style="text-align: center;"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Section Subheader -->
+                <div class="section-header">
+                    Tasdiqlangan me'yorlarga muvofiq taqdim etiladi
+                </div>
+
+                <!-- Approved Norms Table -->
+                <table class="standard-table" id="normsTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 45%;">Maxsus kiyim, mahsus poyabzallar va shaxsiy himoya vositalari</th>
+                            <th style="width: 15%;">Me'yor bo'limi</th>
+                            <th style="width: 15%;">O'lchov birligi</th>
+                            <th style="width: 10%;">Miqdori</th>
+                            <th style="width: 15%;">Kiyish muddati</th>
+                            <th class="table-row-actions-col" style="width: 40px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Dynamic Rows -->
+                    </tbody>
+                </table>
+
+                <div class="table-controls">
+                    <button class="btn btn-outline" style="padding: 4px 10px; font-size: 12px;" onclick="addNormRow()">
+                        <i class="fa-solid fa-plus"></i> Qator qo'shish
+                    </button>
+                </div>
+
+                <!-- Signatures -->
+                <div class="signatures-area">
+                    <div class="sig-row">
+                        <span>Mehnat muhofazasi bo'limi boshlig'i:</span>
+                        <div class="sig-line"></div>
+                        <input type="text" id="sigMehnat" style="width: 200px; text-align: center;" placeholder="F.I.SH. va imzo">
+                    </div>
+                    <div class="sig-row">
+                        <span>Sex / bo'lim boshlig'i:</span>
+                        <div class="sig-line"></div>
+                        <input type="text" id="sigBolim" style="width: 200px; text-align: center;" placeholder="F.I.SH. va imzo">
+                    </div>
+                    <div class="sig-row">
+                        <span>Bosh hisobchi:</span>
+                        <div class="sig-line"></div>
+                        <input type="text" id="sigHisobchi" style="width: 200px; text-align: center;" placeholder="F.I.SH. va imzo">
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- BACK SIDE (Orqa tomoni) -->
+            <div class="card-face card-back">
+                <div class="flip-hint" onclick="toggleCardFlip()">
+                    <i class="fa-solid fa-arrows-rotate"></i> Old tomoni
+                </div>
+
+                <div class="doc-title" style="margin-top: 5px; font-size: 16px;">
+                    Maxsus kiyim, poyabzallar va shaxsiy himoya vositalarining berilishi va qaytarilishi
+                </div>
+
+                <!-- Distribution & Return Table -->
+                <table class="standard-table" id="logTable">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" style="width: 22%;">Maxsus kiyim, poyabzallar va shaxsiy himoya vositalarining nomlanishi</th>
+                            <th rowspan="2" style="width: 12%;">Kod (nomenklatura) tartib raqami (kodi)</th>
+                            <th colspan="5" style="width: 33%;">Berilgan</th>
+                            <th colspan="5" style="width: 33%;">Qaytarilgan</th>
+                            <th rowspan="2" class="table-row-actions-col" style="width: 30px;"></th>
+                        </tr>
+                        <tr>
+                            <!-- Berilgan Sub-columns -->
+                            <th style="font-size: 11px;">Sana</th>
+                            <th style="font-size: 11px;">Soni</th>
+                            <th style="font-size: 11px;">Yaroqlik %</th>
+                            <th style="font-size: 11px;">Narxi</th>
+                            <th style="font-size: 11px;">Olganligi haqida imzo</th>
+                            
+                            <!-- Qaytarilgan Sub-columns -->
+                            <th style="font-size: 11px;">Sana</th>
+                            <th style="font-size: 11px;">Soni</th>
+                            <th style="font-size: 11px;">Yaroq-lik %</th>
+                            <th style="font-size: 11px;">Topshiruvchi-ning imzosi</th>
+                            <th style="font-size: 11px;">Omborchining qabul qilganligi imzosi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Dynamic Rows -->
+                    </tbody>
+                </table>
+
+                <div class="table-controls">
+                    <button class="btn btn-outline" style="padding: 4px 10px; font-size: 12px;" onclick="addLogRow()">
+                        <i class="fa-solid fa-plus"></i> Qator qo'shish
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let qrcodeObj = null;
+
+        // Initialize App
+        document.addEventListener("DOMContentLoaded", function() {
+            // Generate initial QR code
+            qrcodeObj = new QRCode(document.getElementById("qrcode"), {
+                width: 85,
+                height: 85,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.M
+            });
+
+            // Populate initial empty rows
+            for(let i = 0; i < 4; i++) addNormRow();
+            for(let i = 0; i < 8; i++) addLogRow();
+
+            // Set default view & add input listeners to update QR code
+            updateQRCode();
+            
+            document.querySelectorAll('input').forEach(input => {
+                input.addEventListener('input', updateQRCode);
+            });
+        });
+
+        // Toggle Card Flip Animation
+        function toggleCardFlip() {
+            const card = document.getElementById('documentCard');
+            card.classList.toggle('is-flipped');
+        }
+
+        // View Mode Toggle (3D Flip vs Both Sides)
+        function setViewMode(mode) {
+            const container = document.getElementById('stageContainer');
+            const card = document.getElementById('documentCard');
+            const btn3d = document.getElementById('btn3d');
+            const btnBoth = document.getElementById('btnBoth');
+
+            if (mode === 'both') {
+                container.classList.add('show-both');
+                card.classList.remove('is-flipped');
+                btnBoth.classList.add('active');
+                btn3d.classList.remove('active');
+            } else {
+                container.classList.remove('show-both');
+                btn3d.classList.add('active');
+                btnBoth.classList.remove('active');
+            }
+        }
+
+        // Add Norms Row
+        function addNormRow(data = {}) {
+            const tbody = document.querySelector('#normsTable tbody');
+            const tr = document.createElement('tr');
+            
+            tr.innerHTML = `
+                <td><input type="text" class="norm-item" value="${data.item || ''}"></td>
+                <td><input type="text" class="norm-section" value="${data.section || ''}"></td>
+                <td><input type="text" class="norm-unit" value="${data.unit || ''}" style="text-align:center;"></td>
+                <td><input type="text" class="norm-qty" value="${data.qty || ''}" style="text-align:center;"></td>
+                <td><input type="text" class="norm-period" value="${data.period || ''}" style="text-align:center;"></td>
+                <td class="table-row-actions-col"><button class="btn-row-action" onclick="removeRow(this)"><i class="fa-solid fa-trash"></i></button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        // Add Log Row (Back Side)
+        function addLogRow(data = {}) {
+            const tbody = document.querySelector('#logTable tbody');
+            const tr = document.createElement('tr');
+
+            tr.innerHTML = `
+                <td><input type="text" value="${data.item || ''}"></td>
+                <td><input type="text" value="${data.code || ''}" style="text-align:center;"></td>
+                
+                <!-- Berilgan -->
+                <td><input type="text" value="${data.bSana || ''}" style="text-align:center;"></td>
+                <td><input type="text" value="${data.bSoni || ''}" style="text-align:center;"></td>
+                <td><input type="text" value="${data.bYaroq || ''}" style="text-align:center;"></td>
+                <td><input type="text" value="${data.bNarxi || ''}" style="text-align:center;"></td>
+                <td><input type="text" value="${data.bImzo || ''}" style="text-align:center;"></td>
+
+                <!-- Qaytarilgan -->
+                <td><input type="text" value="${data.qSana || ''}" style="text-align:center;"></td>
+                <td><input type="text" value="${data.qSoni || ''}" style="text-align:center;"></td>
+                <td><input type="text" value="${data.qYaroq || ''}" style="text-align:center;"></td>
+                <td><input type="text" value="${data.qImzo1 || ''}" style="text-align:center;"></td>
+                <td><input type="text" value="${data.qImzo2 || ''}" style="text-align:center;"></td>
+
+                <td class="table-row-actions-col"><button class="btn-row-action" onclick="removeRow(this)"><i class="fa-solid fa-trash"></i></button></td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        // Remove Row
+        function removeRow(btn) {
+            const tr = btn.closest('tr');
+            tr.remove();
+            updateQRCode();
+        }
+
+        // Realtime QR Code Update
+        function updateQRCode() {
+            const kartaNo = document.getElementById('kartaNo').value || '00000';
+            const familiya = document.getElementById('familiya').value || 'Familiya';
+            const ismi = document.getElementById('ismi').value || 'Ismi';
+            const tabelNo = document.getElementById('tabelRaqami').value || '-';
+            const korxona = document.getElementById('korxonaName').value || 'Korxona';
+
+            const qrContent = `MB-6 SHAXSIY KARTA\n№: ${kartaNo}\nXodim: ${familiya} ${ismi}\nTabel №: ${tabelNo}\nTashkilot: ${korxona}\nTasdiqlangan elektron shakl`;
+            
+            qrcodeObj.clear();
+            qrcodeObj.makeCode(qrContent);
+        }
+
+        // Clear Form
+        function clearForm() {
+            if(confirm("Barcha kiritilgan ma'lumotlarni tozalashga ishonchingiz komilmi?")) {
+                document.querySelectorAll('input').forEach(i => i.value = '');
+                updateQRCode();
+            }
+        }
+
+        // Fill Sample Data
+        function fillSampleData() {
+            document.getElementById('korxonaName').value = '"O‘ZBEKISTON TEMIR YO‘LLARI" AJ';
+            document.getElementById('kartaNo').value = '1042';
+            document.getElementById('familiya').value = 'Karimov';
+            document.getElementById('ismi').value = 'Sardor';
+            document.getElementById('otasiningIsmi').value = 'Ahmadovich';
+            document.getElementById('tabelRaqami').value = 'T-0854';
+            document.getElementById('sexBolim').value = '1-sonli Lokomotiv sexi';
+            document.getElementById('kasbiLavozimi').value = 'Katta usta politexnik';
+            document.getElementById('ishgaKirganSana').value = '2022-03-15';
+            document.getElementById('ishJoyi').value = 'Markaziy Depo';
+
+            document.getElementById('jinsi').value = 'Erkak';
+            document.getElementById('boyi').value = '178 cm';
+            document.getElementById('kiyimOlchami').value = '50-52';
+            document.getElementById('poyabzalOlchami').value = '42';
+            document.getElementById('boshKiyimOlchami').value = '58';
+
+            document.getElementById('sigMehnat').value = 'A.B. Rahimov';
+            document.getElementById('sigBolim').value = 'N.V. Toshmatov';
+            document.getElementById('sigHisobchi').value = 'M.S. Aliyeva';
+
+            // Fill Norms
+            const normsTable = document.querySelector('#normsTable tbody');
+            normsTable.innerHTML = '';
+            addNormRow({item: 'Kostyum-shim maxsus kiyim', section: '12-modda', unit: 'Juft', qty: '1', period: '12 oy'});
+            addNormRow({item: 'Maxsus poyabzal (etik)', section: '15-modda', unit: 'Juft', qty: '1', period: '12 oy'});
+            addNormRow({item: 'Himoya kashtasi (kaska)', section: '3-modda', unit: 'Dona', qty: '1', period: '24 oy'});
+            addNormRow({item: 'Teri qo‘lqoplar', section: '8-modda', unit: 'Juft', qty: '6', period: '12 oy'});
+
+            // Fill Logs
+            const logTable = document.querySelector('#logTable tbody');
+            logTable.innerHTML = '';
+            addLogRow({
+                item: 'Kostyum-shim maxsus', code: 'MK-8452',
+                bSana: '15.03.2023', bSoni: '1', bYaroq: '100%', bNarxi: '350 000', bImzo: '[Imzo]',
+                qSana: '15.03.2024', qSoni: '1', qYaroq: '40%', qImzo1: '[Imzo]', qImzo2: '[Imzo]'
+            });
+            addLogRow({
+                item: 'Maxsus etik', code: 'PE-1029',
+                bSana: '15.03.2023', bSoni: '1', bYaroq: '100%', bNarxi: '220 000', bImzo: '[Imzo]',
+                qSana: '', qSoni: '', qYaroq: '', qImzo1: '', qImzo2: ''
+            });
+            for(let i = 0; i < 6; i++) addLogRow();
+
+            updateQRCode();
+        }
+    </script>
+</body>
+</html>
+```eof
+
+Elektron MB-6 Shaxsiy karta hujjati tayyor bo'ldi!
+
+### Yaratilgan imkoniyatlar va xususiyatlar:
+1. **Asli o'zgarmagan MB-6 rasmiy shakli:** Taqdim etilgan fotosuratlardagi o'lcham, matn va jadval katakchalarining tartibi saqlab qolindi (ruchka bilan yozilgan sinov raqamlari inobatga olinmadi va o'rniga to'ldiriladigan input maydonlari joylashtirildi).
+2. **Interaktiv 3D flip-karta:** Hujjat ustiga bosilganda yoki yuqoridagi "Orqaga o'girish" tugmasi orqali hujjatning old va orqa tomonlari silliq 3D burilish effekti bilan almashinadi.
+3. **QR-kod integratsiyasi:** Kiritilayotgan xodim, karta raqami va tashkilot ma'lumotlari asosida dinamik tarzda avtomatik ravishda tasdiqlovchi QR-kod shakllanadi.
+4. **Chop etish (Print) va PDF rejim:** `window.print()` va `@media print` stil sozlamalari tufayli chop etish bosilganda ortiqcha tugmalar yashiriladi va old hamda orqa tomonlar alohida A4 sahifalarda bosib chiqariladi.

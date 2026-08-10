@@ -1,19 +1,48 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from "react";
-import type {
-  AppRequest, DB, Item, JournalEntry, Kip, Norm, RequestStatus, Role, Signature, Worker,
-} from "./types";
-import { makeSeed } from "./seed";
-import {
-  addMonths, iso, makeHash, nextStatus, TODAY,
-} from "./logic";
-import { can, type Perm } from "./permissions";
+/* ------------------------------------------------------------------
+   TB tizimi — ilova holati.
 
-const KEY = "tb_db_v1";
-const SKEY = "tb_session_v1";
+   ARXITEKTURA (Django backend):
+     • Maʼlumot manbai — FAQAT server. Har bir amal Django'ga yuboriladi,
+       server tekshiradi, bajaradi va yangilangan holatni qaytaradi.
+     • localStorage'da ilova maʼlumoti SAQLANMAYDI. U yerda faqat kirish
+       tokenlari turadi (lib/api.ts). Brauzerni tozalash maʼlumotni
+       yoʻqotmaydi — hammasi bazada.
+     • Amallar NAVBAT bilan bajariladi: ketma-ket chaqirilgan ikkita amal
+       (masalan updateRequest → advance) tartibini saqlaydi.
+
+   Sahifalar uchun interfeys deyarli oʻzgarmagan: db.workers, db.requests,
+   can(...), advance(...) — hammasi avvalgidek ishlaydi.
+------------------------------------------------------------------ */
+
+import React, {
+  createContext, useCallback, useContext, useEffect, useMemo, useRef, useState,
+} from "react";
+import type {
+  AppRequest, BugalterFields, DB, IncidentEntry, Item, JournalEntry, Kip,
+  Norm, Position, RequestLine, Role, Unit, Worker,
+} from "./types";
+import { workerPositionIds } from "./logic";
+import { resolveAccess, type AccessKey, type FeatureKey, type Perm } from "./permissions";
+import { api, ApiError, tokens, type MeUser } from "./api";
 
 type Session = { workerId: string; roleAs: Role | null } | null;
+
+/** Ishchini saqlash uchun yuboriladigan yozuv.
+ *  Yangi ishchida `id` boʻlmaydi — UUID'ni server yaratadi.
+ *  `pin` — admin belgilaydigan boshlangʻich PIN (ixtiyoriy). */
+export type WorkerYozuv = Omit<Worker, "id"> & { id?: string; pin?: string };
+
+/** Ommaviy import uchun bitta qator */
+export type ImportRow = {
+  tabel: string;
+  familiya: string;
+  ism: string;
+  otasi?: string;
+  positionId?: string;
+  faceImage?: string;
+};
 
 type Ctx = {
   db: DB;
@@ -21,378 +50,419 @@ type Ctx = {
   me: Worker | null;
   roles: Role[];
   ready: boolean;
+  /** Serverdan kelgan oxirgi xato — UI koʻrsatishi uchun */
+  xato: string | null;
+  tozalaXato: () => void;
+  /** Amal bajarilmoqda (spinner uchun) */
+  yuklanmoqda: boolean;
+
   can: (p: Perm) => boolean;
-  login: (tabel: string) => Worker | null;
+  canFeature: (f: FeatureKey) => boolean;
+
+  login: (tabel: string, pin: string) => Promise<"ok" | "pin" | "xato">;
+  /** Yuz bilan kirish — mos kelmasa {ok:false} qaytadi va PIN'ga oʻtiladi */
+  faceLogin: (tabel: string, frames: string[]) => Promise<{ ok: boolean; xato?: string }>;
+  /** Roʻyxatdan oʻtish — frames boʻsh boʻlsa faqat PIN bilan */
+  register: (
+    tabel: string,
+    pin: string,
+    frames: string[]
+  ) => Promise<{ ok: boolean; xato?: string; faceSaqlandi?: boolean; faceXabar?: string }>;
   logout: () => void;
   setRoleAs: (r: Role | null) => void;
-  reset: () => void;
-  update: (fn: (d: DB) => void) => void;
+  /** Holatni serverdan qayta yuklash */
+  reset: () => Promise<void>;
+
   // amallar
-  createRequest: (workerId: string, itemIds: string[], turi?: AppRequest["turi"]) => AppRequest | null;
-  advance: (reqId: string, izoh?: string) => void;
-  reject: (reqId: string, izoh: string) => void;
-  addJournal: (e: Omit<JournalEntry, "id">) => void;
-  signJournal: (id: string, izoh: string) => void;
-  stockIn: (itemId: string, soni: number, izoh: string) => void;
-  toggleTalon: (workerId: string, raqam: 1 | 2 | 3, sabab?: string) => void;
-  addKip: (k: Omit<Kip, "id" | "tugash" | "imzoId">) => void;
-  setExam: (workerId: string, sana: string, davriylikOy: number) => void;
-  upsertItem: (it: Item) => void;
-  upsertNorm: (n: Norm) => void;
-  removeNorm: (id: string) => void;
-  upsertWorker: (w: Worker) => void;
+  createRequest: (workerId: string, itemIds: string[], turi?: AppRequest["turi"]) => Promise<void>;
+  updateRequest: (reqId: string, patch: { lines?: RequestLine[]; bugField?: BugalterFields }) => Promise<void>;
+  advance: (reqId: string, izoh?: string) => Promise<void>;
+  reject: (reqId: string, izoh: string) => Promise<void>;
+  addJournal: (e: Omit<JournalEntry, "id">) => Promise<void>;
+  signJournal: (id: string, izoh: string) => Promise<void>;
+  stockIn: (itemId: string, soni: number, izoh: string) => Promise<void>;
+  toggleTalon: (workerId: string, raqam: 1 | 2 | 3, sabab?: string) => Promise<void>;
+  addKip: (k: Omit<Kip, "id" | "tugash" | "imzoId">) => Promise<void>;
+  setExam: (workerId: string, sana: string, davriylikOy: number) => Promise<void>;
+  upsertItem: (it: Item) => Promise<void>;
+  upsertNorm: (n: Norm) => Promise<void>;
+  removeNorm: (id: string) => Promise<void>;
+  /** Yangi ishchida id boʻlmaydi — serverda UUID yaratiladi.
+   *  `pin` berilsa boshlangʻich PIN oʻrnatiladi (ixtiyoriy).
+   *  Saqlansa `null`, xato boʻlsa xato matni qaytadi. */
+  upsertWorker: (w: WorkerYozuv) => Promise<string | null>;
+  addPosition: (nomi: string) => Promise<Position | null>;
+  renamePosition: (id: string, nomi: string) => Promise<void>;
+  archivePosition: (id: string, arxiv: boolean) => Promise<void>;
+  addUnit: (u: string) => Promise<void>;
+  removeUnit: (u: Unit) => Promise<void>;
+  setRoleAccess: (role: Role, key: AccessKey, value: boolean | null) => Promise<void>;
+  setPositionAccess: (positionId: string, key: AccessKey, value: boolean | null) => Promise<void>;
+  setUserAccess: (workerId: string, key: AccessKey, value: boolean | null) => Promise<void>;
+  importWorkers: (rows: ImportRow[], positionId: string) => Promise<number>;
+  setWorkerPin: (workerId: string, pin: string) => Promise<void>;
+  clearWorkerPin: (workerId: string) => Promise<void>;
+  /** Ishchining Face ID'sini oʻchirish (admin) */
+  resetWorkerFace: (workerId: string) => Promise<void>;
+  /** Ishchini oʻchirish (soft-delete). Xato boʻlsa matn qaytadi. */
+  deleteWorker: (workerId: string) => Promise<string | null>;
+  addIncident: (turi: IncidentEntry["turi"], matn: string) => Promise<void>;
 };
 
 const C = createContext<Ctx | null>(null);
 
-function load(): DB {
-  if (typeof window === "undefined") return makeSeed();
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (raw) return JSON.parse(raw) as DB;
-  } catch {}
-  return makeSeed();
+/* ------------------------------------------------------------------
+   Boshlangʻich boʻsh holat — server javobi kelgunicha shu ishlatiladi.
+   Demo/seed maʼlumot ISHLATILMAYDI: ekranda hech qachon soxta yozuv
+   koʻrinmasligi kerak.
+------------------------------------------------------------------ */
+
+function bosh(): DB {
+  return {
+    depo: { id: "", kod: "", nomi: "", tashkilot: "", qishBoshi: "09-15", qishOxiri: "04-15" },
+    positions: [], items: [], norms: [], workers: [], cards: [], requests: [],
+    journal: [], stock: [], moves: [], talons: [], exams: [], kips: [],
+    notifications: [], incidents: [], audit: [],
+    lines: [], units: [],
+    access: { roleOverrides: {}, positionOverrides: {}, userOverrides: {} },
+    seq: 0,
+  };
 }
 
+/** Server javobida boʻsh kelishi mumkin boʻlgan maydonlarni toʻldiramiz. */
+function normalize(d: DB): DB {
+  const b = bosh();
+  return {
+    ...b,
+    ...d,
+    access: {
+      roleOverrides: d.access?.roleOverrides ?? {},
+      positionOverrides: d.access?.positionOverrides ?? {},
+      userOverrides: d.access?.userOverrides ?? {},
+    },
+    lines: Array.isArray(d.lines) ? d.lines : [],
+    units: Array.isArray(d.units) && d.units.length ? d.units : b.units,
+    incidents: Array.isArray(d.incidents) ? d.incidents : [],
+  };
+}
+
+/* ------------------------------------------------------------------ */
+
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [db, setDb] = useState<DB>(() => makeSeed());
-  const [session, setSession] = useState<Session>(null);
+  const [db, setDb] = useState<DB>(bosh);
+  const [meUser, setMeUser] = useState<MeUser | null>(null);
+  const [roleAs, setRoleAsState] = useState<Role | null>(null);
   const [ready, setReady] = useState(false);
+  const [xato, setXato] = useState<string | null>(null);
+  const [band, setBand] = useState(0);
+
+  /* --- amallar navbati: tartibni saqlash uchun --- */
+  const navbat = useRef<Promise<unknown>>(Promise.resolve());
+
+  const yugur = useCallback(
+    <T,>(fn: () => Promise<T>, holatOl?: (r: T) => DB | undefined): Promise<T | null> => {
+      const keyingi = navbat.current.then(async () => {
+        setBand((n) => n + 1);
+        try {
+          const r = await fn();
+          const yangi = holatOl ? holatOl(r) : (r as { state?: DB })?.state;
+          if (yangi) setDb(normalize(yangi));
+          return r;
+        } catch (e) {
+          const xabar = e instanceof ApiError ? e.message : "Kutilmagan xato";
+          setXato(xabar);
+          if (e instanceof ApiError && e.status === 401) {
+            tokens.clear();
+            setMeUser(null);
+          }
+          return null;
+        } finally {
+          setBand((n) => n - 1);
+        }
+      });
+      navbat.current = keyingi;
+      return keyingi as Promise<T | null>;
+    },
+    []
+  );
+
+  /* --- boshlangʻich yuklash --- */
+  const yukla = useCallback(async () => {
+    if (!tokens.access && !tokens.refresh) {
+      setMeUser(null);
+      setDb(bosh());
+      setReady(true);
+      return;
+    }
+    try {
+      const [u, state] = await Promise.all([api.me(), api.getState()]);
+      setMeUser(u);
+      setDb(normalize(state));
+    } catch (e) {
+      // Token eskirgan yoki server yoʻq — chiqib turamiz
+      if (e instanceof ApiError && e.status === 401) tokens.clear();
+      setMeUser(null);
+      setDb(bosh());
+    } finally {
+      setReady(true);
+    }
+  }, []);
 
   useEffect(() => {
-    setDb(load());
-    try {
-      const s = localStorage.getItem(SKEY);
-      if (s) setSession(JSON.parse(s));
-    } catch {}
+    void yukla();
+  }, [yukla]);
+
+  /* --- oynalar orasidagi devor ---------------------------------------
+     Tokenlar localStorage'da, u esa BITTA domenning barcha oynalari
+     uchun umumiy. Yaʼni bir oynada boshqa hisob bilan kirilsa, qolgan
+     oynalar ham jimgina oʻsha hisobga oʻtib qolardi: ekranda admin
+     paneli turadi, soʻrovlar esa ishchi nomidan ketadi.
+
+     `storage` hodisasi FAQAT boshqa oynalarda ishlaydi — shuning uchun
+     kirish/chiqish sodir boʻlgan oynaning oʻzi qayta yuklanmaydi.
+  ------------------------------------------------------------------ */
+  useEffect(() => {
+    const kuzat = (e: StorageEvent) => {
+      // null — localStorage.clear() chaqirilgan
+      if (e.key !== null && e.key !== "tb_access" && e.key !== "tb_refresh") return;
+      setReady(false);
+      void yukla();
+    };
+    window.addEventListener("storage", kuzat);
+    return () => window.removeEventListener("storage", kuzat);
+  }, [yukla]);
+
+  /* --- joriy foydalanuvchi (toʻliq Worker obyekti sifatida) --- */
+  const me = useMemo<Worker | null>(() => {
+    if (!meUser) return null;
+    return db.workers.find((w) => w.id === meUser.id) ?? null;
+  }, [db.workers, meUser]);
+
+  const session = useMemo<Session>(
+    () => (meUser ? { workerId: meUser.id, roleAs } : null),
+    [meUser, roleAs]
+  );
+
+  const roles = useMemo<Role[]>(() => {
+    if (!meUser) return [];
+    if (roleAs) return [roleAs];
+    return (meUser.roles as Role[]) ?? [];
+  }, [meUser, roleAs]);
+
+  const myPositionIds = me ? workerPositionIds(me) : undefined;
+
+  /* ---------------- kirish / chiqish ---------------- */
+
+  /** Kirish muvaffaqiyatli — foydalanuvchi va toʻliq holat oʻrnatiladi */
+  const kirdi = useCallback(async (u: MeUser) => {
+    setMeUser(u);
+    setDb(normalize(await api.getState()));
     setReady(true);
   }, []);
 
-  useEffect(() => {
-    if (!ready) return;
+  const login: Ctx["login"] = useCallback(async (tabel, pin) => {
+    setXato(null);
     try {
-      localStorage.setItem(KEY, JSON.stringify(db));
-    } catch {}
-  }, [db, ready]);
+      const r = await api.login(tabel, pin);
+      if (r.kutilmoqda === "pin") return "pin";
+      await kirdi(r.user);
+      return "ok";
+    } catch (e) {
+      setXato(e instanceof ApiError ? e.message : "Kirishda xato");
+      return "xato";
+    }
+  }, [kirdi]);
 
-  useEffect(() => {
-    if (!ready) return;
+  const faceLogin: Ctx["faceLogin"] = useCallback(async (tabel, frames) => {
+    setXato(null);
     try {
-      if (session) localStorage.setItem(SKEY, JSON.stringify(session));
-      else localStorage.removeItem(SKEY);
-    } catch {}
-  }, [session, ready]);
+      await kirdi(await api.faceLogin(tabel, frames));
+      return { ok: true };
+    } catch (e) {
+      // Yuz mos kelmasa bu ODATIY holat — chaqiruvchi PIN'ga oʻtadi,
+      // shuning uchun global xatoga yozilmaydi.
+      return { ok: false, xato: e instanceof ApiError ? e.message : "Yuz tekshirilmadi" };
+    }
+  }, [kirdi]);
 
-  const update = useCallback((fn: (d: DB) => void) => {
-    setDb((prev) => {
-      const next: DB = JSON.parse(JSON.stringify(prev));
-      fn(next);
-      return next;
-    });
+  const register: Ctx["register"] = useCallback(async (tabel, pin, frames) => {
+    setXato(null);
+    try {
+      const r = await api.register(tabel, pin, frames);
+      await kirdi(r.user);
+      return { ok: true, faceSaqlandi: r.faceSaqlandi, faceXabar: r.faceXabar };
+    } catch (e) {
+      return {
+        ok: false,
+        xato: e instanceof ApiError ? e.message : "Roʻyxatdan oʻtishda xato",
+      };
+    }
+  }, [kirdi]);
+
+  const logout: Ctx["logout"] = useCallback(() => {
+    void api.logout();
+    setMeUser(null);
+    setRoleAsState(null);
+    setDb(bosh());
   }, []);
 
-  const me = useMemo(
-    () => (session ? db.workers.find((w) => w.id === session.workerId) ?? null : null),
-    [db.workers, session]
-  );
+  const setRoleAs: Ctx["setRoleAs"] = useCallback((r) => setRoleAsState(r), []);
 
-  const roles: Role[] = useMemo(() => {
-    if (!me) return [];
-    if (session?.roleAs) return [session.roleAs];
-    return me.roles;
-  }, [me, session]);
+  const reset: Ctx["reset"] = useCallback(async () => {
+    await yukla();
+  }, [yukla]);
 
-  const audit = (d: DB, obyekt: string, amal: string, izoh?: string) => {
-    d.audit.unshift({
-      id: `a${Date.now()}${Math.random().toString(16).slice(2, 6)}`,
-      userId: session?.workerId ?? "system",
-      obyekt,
-      amal,
-      sana: new Date().toISOString(),
-      izoh,
-    });
-    d.audit = d.audit.slice(0, 400);
-  };
+  /* ---------------- amallar ---------------- */
 
-  const notify = (d: DB, workerId: string, sarlavha: string, matn: string, turi = "info") => {
-    d.notifications.unshift({
-      id: `nt${Date.now()}${Math.random().toString(16).slice(2, 6)}`,
-      workerId,
-      turi,
-      sarlavha,
-      matn,
-      sana: new Date().toISOString(),
-      oqilgan: false,
-    });
-    d.notifications = d.notifications.slice(0, 200);
-  };
-
-  const sign = (d: DB, docType: Signature["docType"], docId: string, field: string): Signature => ({
-    id: `sg${Date.now()}${Math.random().toString(16).slice(2, 6)}`,
-    docType,
-    docId,
-    field,
-    userId: session?.workerId ?? "system",
-    sana: new Date().toISOString(),
-    hash: makeHash(`${docType}${docId}${field}${session?.workerId}${Date.now()}`),
-  });
-
-  /* -------------------- amallar -------------------- */
-
-  const login: Ctx["login"] = (tabel) => {
-    const w = db.workers.find((x) => x.tabel === tabel.trim() && x.faol);
-    if (!w) return null;
-    setSession({ workerId: w.id, roleAs: null });
-    return w;
-  };
-
-  const logout = () => setSession(null);
-  const setRoleAs = (r: Role | null) => setSession((s) => (s ? { ...s, roleAs: r } : s));
-  const reset = () => {
-    setDb(makeSeed());
-    setSession(null);
-    try {
-      localStorage.removeItem(KEY);
-      localStorage.removeItem(SKEY);
-    } catch {}
-  };
-
-  const createRequest: Ctx["createRequest"] = (workerId, itemIds, turi = "oddiy") => {
-    let created: AppRequest | null = null;
-    update((d) => {
-      d.seq += 1;
-      const r: AppRequest = {
-        id: `r${Date.now()}`,
-        raqam: `TCH6-${new Date().getFullYear()}-${String(d.seq).padStart(5, "0")}`,
-        workerId,
-        turi,
-        status: "SUBMITTED",
-        lines: itemIds.map((id) => {
-          const it = d.items.find((x) => x.id === id)!;
-          return { itemId: id, soni: 1, unit: it.unit, narx: it.narx };
-        }),
-        yaratganId: session?.workerId ?? workerId,
-        yaratilgan: iso(TODAY()),
-        transitions: [
-          { from: "DRAFT", to: "SUBMITTED", userId: session?.workerId ?? workerId, sana: new Date().toISOString() },
-        ],
-        imzolar: [sign(d, "requisition", `r${Date.now()}`, "12")],
-      };
-      d.requests.unshift(r);
-      created = r;
-      audit(d, `ariza ${r.raqam}`, "yaratildi");
-      notify(d, workerId, "Ariza yuborildi", `${r.raqam} — bugalteriya koʻrigida`);
-    });
-    return created;
-  };
-
-  const advance: Ctx["advance"] = (reqId, izoh) => {
-    update((d) => {
-      const r = d.requests.find((x) => x.id === reqId);
-      if (!r) return;
-      const to = nextStatus(r.status);
-      if (!to) return;
-      const fieldMap: Partial<Record<RequestStatus, string>> = {
-        SUBMITTED: "06",
-        ACCOUNTANT_APPROVED: "14",
-        CHIEF_APPROVED: "05",
-        HEAD_APPROVED: "11",
-        ISSUED: "12",
-      };
-      const f = fieldMap[r.status];
-      if (f) r.imzolar.push(sign(d, "requisition", r.id, f));
-      r.transitions.push({
-        from: r.status,
-        to,
-        userId: session?.workerId ?? "system",
-        sana: new Date().toISOString(),
-        izoh,
-      });
-      r.status = to;
-
-      if (to === "COMPLETED") {
-        r.yakunlangan = iso(TODAY());
-        const card = d.cards.find((c) => c.workerId === r.workerId);
-        r.lines.forEach((l) => {
-          const s = d.stock.find((x) => x.itemId === l.itemId);
-          if (s) s.qoldiq = Math.max(0, s.qoldiq - l.soni);
-          d.moves.unshift({
-            id: `mv${Date.now()}${l.itemId}`,
-            itemId: l.itemId,
-            turi: "chiqim",
-            soni: l.soni,
-            sana: iso(TODAY()),
-            izoh: `Ariza ${r.raqam}`,
-            hujjatId: r.id,
-          });
-          card?.berilgan.push({
-            id: `ci${Date.now()}${l.itemId}`,
-            itemId: l.itemId,
-            sana: iso(TODAY()),
-            soni: l.soni,
-            yaroqlilik: 100,
-            imzoId: sign(d, "card", card.id, "25").id,
-          });
-        });
-        notify(d, r.workerId, "Ariza yakunlandi", `${r.raqam} — buyumlar kartochkangizga qayd etildi`);
-      } else {
-        notify(d, r.workerId, "Ariza holati oʻzgardi", `${r.raqam} — keyingi bosqichga oʻtdi`);
-      }
-      audit(d, `ariza ${r.raqam}`, `holat → ${to}`, izoh);
-    });
-  };
-
-  const reject: Ctx["reject"] = (reqId, izoh) => {
-    update((d) => {
-      const r = d.requests.find((x) => x.id === reqId);
-      if (!r) return;
-      const who = d.workers.find((w) => w.id === session?.workerId);
-      r.transitions.push({
-        from: r.status,
-        to: "REJECTED",
-        userId: session?.workerId ?? "system",
-        sana: new Date().toISOString(),
-        izoh,
-      });
-      r.status = "REJECTED";
-      notify(
-        d,
-        r.workerId,
-        "Ariza rad etildi",
-        `${r.raqam} — ${who ? `${who.familiya} ${who.ism}` : "masʼul shaxs"} tomonidan. Sabab: ${izoh || "koʻrsatilmagan"}`,
-        "reject"
-      );
-      audit(d, `ariza ${r.raqam}`, "rad etildi", izoh);
-    });
-  };
-
-  const addJournal: Ctx["addJournal"] = (e) => {
-    update((d) => {
-      d.journal.unshift({ ...e, id: `j${Date.now()}` });
-      audit(d, `jurnal ${e.bosqich}-bosqich`, "yozuv qoʻshildi");
-    });
-  };
-
-  const signJournal: Ctx["signJournal"] = (id, izoh) => {
-    update((d) => {
-      const j = d.journal.find((x) => x.id === id);
-      if (!j) return;
-      j.bajarildi = true;
-      j.bajarilganIzoh = izoh;
-      j.imzo = sign(d, "journal", id, "07");
-      audit(d, `jurnal yozuvi ${id}`, "bajarildi va imzolandi");
-    });
-  };
-
-  const stockIn: Ctx["stockIn"] = (itemId, soni, izoh) => {
-    update((d) => {
-      const s = d.stock.find((x) => x.itemId === itemId);
-      if (s) s.qoldiq += soni;
-      else d.stock.push({ itemId, qoldiq: soni });
-      d.moves.unshift({
-        id: `mv${Date.now()}`,
-        itemId,
-        turi: "kirim",
-        soni,
-        sana: iso(TODAY()),
-        izoh,
-      });
-      audit(d, `ombor ${itemId}`, `kirim +${soni}`, izoh);
-    });
-  };
-
-  const toggleTalon: Ctx["toggleTalon"] = (workerId, raqam, sabab) => {
-    update((d) => {
-      const t = d.talons.find((x) => x.workerId === workerId && x.raqam === raqam);
-      if (!t) return;
-      const amal = t.olingan ? "qaytarildi" : "olindi";
-      t.olingan = !t.olingan;
-      t.tarix.unshift({
-        amal,
-        sana: new Date().toISOString(),
-        tbXodimId: session?.workerId ?? "system",
-        sabab,
-      });
-      notify(
-        d,
-        workerId,
-        amal === "olindi" ? "Talon olindi" : "Talon qaytarildi",
-        `${raqam}-sonli talon ${amal}${sabab ? `. Sabab: ${sabab}` : ""}`
-      );
-      audit(d, `talon ${raqam} / ${workerId}`, amal, sabab);
-    });
-  };
-
-  const addKip: Ctx["addKip"] = (k) => {
-    update((d) => {
-      const id = `k${Date.now()}`;
-      const tugash = iso(addMonths(new Date(k.sana), k.muddatOy));
-      d.kips.unshift({ ...k, id, tugash, imzoId: sign(d, "kip", id, "04").id });
-      notify(d, k.workerId, "Yangi KIP", `${k.liniya} · ${k.muddatOy} oy · tugash: ${tugash}`);
-      audit(d, `KIP ${id}`, "yozildi");
-    });
-  };
-
-  const setExam: Ctx["setExam"] = (workerId, sana, davriylikOy) => {
-    update((d) => {
-      const e = d.exams.find((x) => x.workerId === workerId);
-      if (e) {
-        e.oxirgi = sana;
-        e.davriylikOy = davriylikOy;
-        e.natija = "otdi";
-      } else {
-        d.exams.push({ workerId, oxirgi: sana, davriylikOy, natija: "otdi" });
-      }
-      notify(d, workerId, "TB imtixoni", `Keyingi imtixon: ${iso(addMonths(new Date(sana), davriylikOy))}`);
-      audit(d, `imtixon ${workerId}`, "yangilandi");
-    });
-  };
-
-  const upsertItem: Ctx["upsertItem"] = (it) =>
-    update((d) => {
-      const i = d.items.findIndex((x) => x.id === it.id);
-      if (i >= 0) d.items[i] = it;
-      else {
-        d.items.push(it);
-        d.stock.push({ itemId: it.id, qoldiq: 0 });
-      }
-      audit(d, `buyum ${it.nomi}`, "saqlandi");
-    });
-
-  const upsertNorm: Ctx["upsertNorm"] = (n) =>
-    update((d) => {
-      const i = d.norms.findIndex((x) => x.id === n.id);
-      if (i >= 0) d.norms[i] = n;
-      else d.norms.push(n);
-      audit(d, `norma ${n.id}`, "saqlandi");
-    });
-
-  const removeNorm: Ctx["removeNorm"] = (id) =>
-    update((d) => {
-      d.norms = d.norms.filter((n) => n.id !== id);
-      audit(d, `norma ${id}`, "oʻchirildi");
-    });
-
-  const upsertWorker: Ctx["upsertWorker"] = (w) =>
-    update((d) => {
-      const i = d.workers.findIndex((x) => x.id === w.id);
-      if (i >= 0) d.workers[i] = w;
-      else {
-        d.workers.push(w);
-        d.cards.push({ id: `c${w.id}`, workerId: w.id, ochilgan: iso(TODAY()), berilgan: [], qaytarilgan: [], imzolar: {} });
-        ([1, 2, 3] as const).forEach((r) => d.talons.push({ workerId: w.id, raqam: r, olingan: false, tarix: [] }));
-      }
-      audit(d, `ishchi ${w.tabel}`, "saqlandi");
-    });
+  const bekor = async () => {};   // tur mosligi uchun
 
   const value: Ctx = {
-    db, session, me, roles, ready,
-    can: (p) => can(roles, p),
-    login, logout, setRoleAs, reset, update,
-    createRequest, advance, reject,
-    addJournal, signJournal, stockIn, toggleTalon, addKip, setExam,
-    upsertItem, upsertNorm, removeNorm, upsertWorker,
+    db,
+    session,
+    me,
+    roles,
+    ready,
+    xato,
+    tozalaXato: () => setXato(null),
+    yuklanmoqda: band > 0,
+
+    can: (p) => resolveAccess(p, roles, meUser?.id, db.access, false, myPositionIds),
+    canFeature: (f) => resolveAccess(f, roles, meUser?.id, db.access, true, myPositionIds),
+
+    login,
+    faceLogin,
+    register,
+    logout,
+    setRoleAs,
+    reset,
+
+    /* --- arizalar --- */
+    createRequest: async (workerId, itemIds, turi = "oddiy") => {
+      await yugur(() => api.createRequest(workerId, itemIds, turi));
+    },
+    updateRequest: async (reqId, patch) => {
+      await yugur(() => api.updateRequest(reqId, patch as Record<string, unknown>));
+    },
+    advance: async (reqId, izoh) => {
+      await yugur(() => api.advanceRequest(reqId, izoh));
+    },
+    reject: async (reqId, izoh) => {
+      await yugur(() => api.rejectRequest(reqId, izoh));
+    },
+
+    /* --- jurnal --- */
+    addJournal: async (e) => {
+      await yugur(() => api.addJournal(e as unknown as Record<string, unknown>));
+    },
+    signJournal: async (id, izoh) => {
+      await yugur(() => api.signJournal(id, izoh));
+    },
+
+    /* --- ombor --- */
+    stockIn: async (itemId, soni, izoh) => {
+      await yugur(() => api.stockIn(itemId, soni, izoh));
+    },
+
+    /* --- talon / KIP / imtixon --- */
+    toggleTalon: async (workerId, raqam, sabab) => {
+      await yugur(() => api.toggleTalon(workerId, raqam, sabab));
+    },
+    addKip: async (k) => {
+      await yugur(() => api.addKip(k as unknown as Record<string, unknown>));
+    },
+    setExam: async (workerId, sana, davriylikOy) => {
+      await yugur(() => api.setExam(workerId, sana, davriylikOy));
+    },
+
+    /* --- buyum / norma --- */
+    upsertItem: async (it) => {
+      await yugur(() => api.upsertItem(it as unknown as Record<string, unknown>));
+    },
+    upsertNorm: async (n) => {
+      await yugur(() => api.upsertNorm(n as unknown as Record<string, unknown>));
+    },
+    removeNorm: async (id) => {
+      await yugur(() => api.removeNorm(id));
+    },
+
+    /* --- ishchilar --- */
+    upsertWorker: async (w) => {
+      // Xato matnini forma joyida koʻrsatish uchun ushlab qolamiz —
+      // yugur() uni global holatga yozadi va null qaytaradi.
+      const tut: { xabar: string | null } = { xabar: null };
+      const r = await yugur(() =>
+        api.upsertWorker(w as unknown as Record<string, unknown>).catch((e: unknown) => {
+          tut.xabar = e instanceof ApiError ? e.message : "Kutilmagan xato";
+          throw e;
+        })
+      );
+      return r === null ? tut.xabar ?? "Ishchi saqlanmadi" : null;
+    },
+    importWorkers: async (rows, positionId) => {
+      const r = await yugur(() => api.importWorkers(rows, positionId));
+      return (r as { added?: number } | null)?.added ?? 0;
+    },
+    setWorkerPin: async (workerId, pin) => {
+      await yugur(() => api.setWorkerPin(workerId, pin));
+    },
+    clearWorkerPin: async (workerId) => {
+      await yugur(() => api.clearWorkerPin(workerId));
+    },
+    resetWorkerFace: async (workerId) => {
+      await yugur(() => api.resetWorkerFace(workerId));
+    },
+    deleteWorker: async (workerId) => {
+      // Server rad etishi mumkin (oxirgi admin, oʻzini oʻchirish) —
+      // sababni foydalanuvchiga aynan koʻrsatamiz.
+      const tut: { xabar: string | null } = { xabar: null };
+      const r = await yugur(() =>
+        api.deleteWorker(workerId).catch((e: unknown) => {
+          tut.xabar = e instanceof ApiError ? e.message : "Kutilmagan xato";
+          throw e;
+        })
+      );
+      return r === null ? tut.xabar ?? "Oʻchirilmadi" : null;
+    },
+
+    /* --- lavozim / birlik --- */
+    addPosition: async (nomi) => {
+      const r = await yugur(() => api.addPosition(nomi));
+      const id = (r as { id?: string } | null)?.id;
+      const state = (r as { state?: DB } | null)?.state;
+      if (!id || !state) return null;
+      return state.positions.find((p) => p.id === id) ?? null;
+    },
+    renamePosition: async (id, nomi) => {
+      await yugur(() => api.updatePosition(id, { nomi }));
+    },
+    archivePosition: async (id, arxiv) => {
+      await yugur(() => api.updatePosition(id, { arxiv }));
+    },
+    addUnit: async (u) => {
+      await yugur(() => api.addUnit(u));
+    },
+    removeUnit: async (u) => {
+      await yugur(() => api.removeUnit(u));
+    },
+
+    /* --- ruxsatlar --- */
+    setRoleAccess: async (role, key, value) => {
+      await yugur(() => api.setAccess("role", role, key, value));
+    },
+    setPositionAccess: async (positionId, key, value) => {
+      await yugur(() => api.setAccess("position", positionId, key, value));
+    },
+    setUserAccess: async (workerId, key, value) => {
+      await yugur(() => api.setAccess("user", workerId, key, value));
+    },
+
+    /* --- xodisalar --- */
+    addIncident: async (turi, matn) => {
+      await yugur(() => api.addIncident(turi, matn));
+    },
   };
+
+  void bekor;
 
   return <C.Provider value={value}>{children}</C.Provider>;
 }

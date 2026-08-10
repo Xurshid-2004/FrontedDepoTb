@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mehnatni Muhofaza Qilish Nazorat Jurnali</title>
+    <!-- FontAwesome va QRCode.js -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Times New Roman', Times, serif;
+        }
+
+        body {
+            background-color: #f1f5f9;
+            padding: 20px 0 60px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Yuqori boshqaruv paneli */
+        .toolbar {
+            width: 1000px;
+            background: #ffffff;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 10px;
+            z-index: 1000;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 9px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-family: system-ui, sans-serif;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-success { background: #059669; }
+        .btn-success:hover { background: #047857; }
+        .btn-secondary { background: #64748b; }
+        .btn-secondary:hover { background: #475569; }
+
+        /* A4 Sahifa Konteyneri */
+        .pages-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .journal-page {
+            width: 1000px;
+            min-height: 700px;
+            background: #ffffff;
+            border: 1px solid #000;
+            padding: 25px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        /* Jadval Stili */
+        .journal-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .journal-table th, .journal-table td {
+            border: 1px solid #000;
+            padding: 6px 5px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .journal-table th {
+            background-color: #f8fafc;
+            font-weight: bold;
+            font-size: 11px;
+            line-height: 1.2;
+        }
+
+        /* Inputlar styling */
+        .journal-table td input, .journal-table td textarea {
+            width: 100%;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12px;
+            text-align: center;
+            resize: none;
+        }
+
+        .journal-table td textarea {
+            text-align: left;
+            height: 38px;
+        }
+
+        .journal-table td input:focus, .journal-table td textarea:focus {
+            background-color: #f0f9ff;
+        }
+
+        /* Sahifa pastki qismi (Footer, Raqamlash va QR kod) */
+        .page-footer {
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding-top: 10px;
+            border-top: 1px dashed #cbd5e1;
+        }
+
+        .footer-left {
+            font-size: 10px;
+            font-family: system-ui, sans-serif;
+            color: #64748b;
+        }
+
+        .qr-block {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid #000;
+            padding: 5px 10px;
+            border-radius: 4px;
+            background: #fafafa;
+        }
+
+        .qr-info {
+            font-size: 9px;
+            font-family: system-ui, sans-serif;
+            line-height: 1.3;
+        }
+
+        .page-number-display {
+            font-size: 14px;
+            font-weight: bold;
+            font-family: 'Times New Roman', Times, serif;
+        }
+
+        /* O'chirish tugmasi */
+        .btn-delete-row {
+            color: #ef4444;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        /* Print (Chop etish) qoidalari */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .toolbar, .btn-delete-row, .no-print {
+                display: none !important;
+            }
+
+            .journal-page {
+                box-shadow: none !important;
+                border: 1px solid #000 !important;
+                padding: 15mm 10mm !important;
+                page-break-after: always !important; /* Har bir sahifa alohida chop etiladi */
+                width: 100% !important;
+                height: 100vh !important;
+            }
+
+            textarea, input {
+                border: none !important;
+            }
+
+            .page-footer {
+                border-top: 1px solid #000 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Boshqaruv paneli -->
+    <div class="toolbar">
+        <div class="btn-group">
+            <button class="btn btn-success" onclick="window.print()">
+                <i class="fa-solid fa-print"></i> Chop etish (Print)
+            </button>
+            <button class="btn" onclick="addNewEntry()">
+                <i class="fa-solid fa-plus"></i> Yangi qator qo'shish
+            </button>
+            <button class="btn btn-secondary" onclick="fillSampleData()">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Namuna ma'lumot
+            </button>
+        </div>
+        <div style="font-family: system-ui; font-size: 14px; color: #475569;">
+            Jami sahifalar: <strong id="totalPagesCount">1</strong> ta
+        </div>
+    </div>
+
+    <!-- Sahifalar joylashadigan asosiy konteyner -->
+    <div class="pages-container" id="pagesContainer">
+        <!-- Sahifalar JS yordamida dinamik yaratiladi va to'ldiriladi -->
+    </div>
+
+    <script>
+        const ROWS_PER_PAGE = 10; // Har bir sahifaga sig'adigan maksimal qatorlar soni
+        let entriesData = [];     // Barcha kiritilgan yozuvlar ro'yxati
+
+        document.addEventListener("DOMContentLoaded", function() {
+            // Dastlab kamida 1 ta bo'sh yozuv yaratamiz
+            for(let i = 0; i < 5; i++) {
+                entriesData.push(createEmptyEntry());
+            }
+            renderPages();
+        });
+
+        function createEmptyEntry() {
+            return {
+                id: Date.now() + Math.random(),
+                sana: '',
+                komissiya: '',
+                nomuvofiqlik: '',
+                choraTadbirlar: '',
+                javobgar: '',
+                muddati: '',
+                belgi: ''
+            };
+        }
+
+        // Yangi ma'lumot qo'shish (Agarda oxirgi sahifa to'lgan bo'lsa, avtomatik yangi sahifaga o'tadi)
+        function addNewEntry() {
+            entriesData.push(createEmptyEntry());
+            renderPages();
+        }
+
+        function removeEntry(index) {
+            if(entriesData.length > 1) {
+                entriesData.splice(index, 1);
+                renderPages();
+            }
+        }
+
+        function updateEntryField(index, field, value) {
+            entriesData[index][field] = value;
+            // QR kod ma'lumotlarini yangilash uchun sahifa renderini chaqiramiz (kerak bo'lsa)
+            updatePageQRCodes();
+        }
+
+        // Sahifalarni qayta chizish va avtomatik ravishda betlarga bo'lish
+        function renderPages() {
+            const container = document.getElementById('pagesContainer');
+            container.innerHTML = '';
+
+            const totalPages = Math.ceil(entriesData.length / ROWS_PER_PAGE) || 1;
+            document.getElementById('totalPagesCount').innerText = totalPages;
+
+            for (let p = 0; p < totalPages; p++) {
+                const pageNum = p + 1;
+                const pageEntries = entriesData.slice(p * ROWS_PER_PAGE, (p + 1) * ROWS_PER_PAGE);
+
+                const pageDiv = document.createElement('div');
+                pageDiv.className = 'journal-page';
+                pageDiv.id = `page-${pageNum}`;
+
+                pageDiv.innerHTML = `
+                    <div>
+                        <table class="journal-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 10%;">Nazoratni o‘tkazish sanasi</th>
+                                    <th style="width: 15%;">Nazorat o‘tkazgan komissiya tarkibi (F.I.O., lavozimi)</th>
+                                    <th style="width: 20%;">Mehnatni muhofaza qilish bo‘yicha aniqlangan nomuvofiqliklar</th>
+                                    <th style="width: 20%;">Kamchilik va nomuvofiqliklarni bartaraf etish bo‘yicha chora-tadbirlar</th>
+                                    <th style="width: 12%;">Ijrosi uchun javobgar shaxslar</th>
+                                    <th style="width: 9%;">Bajarish muddati</th>
+                                    <th style="width: 14%;">Bajarilgani bo‘yicha belgi (sana, bajarishga javobgar shaxs va vakil imzosi)</th>
+                                    <th class="no-print" style="width: 3%;"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${pageEntries.map((entry, idx) => {
+                                    const globalIdx = p * ROWS_PER_PAGE + idx;
+                                    return `
+                                        <tr>
+                                            <td><input type="text" value="${entry.sana}" placeholder="KUN.OY.YIL" oninput="updateEntryField(${globalIdx}, 'sana', this.value)"></td>
+                                            <td><textarea oninput="updateEntryField(${globalIdx}, 'komissiya', this.value)" placeholder="F.I.O., Lavozimi">${entry.komissiya}</textarea></td>
+                                            <td><textarea oninput="updateEntryField(${globalIdx}, 'nomuvofiqlik', this.value)" placeholder="Kamchiliklar...">${entry.nomuvofiqlik}</textarea></td>
+                                            <td><textarea oninput="updateEntryField(${globalIdx}, 'choraTadbirlar', this.value)" placeholder="Chora-tadbirlar...">${entry.choraTadbirlar}</textarea></td>
+                                            <td><textarea oninput="updateEntryField(${globalIdx}, 'javobgar', this.value)" placeholder="Javobgar shaxs">${entry.javobgar}</textarea></td>
+                                            <td><input type="text" value="${entry.muddati}" placeholder="Muddati" oninput="updateEntryField(${globalIdx}, 'muddati', this.value)"></td>
+                                            <td class="belgi-cell"><textarea oninput="updateEntryField(${globalIdx}, 'belgi', this.value)" placeholder="Belgi va E-imzo">${entry.belgi}</textarea><div class="cell-qr" id="rowqr-${globalIdx}" style="margin-top:6px; display:flex; justify-content:center;"></div></td>
+                                            <td class="no-print">
+                                                <button class="btn-delete-row" onclick="removeEntry(${globalIdx})"><i class="fa-solid fa-trash"></i></button>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Sahifa Pastki Qismi (Footer, Tartib Raqami va QR Imzo) -->
+                    <div class="page-footer">
+                        <div class="footer-left">
+                            <div>"Yo D"-26 №009919/2 Nazorat Jurnali</div>
+                            <div>Rasmiy elektron shakl</div>
+                        </div>
+
+                        <!-- QR Kodli Elektron Imzo -->
+                        <div class="qr-block">
+                            <div id="qrcode-page-${pageNum}"></div>
+                            <div class="qr-info">
+                                <div><strong>ELEKTRON NAZORAT JURNALI</strong></div>
+                                <div>Sahifa tasdiqlandi: <strong>№ ${pageNum} / ${totalPages}</strong></div>
+                                <div>E-Imzo Hash: <span style="font-family: monospace;">#QR-MMJ-2026P${pageNum}</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Sahifa Raqami -->
+                        <div class="page-number-display">
+                            Bet № ${pageNum}
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(pageDiv);
+            }
+
+            // QR Kodlarni har bir sahifa uchun yaratamiz
+            updatePageQRCodes();
+            // Har imzolangan qator uchun "belgi" ustunida kichik QR
+            updateRowQRCodes();
+        }
+
+        // "Bajarilgani bo'yicha belgi" ustuni — imzolangan qatorlarda QR imzo
+        function updateRowQRCodes() {
+            entriesData.forEach((entry, idx) => {
+                const el = document.getElementById(`rowqr-${idx}`);
+                if (!el) return;
+                el.innerHTML = '';
+                const signed = /\[E-imzo\]|Bajarildi|Topshirildi|Imzo/i.test(entry.belgi || '');
+                if (!signed) return;
+                new QRCode(el, {
+                    text: `MMJ-IMZO | Sana: ${entry.sana} | Javobgar: ${entry.javobgar} | Belgi: ${entry.belgi} | Hash: E-SIGN-${entry.id}`,
+                    width: 40,
+                    height: 40,
+                    colorDark: "#0d1b2a",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+            });
+        }
+
+        function updatePageQRCodes() {
+            const totalPages = Math.ceil(entriesData.length / ROWS_PER_PAGE) || 1;
+            for (let p = 1; p <= totalPages; p++) {
+                const qrElement = document.getElementById(`qrcode-page-${p}`);
+                if (qrElement) {
+                    qrElement.innerHTML = '';
+                    new QRCode(qrElement, {
+                        text: `Mehnatni Muhofaza Qilish Jurnali | Bet: ${p}/${totalPages} | Hash: E-SIGN-2026-VAL-${p}`,
+                        width: 42,
+                        height: 42,
+                        colorDark : "#000000",
+                        colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel.M
+                    });
+                }
+            }
+        }
+
+        // Namuna ma'lumotlar bilan to'ldirish (Test qilish uchun)
+        function fillSampleData() {
+            entriesData = [
+                {
+                    id: 1,
+                    sana: '07.08.2026',
+                    komissiya: 'Karimov S.A. (Bosh muhandis)',
+                    nomuvofiqlik: 'Electr qalqonida xavfsizlik to\'siqlari o\'rnatilmagan.',
+                    choraTadbirlar: 'Himoya to\'siqlarini o\'rnatish va belgi qo\'yish.',
+                    javobgar: 'Toshmatov N. (Elektrik)',
+                    muddati: '10.08.2026',
+                    belgi: 'Bajarildi. 09.08.2026 [E-imzo]'
+                },
+                {
+                    id: 2,
+                    sana: '07.08.2026',
+                    komissiya: 'Aliyev M. (Mehnat muhofazasi muhandisi)',
+                    nomuvofiqlik: 'Xodimlarda maxsus poyabzal va qo\'lqop yetishmaydi.',
+                    choraTadbirlar: 'Omborxonadan yangi PPE vositalarini ajratish.',
+                    javobgar: 'Ivanov A. (Omborchi)',
+                    muddati: '08.08.2026',
+                    belgi: 'Topshirildi. 08.08.2026 [E-imzo]'
+                }
+            ];
+
+            // 1-bet to'lib avtomatik 2-betga o'tishini ko'rsatish uchun 12 ta yozuv generatsiya qilamiz
+            for(let i = 3; i <= 14; i++) {
+                entriesData.push({
+                    id: i,
+                    sana: '07.08.2026',
+                    komissiya: `Tekshiruvchi #${i}`,
+                    nomuvofiqlik: `Texnika xavfsizligi bo'yicha aniqlangan qoidabuzarlik #${i}`,
+                    choraTadbirlar: `Bartaraf etish bo'yicha reja-tadbir #${i}`,
+                    javobgar: `Mas'ul xodim #${i}`,
+                    muddati: '15.08.2026',
+                    belgi: 'Jarayonda'
+                });
+            }
+
+            renderPages();
+        }
+    </script>
+</body>
+</html>

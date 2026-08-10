@@ -167,7 +167,7 @@ export default function BookCard({
                 <div className="relative flex" style={{ transformStyle: "preserve-3d" }}>
                   {/* ichki sahifa */}
                   <motion.div
-                    className="relative w-[min(90vw,860px)] overflow-hidden rounded-r-xl rounded-l-sm border border-white/10 bg-[#0b1524]"
+                    className="relative w-[min(90vw,860px)] overflow-hidden rounded-r-xl rounded-l-sm border border-slate-200 bg-[#f8fafc]"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.35 }}
@@ -175,19 +175,19 @@ export default function BookCard({
                   >
                     <div
                       className="absolute inset-y-0 left-0 w-6"
-                      style={{ background: "linear-gradient(90deg, rgba(0,0,0,.55), transparent)" }}
+                      style={{ background: "linear-gradient(90deg, rgba(15,23,42,.12), transparent)" }}
                     />
                     <div className="max-h-[74vh] overflow-auto p-6 md:p-8">
                       <div className="mb-5 flex items-start justify-between gap-4">
                         <div>
-                          <p className="text-[10px] uppercase tracking-[0.32em]" style={{ color: accent }}>
+                          <p className="text-[10px] uppercase tracking-[0.32em] font-semibold" style={{ color: accent }}>
                             Yo D-26
                           </p>
-                          <h3 className="mt-2 text-xl font-semibold text-white">{title}</h3>
+                          <h3 className="mt-2 text-xl font-semibold text-slate-900">{title}</h3>
                         </div>
                         <button
                           onClick={close}
-                          className="rounded-lg border border-white/10 px-3 py-1.5 text-[12px] text-slate-300 transition hover:border-sky-400/60 hover:text-white"
+                          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-[12px] text-slate-600 transition hover:border-sky-400 hover:text-slate-900"
                         >
                           Yopish
                         </button>

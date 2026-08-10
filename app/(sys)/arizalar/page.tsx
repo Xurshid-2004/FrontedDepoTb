@@ -21,7 +21,11 @@ const FILTERS: { k: "all" | "mine" | "pending" | "done"; l: string }[] = [
 export default function Arizalar() {
   const { db, me, roles, can, advance, reject } = useStore();
   const t = useToast();
-  const [f, setF] = useState<"all" | "mine" | "pending" | "done">("pending");
+  // Ariza tasdiqlash/berish huquqi bor foydalanuvchi — «approver»
+  const isApprover =
+    can("request.approve1") || can("request.approve2") || can("request.approve3") || can("request.issue");
+  const visibleFilters = isApprover ? FILTERS : FILTERS.filter((x) => x.k === "mine");
+  const [f, setF] = useState<"all" | "mine" | "pending" | "done">(isApprover ? "pending" : "mine");
   const [q, setQ] = useState("");
   const [rejFor, setRejFor] = useState<string | null>(null);
   const [sabab, setSabab] = useState("");
@@ -59,17 +63,22 @@ export default function Arizalar() {
         title="Arizalar"
         sub="Ishchi → bugalter → bosh xisobchi → depo boshligʻi → ombor mudiri. Rad etilgan ariza butunlay yopiladi."
         right={
-          <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Raqam, F.I.Sh. yoki tabel"
-            className="h-10 w-[260px]"
-          />
+          <div className="flex items-center gap-2.5">
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Raqam, F.I.Sh. yoki tabel"
+              className="h-10 w-[220px]"
+            />
+            {!isApprover && (
+              <Link href="/ishchi"><Btn variant="primary">+ Ariza yuborish</Btn></Link>
+            )}
+          </div>
         }
       />
 
       <div className="mb-5 flex flex-wrap gap-2">
-        {FILTERS.map((x) => (
+        {visibleFilters.map((x) => (
           <button
             key={x.k}
             onClick={() => setF(x.k)}

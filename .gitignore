@@ -1,13 +1,33 @@
+# --- Node / Next.js ---
 node_modules
 .next
 out
 build
-.DS_Store
-*.pem
+next-env.d.ts
+*.tsbuildinfo
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.env*
 .vercel
-*.tsbuildinfo
-next-env.d.ts
+
+# --- Muhit fayllari (maxfiy kalitlar) ---
+.env*
+!.env.example
+
+# --- Backend (alohida repoda saqlanadi, bu repo faqat frontend) ---
+Bacend/
+
+# --- Python / Django ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+*.sqlite3
+
+# --- Kalitlar ---
+*.pem
+
+# --- OS ---
+.DS_Store
+Thumbs.db

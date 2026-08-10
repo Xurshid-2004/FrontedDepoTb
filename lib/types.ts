@@ -40,6 +40,7 @@ export interface Position {
   id: string;
   tartib: number;
   nomi: string;
+  arxiv?: boolean; // soft-delete
 }
 
 export interface Item {
@@ -67,7 +68,8 @@ export interface Worker {
   familiya: string;
   ism: string;
   otasi: string;
-  positionId: string;
+  positionId: string; // asosiy (birinchi) lavozim — eski kod bilan moslik uchun
+  positionIds?: string[]; // barcha lavozimlar (bitta ham, bir nechta ham boʻlishi mumkin)
   sex: string;
   ishJoyi: string;
   kolonna?: string;
@@ -82,6 +84,25 @@ export interface Worker {
   yoriqchiId?: string;
   faol: boolean;
   imzoId?: string;
+
+  /** FaceID surati manzili — surat bazada, javobda faqat havola keladi.
+   *  (800 ta base64 suratni bitta javobda yuborish mumkin emas.) */
+  faceUrl?: string | null;
+
+  /** Faqat YOZISH uchun: yangi surat yuklashda base64 data URL yuboriladi.
+   *  Serverdan hech qachon qaytmaydi. */
+  faceImage?: string;
+
+  /** PIN oʻrnatilganmi. Hash'ning OʻZI serverdan hech qachon chiqmaydi —
+   *  PIN faqat Django tomonida tekshiriladi. */
+  pinSet?: boolean;
+  pinReset?: boolean; // true = keyingi kirishda majburiy yangi PIN oʻrnatiladi
+
+  /** Face ID sozlanganmi. Yuz vektorining OʻZI serverdan chiqmaydi —
+   *  taqqoslash faqat Django tomonida bajariladi. */
+  faceBor?: boolean;
+  /** Ishchi oʻzi roʻyxatdan oʻtgan payt (admin qoʻshgani — bu emas) */
+  royxatdanOtgan?: string | null;
 }
 
 export type RequestStatus =
@@ -110,6 +131,17 @@ export interface Transition {
   izoh?: string;
 }
 
+/** Bugalter qoʻlda toʻldiradigan Требование maydonlari (06-07-08-09-13-16-17-18-19).
+ *  06/08/09 — qatorlar ichида (RequestLine.unit/soni), qolganlari header. */
+export interface BugalterFields {
+  sana07?: string;      // 07 — Требование sanasi
+  royxat13?: string;    // 13 — №№ по складской картотеке (roʻyxat raqami)
+  oy16?: string;        // 16 — Дата выдачи: месяц
+  yil17?: string;       // 17 — Дата выдачи: год
+  corr18?: string;      // 18 — Корреспондирующий счёт
+  uchastok19?: string;  // 19 — Участок
+}
+
 export interface AppRequest {
   id: string;
   raqam: string; // TCH6-YYYY-NNNNN
@@ -122,6 +154,7 @@ export interface AppRequest {
   yakunlangan?: string;
   transitions: Transition[];
   imzolar: Signature[];
+  bugField?: BugalterFields; // bugalter toʻldirgan maydonlar
 }
 
 export interface Signature {
@@ -236,6 +269,25 @@ export interface AuditLog {
   izoh?: string;
 }
 
+/** Ruxsat/koʻrinish override tizimi.
+ *  Kalit = Perm yoki FeatureKey (permissions.ts). Qiymat = true (yoq) / false (yashir).
+ *  Ustuvorlik: userOverrides > roleOverrides > standart (ROLE_PERMS / ROLE_FEATURES). */
+export interface AccessState {
+  roleOverrides: Partial<Record<Role, Record<string, boolean>>>;
+  positionOverrides: Record<string, Record<string, boolean>>; // positionId -> kalit -> qiymat
+  userOverrides: Record<string, Record<string, boolean>>; // workerId -> kalit -> qiymat
+}
+
+/** TB xodimi kiritadigan "baxtsiz xodisa" yozuvi yoki mashinist yoʻriqchisi
+ *  kiritadigan "avariya" yozuvi — matnli xabar, hammaga (ruxsati borlarga) koʻrinadi. */
+export interface IncidentEntry {
+  id: string;
+  turi: "tb" | "avariya"; // tb = TB baxtsiz xodisalar, avariya = mashinist yoʻriqchisi avariyalari
+  matn: string;
+  authorId: string;
+  sana: string; // ISO datetime
+}
+
 export interface DB {
   depo: Depo;
   positions: Position[];
@@ -251,8 +303,10 @@ export interface DB {
   exams: Exam[];
   kips: Kip[];
   notifications: Notification[];
+  incidents: IncidentEntry[];
   audit: AuditLog[];
   lines: string[];
   units: Unit[];
+  access: AccessState;
   seq: number;
 }

@@ -27,18 +27,45 @@ const KINDS: { k: Kind; l: string }[] = [
 ];
 
 export default function Hisobot() {
-  const { db } = useStore();
+  const { db, me, roles } = useStore();
   const [kind, setKind] = useState<Kind>("berilgan");
   const [from, setFrom] = useState(iso(addMonths(TODAY(), -1)));
   const [to, setTo] = useState(iso(TODAY()));
 
   const inRange = (d: string) => d >= from && d <= to;
 
+  // Yoʻriqchi (boshqa yuqori rolsiz) — faqat oʻziga biriktirilgan mashinist/yordamchilar
+  const onlyYoriqchi =
+    roles.includes("yoriqchi") &&
+    !roles.some((r) => ["admin", "depo_boshligi", "bosh_xisobchi", "bugalter", "tb_xodim", "ombor_mudiri"].includes(r));
+  const myWorkerIds = useMemo(
+    () => (onlyYoriqchi ? new Set(db.workers.filter((w) => w.yoriqchiId === me?.id).map((w) => w.id)) : null),
+    [db.workers, onlyYoriqchi, me]
+  );
+  const allowW = (wid: string) => !myWorkerIds || myWorkerIds.has(wid);
+
+  // TB imtixoni — 3 toifa (1 oy qoldi / bugun oxirgi kun / muddati oʻtgan)
+  const imtixonRows = useMemo(() => {
+    return db.exams
+      .filter((e) => allowW(e.workerId))
+      .map((e) => {
+        const next = iso(addMonths(new Date(e.oxirgi), e.davriylikOy));
+        return { e, next, d: daysBetween(TODAY(), next) };
+      })
+      .sort((a, b) => a.d - b.d);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [db.exams, myWorkerIds]);
+  const imtixonCats = {
+    oy: imtixonRows.filter((r) => r.d > 0 && r.d <= 30).length,
+    bugun: imtixonRows.filter((r) => r.d === 0).length,
+    otgan: imtixonRows.filter((r) => r.d < 0).length,
+  };
+
   const data = useMemo(() => {
     switch (kind) {
       case "berilgan": {
         const rows: { sana: string; w: string; pos: string; item: string; soni: number; narx: number }[] = [];
-        db.cards.forEach((c) => {
+        db.cards.filter((c) => allowW(c.workerId)).forEach((c) => {
           const w = workerById(db, c.workerId);
           c.berilgan.filter((b) => inRange(b.sana)).forEach((b) => {
             const it = itemById(db, b.itemId);
@@ -57,11 +84,11 @@ export default function Hisobot() {
       case "kirim":
         return db.moves.filter((m) => m.turi === "kirim" && inRange(m.sana));
       case "arizalar":
-        return db.requests.filter((r) => inRange(r.yaratilgan));
+        return db.requests.filter((r) => inRange(r.yaratilgan) && allowW(r.workerId));
       case "jurnal":
         return db.journal.filter((j) => inRange(j.sana));
       case "kip":
-        return db.kips.filter((k) => inRange(k.sana));
+        return db.kips.filter((k) => inRange(k.sana) && allowW(k.workerId));
       default:
         return [];
     }
@@ -70,7 +97,7 @@ export default function Hisobot() {
   const muddat = useMemo(
     () =>
       db.workers
-        .filter((w) => w.faol)
+        .filter((w) => w.faol && allowW(w.id))
         .flatMap((w) =>
           itemStates(db, w)
             .filter((s) => s.holat === "sariq" || s.holat === "qizil")
@@ -81,7 +108,7 @@ export default function Hisobot() {
 
   const xarajat = useMemo(() => {
     const map = new Map<string, number>();
-    db.cards.forEach((c) => {
+    db.cards.filter((c) => allowW(c.workerId)).forEach((c) => {
       const w = workerById(db, c.workerId);
       if (!w) return;
       const pos = positionById(db, w.positionId)?.nomi ?? "—";
@@ -127,7 +154,7 @@ export default function Hisobot() {
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <Stat
           label="Yozuvlar"
-          value={kind === "muddat" ? muddat.length : kind === "xarajat" ? xarajat.length : (data as unknown[]).length}
+          value={kind === "muddat" ? muddat.length : kind === "xarajat" ? xarajat.length : kind === "imtixon" ? imtixonRows.length : (data as unknown[]).length}
         />
         <Stat label="Davr" value={`${fmt(from)} — ${fmt(to)}`} color="#a78bfa" />
         <Stat label="Jami summa" value={jamiSumma ? money(jamiSumma) : "—"} color="#f2b544" />
@@ -259,7 +286,7 @@ export default function Hisobot() {
 
         {kind === "talon" && (
           <Table head={["Ishchi", "Talon", "Holat", "Oxirgi amal"]} min={700}>
-            {db.talons.filter((x) => x.tarix.length).map((x, i) => {
+            {db.talons.filter((x) => x.tarix.length && allowW(x.workerId)).map((x, i) => {
               const w = workerById(db, x.workerId);
               const last = x.tarix[0];
               return (
@@ -275,27 +302,45 @@ export default function Hisobot() {
         )}
 
         {kind === "imtixon" && (
-          <Table head={["Ishchi", "Tabel", "Oxirgi imtixon", "Davriylik", "Keyingi", "Holat"]} min={820}>
-            {db.exams.map((e) => {
-              const w = workerById(db, e.workerId);
-              const next = iso(addMonths(new Date(e.oxirgi), e.davriylikOy));
-              const d = daysBetween(TODAY(), next);
-              return (
-                <Tr key={e.workerId}>
-                  <Td className="text-slate-900">{w ? fioShort(w) : "—"}</Td>
-                  <Td className="tabular-nums">{w?.tabel}</Td>
-                  <Td className="tabular-nums">{fmt(e.oxirgi)}</Td>
-                  <Td className="tabular-nums">{e.davriylikOy} oy</Td>
-                  <Td className="tabular-nums">{fmt(next)}</Td>
-                  <Td>
-                    <Badge color={d < 0 ? "#ef4444" : d <= 10 ? "#f59e0b" : "#22c55e"}>
-                      {d < 0 ? `${-d} kun kechikdi` : `${d} kun qoldi`}
-                    </Badge>
-                  </Td>
-                </Tr>
-              );
-            })}
-          </Table>
+          <>
+            <div className="grid gap-3 p-4 sm:grid-cols-3">
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                <p className="text-[11px] uppercase tracking-wider text-amber-700">1 oy qoldi</p>
+                <p className="mt-1 text-[26px] font-bold tabular-nums text-amber-600">{imtixonCats.oy}</p>
+              </div>
+              <div className="rounded-xl border border-orange-300 bg-orange-50 px-4 py-3">
+                <p className="text-[11px] uppercase tracking-wider text-orange-700">Bugun oxirgi kun</p>
+                <p className="mt-1 text-[26px] font-bold tabular-nums text-orange-600">{imtixonCats.bugun}</p>
+              </div>
+              <div className="rounded-xl border border-red-300 bg-red-50 px-4 py-3">
+                <p className="text-[11px] uppercase tracking-wider text-red-700">Muddati oʻtgan</p>
+                <p className="mt-1 text-[26px] font-bold tabular-nums text-red-600">{imtixonCats.otgan}</p>
+              </div>
+            </div>
+            <Table head={["Ishchi", "Tabel", "Oxirgi imtixon", "Davriylik", "Keyingi", "Toifa"]} min={820}>
+              {imtixonRows.map(({ e, next, d }) => {
+                const w = workerById(db, e.workerId);
+                const cat =
+                  d < 0
+                    ? { c: "#ef4444", l: `Muddati oʻtgan (${-d} kun)` }
+                    : d === 0
+                      ? { c: "#f97316", l: "Bugun oxirgi kun" }
+                      : d <= 30
+                        ? { c: "#f59e0b", l: `1 oy ichida (${d} kun)` }
+                        : { c: "#22c55e", l: `${d} kun qoldi` };
+                return (
+                  <Tr key={e.workerId}>
+                    <Td className="text-slate-900">{w ? fioShort(w) : "—"}</Td>
+                    <Td className="tabular-nums">{w?.tabel}</Td>
+                    <Td className="tabular-nums">{fmt(e.oxirgi)}</Td>
+                    <Td className="tabular-nums">{e.davriylikOy} oy</Td>
+                    <Td className="tabular-nums">{fmt(next)}</Td>
+                    <Td><Badge color={cat.c}>{cat.l}</Badge></Td>
+                  </Tr>
+                );
+              })}
+            </Table>
+          </>
         )}
 
         {kind === "xarajat" && (

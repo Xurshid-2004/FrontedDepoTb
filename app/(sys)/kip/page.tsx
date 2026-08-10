@@ -6,6 +6,7 @@ import { fmt, fio, fioShort, kipTone, positionById } from "@/lib/logic";
 import {
   Badge, Btn, Empty, Field, Input, Modal, PageHead, Panel, Select, Stat, Table, Td, Tr, useToast,
 } from "@/components/ui";
+import IncidentFeed from "@/components/IncidentFeed";
 
 const QISM = [
   { q: 1, l: "3 kun qoldi", c: "#22c55e" },
@@ -15,7 +16,7 @@ const QISM = [
 ] as const;
 
 export default function KipPage() {
-  const { db, me, can, addKip } = useStore();
+  const { db, me, can, addKip, addIncident } = useStore();
   const t = useToast();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<string | null>(null);
@@ -113,6 +114,21 @@ export default function KipPage() {
           })}
         </Table>
       </Panel>
+
+      {can("incident.avariya.read") && (
+        <div className="mt-6">
+          <IncidentFeed
+            db={db}
+            entries={db.incidents.filter((i) => i.turi === "avariya")}
+            canWrite={can("incident.avariya.write")}
+            onAdd={(matn) => addIncident("avariya", matn)}
+            title="Mashinist yoʻriqchisi — avariyalar"
+            subtitle="Tizimda roʻy bergan avariyalar haqida xabar — hammaga koʻrinadi"
+            placeholder="Avariya haqida qisqacha yozing..."
+            accent="#f2b544"
+          />
+        </div>
+      )}
 
       <Modal open={!!open} onClose={() => setOpen(null)} title="Yangi KIP yozuvi">
         <div className="space-y-4">

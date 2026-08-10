@@ -15,12 +15,16 @@ type Phase = "idle" | "scatter" | "merge" | "done";
 export default function PinPad({
   length = 4,
   onDone,
+  verify,
+  onError,
   label = "PIN kodni kiriting",
   hint = "Ilovada har kirishda shu kod soʻraladi",
   autoFocus = true,
 }: {
   length?: number;
   onDone?: (pin: string) => void;
+  verify?: (pin: string) => boolean | Promise<boolean>;
+  onError?: () => void;
   label?: string;
   hint?: string;
   autoFocus?: boolean;
@@ -43,22 +47,47 @@ export default function PinPad({
     if (autoFocus) inputRef.current?.focus();
   }, [autoFocus]);
 
+  // onDone/verify har renderda yangi funksiya boʻlishi mumkin — refda saqlaymiz
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+  const verifyRef = useRef(verify);
+  verifyRef.current = verify;
+  const onErrRef = useRef(onError);
+  onErrRef.current = onError;
+
+  // Zanjir bir marta ishga tushadi va oʻzini bekor qilmaydi
+  const started = useRef(false);
+
   useEffect(() => {
-    if (val.length !== length || phase !== "idle") return;
+    if (val.length !== length || started.current) return;
+    started.current = true;
+
     const t1 = setTimeout(() => setPhase("scatter"), 220);
-    const t2 = setTimeout(() => setPhase("merge"), 1000);
-    const t3 = setTimeout(() => {
+    const t2 = setTimeout(() => setPhase("merge"), 900);
+    const t3 = setTimeout(async () => {
+      // PIN tekshiruvi (agar berilgan boʻlsa) — notoʻgʻri boʻlsa muvaffaqiyat koʻrsatilmaydi
+      if (verifyRef.current) {
+        const ok = await verifyRef.current(val);
+        if (!ok) {
+          onErrRef.current?.();
+          reset();
+          return;
+        }
+      }
       setPhase("done");
-      onDone?.(val);
-    }, 1500);
+      onDoneRef.current?.(val);
+    }, 1400);
+
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
     };
-  }, [val, length, phase, onDone]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [val, length]);
 
   const reset = () => {
+    started.current = false;
     setVal("");
     setPhase("idle");
     inputRef.current?.focus();
@@ -74,8 +103,8 @@ export default function PinPad({
             transition={{ duration: 0.35 }}
             className="flex flex-col items-center"
           >
-            <p className="text-[15px] font-semibold text-slate-100">{label}</p>
-            <p className="mt-1 text-center text-[12px] text-slate-400">{hint}</p>
+            <p className="text-[16px] font-semibold text-slate-800">{label}</p>
+            <p className="mt-1 text-center text-[12.5px] text-slate-500">{hint}</p>
 
             <div
               className="relative mt-7 flex items-center justify-center gap-3"
@@ -101,17 +130,17 @@ export default function PinPad({
                         ? { type: "spring", stiffness: 130, damping: 9 }
                         : { type: "spring", stiffness: 300, damping: 20 }
                     }
-                    className={`grid h-14 w-12 place-items-center rounded-2xl border text-xl font-semibold tabular-nums ${
+                    className={`grid h-14 w-12 place-items-center rounded-2xl border-2 text-xl font-semibold tabular-nums ${
                       filled
-                        ? "border-sky-400/70 bg-sky-400/10 text-white shadow-[0_0_24px_-4px_rgba(56,189,248,.8)]"
-                        : "border-white/12 bg-white/[0.03] text-slate-500"
+                        ? "border-sky-500 bg-sky-50 text-sky-700 shadow-[0_0_22px_-6px_rgba(28,92,158,.7)]"
+                        : "border-slate-300 bg-white text-slate-400"
                     }`}
                   >
                     {filled ? "•" : ""}
                     {filled && (
                       <motion.span
                         layoutId={`d${i}`}
-                        className="pointer-events-none absolute h-1.5 w-1.5 rounded-full bg-sky-300"
+                        className="pointer-events-none absolute h-1.5 w-1.5 rounded-full bg-sky-500"
                         initial={{ scale: 0 }}
                         animate={{ scale: [0, 2.6, 1] }}
                         transition={{ duration: 0.4 }}
@@ -138,7 +167,7 @@ export default function PinPad({
             <button
               type="button"
               onClick={reset}
-              className="mt-6 text-[12px] text-slate-500 transition hover:text-sky-300"
+              className="mt-6 rounded-lg px-3 py-1.5 text-[12.5px] text-slate-500 transition hover:bg-slate-100 hover:text-sky-700"
             >
               Kodni tozalash
             </button>
@@ -189,8 +218,8 @@ export default function PinPad({
                 />
               </motion.svg>
             </div>
-            <p className="mt-4 text-[15px] font-semibold text-emerald-300">Tasdiqlandi</p>
-            <p className="mt-1 text-[12px] text-slate-400">Tizimga kirilmoqda…</p>
+            <p className="mt-4 text-[15px] font-semibold text-emerald-600">Tasdiqlandi</p>
+            <p className="mt-1 text-[12.5px] text-slate-500">Tizimga kirilmoqda…</p>
           </motion.div>
         )}
       </AnimatePresence>

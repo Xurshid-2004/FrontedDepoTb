@@ -1,0 +1,38 @@
+# =====================================================================
+# Next.js image'iga TUSHMASLIGI kerak boʻlgan fayllar.
+#
+# Dockerfile'da `COPY . .` bor. Bu fayl boʻlmasa .env.local (maxfiy
+# imzo kalitlari), node_modules va butun Bacend/ papkasi (Django
+# virtual muhiti bilan birga) image ichiga tushib qoladi.
+# =====================================================================
+
+# --- Maxfiy ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --- Node ---
+node_modules/
+.next/
+out/
+npm-debug.log*
+
+# --- Boshqa xizmatlar (oʻz image'lari bor) ---
+Bacend/
+face-service/
+app_flutter/
+
+# --- Git / IDE ---
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# --- Hujjatlar va skriptlar ---
+*.md
+!README.md
+*.ps1
+deploy.sh
+arxiv/

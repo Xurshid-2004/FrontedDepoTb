@@ -3,11 +3,11 @@
 import { use } from "react";
 import { useStore } from "@/lib/store";
 import { fmt, fio, itemById, normsFor, positionById } from "@/lib/logic";
-import { Badge, Empty, PageHead, Panel, QrSig, Table, Td, Tr } from "@/components/ui";
+import { Badge, Btn, Empty, PageHead, Panel, QrSig, Table, Td, Tr } from "@/components/ui";
 
 export default function Kartochka({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { db } = useStore();
+  const { db, canFeature } = useStore();
   const w = db.workers.find((x) => x.id === id);
   const card = db.cards.find((c) => c.workerId === id);
 
@@ -21,8 +21,38 @@ export default function Kartochka({ params }: { params: Promise<{ id: string }> 
 
   return (
     <>
-      <PageHead title={`Shaxsiy kartochka — ${fio(w)}`} sub={`Shakl MB-6 · tabel ${w.tabel} · ${pos?.nomi}`} />
+      <PageHead
+        title={`Shaxsiy kartochka — ${fio(w)}`}
+        sub={`Shakl MB-6 · tabel ${w.tabel} · ${pos?.nomi}`}
+        right={
+          <div className="flex flex-wrap gap-2">
+            <Btn size="sm" variant="primary" onClick={() => window.print()}>Chop etish / PDF</Btn>
+            {canFeature("doc.mb6") && (
+              <a href="/hujjatlar/mb6.html" target="_blank" rel="noopener noreferrer">
+                <Btn size="sm">Boʻsh blanka ↗</Btn>
+              </a>
+            )}
+          </div>
+        }
+      />
 
+      {canFeature("doc.mb6") && (
+        <Panel className="mb-5" pad={false}>
+          <div className="flex items-center justify-between px-5 py-3">
+            <p className="text-[11px] uppercase tracking-wider text-slate-500">MB-6 — elektron shakl (bosma)</p>
+            <a href="/hujjatlar/mb6.html" target="_blank" rel="noopener noreferrer" className="text-[12px] text-sky-600 hover:underline">
+              Yangi oynada ochish ↗
+            </a>
+          </div>
+          <iframe
+            src="/hujjatlar/mb6.html"
+            title="MB-6 elektron shakl"
+            className="h-[900px] w-full rounded-b-2xl border-0"
+          />
+        </Panel>
+      )}
+
+      <div className="print-area">
       <Panel className="mb-5">
         <div className="mb-5 border-b border-slate-200 pb-4 text-center">
           <p className="text-[11px] uppercase tracking-[0.3em] text-slate-500">Shakl MB-6</p>
@@ -66,7 +96,7 @@ export default function Kartochka({ params }: { params: Promise<{ id: string }> 
 
         <p className="mb-3 mt-6 text-[11px] uppercase tracking-wider text-slate-500">16 · 17 · 18 — QR imzolar</p>
         <div className="grid gap-3 sm:grid-cols-3">
-          <QrSig sigId={`c16-${card.id}`} hash={card.id + "16"} fio={tb ? fio(tb) : "—"} lavozim="16 · Mehnat muhofazasi" sana={fmt(card.ochilgan)} size={60} />
+          <QrSig sigId={`c16-${card.id}`} hash={card.id + "16"} fio={tb ? fio(tb) : "—"} lavozim="16 · TB xodimi (Mehnat muhofazasi)" sana={fmt(card.ochilgan)} size={60} />
           <QrSig sigId={`c17-${card.id}`} hash={card.id + "17"} fio={sx ? fio(sx) : "—"} lavozim="17 · Sex boshligʻi" sana={fmt(card.ochilgan)} size={60} />
           <QrSig sigId={`c18-${card.id}`} hash={card.id + "18"} fio={bx ? fio(bx) : "—"} lavozim="18 · Bosh hisobchi" sana={fmt(card.ochilgan)} size={60} />
         </div>
@@ -116,6 +146,7 @@ export default function Kartochka({ params }: { params: Promise<{ id: string }> 
           </Table>
         )}
       </Panel>
+      </div>
     </>
   );
 }
