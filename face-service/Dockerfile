@@ -27,6 +27,19 @@ COPY app.py .
 
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-  CMD curl -fsS http://127.0.0.1:8000/health || exit 1
+  CMD curl -fsS "http://127.0.0.1:${PORT:-8000}/health" || exit 1
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+# Shell shakli — Railway/Fly portni $PORT orqali beradi.
+#
+# --host :: — Railway'ning ichki tarmogʻi (*.railway.internal) IPv6 da
+# ishlaydi, 0.0.0.0 esa faqat IPv4 ni tinglaydi va Django ulana olmaydi.
+# Linux'da :: ikkala oilani ham qabul qiladi, shuning uchun public
+# domen ham shu bilan ishlayveradi.
+#
+# Bitta worker: har bir worker buffalo_l modelini alohida xotiraga
+# yuklaydi (~1.2 GB). Ikkita worker konteynerni xotira limitidan
+# chiqarib yuboradi. Yuklama ortsa WEB_CONCURRENCY bilan koʻtariladi.
+CMD uvicorn app:app \
+      --host :: \
+      --port "${PORT:-8000}" \
+      --workers "${WEB_CONCURRENCY:-1}"
