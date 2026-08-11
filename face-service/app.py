@@ -11,8 +11,12 @@ Endpointlar:
 Himoya: X-Face-Token sarlavhasi FACE_TOKEN muhit oʻzgaruvchisi bilan mos kelishi shart.
 """
 import base64
+import contextlib
 import io
+import logging
 import os
+import threading
+import time
 from typing import List, Optional
 
 import numpy as np
@@ -23,18 +27,54 @@ TOKEN = os.getenv("FACE_TOKEN", "")
 THRESHOLD = float(os.getenv("FACE_THRESHOLD", "0.62"))
 DET_SIZE = int(os.getenv("FACE_DET_SIZE", "640"))
 
+# buffalo_l paketida 5 ta model bor, lekin bizga faqat ikkitasi kerak:
+#   detection   — yuzni topish (det_10g)
+#   recognition — vektor olish (w600k_r50)
+# Qolgani (yosh/jins, 3D nuqtalar) ishlatilmaydi, ammo yuklansa ~500 MB
+# qoʻshimcha xotira yeydi. Railway'dagi eng qimmat resurs — aynan xotira.
+MODULLAR = ["detection", "recognition"]
+
+log = logging.getLogger("face")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+
 app = FastAPI(title="TB Face Service", version="1.0")
+
 _model = None
+_qulf = threading.Lock()
+_holat = "kutmoqda"          # kutmoqda | yuklanmoqda | tayyor | xato
 
 
 def model():
-    """InsightFace modelini birinchi soʻrovda yuklaydi (lazy)."""
-    global _model
-    if _model is None:
-        from insightface.app import FaceAnalysis
-        m = FaceAnalysis(name="buffalo_l", providers=["CPUExecutionProvider"])
-        m.prepare(ctx_id=0, det_size=(DET_SIZE, DET_SIZE))
-        _model = m
+    """
+    InsightFace modelini qaytaradi, kerak boʻlsa yuklaydi.
+
+    Qulf shart: uvicorn sinxron endpointlarni threadpool'da bajaradi —
+    qulfsiz ikkita bir vaqtdagi soʻrov modelni ikki marta yuklab,
+    xotirani ikkilantirib yuborardi.
+    """
+    global _model, _holat
+    if _model is not None:
+        return _model
+
+    with _qulf:
+        if _model is None:
+            from insightface.app import FaceAnalysis
+            _holat = "yuklanmoqda"
+            boshlandi = time.monotonic()
+            try:
+                m = FaceAnalysis(
+                    name="buffalo_l",
+                    providers=["CPUExecutionProvider"],
+                    allowed_modules=MODULLAR,
+                )
+                m.prepare(ctx_id=0, det_size=(DET_SIZE, DET_SIZE))
+            except Exception as e:
+                _holat = "xato"
+                log.error("Model yuklanmadi: %s", e)
+                raise
+            _model = m
+            _holat = "tayyor"
+            log.info("Model tayyor — %.1f soniya", time.monotonic() - boshlandi)
     return _model
 
 
