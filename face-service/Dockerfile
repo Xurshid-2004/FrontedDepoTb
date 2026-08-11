@@ -23,23 +23,14 @@ RUN python -c "from insightface.app import FaceAnalysis; \
     m=FaceAnalysis(name='buffalo_l', providers=['CPUExecutionProvider']); \
     m.prepare(ctx_id=0, det_size=(640,640))" || true
 
-COPY app.py .
+COPY app.py run.py ./
 
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
   CMD curl -fsS "http://127.0.0.1:${PORT:-8000}/health" || exit 1
 
-# Shell shakli — Railway/Fly portni $PORT orqali beradi.
-#
-# --host :: — Railway'ning ichki tarmogʻi (*.railway.internal) IPv6 da
-# ishlaydi, 0.0.0.0 esa faqat IPv4 ni tinglaydi va Django ulana olmaydi.
-# Linux'da :: ikkala oilani ham qabul qiladi, shuning uchun public
-# domen ham shu bilan ishlayveradi.
-#
-# Bitta worker: har bir worker buffalo_l modelini alohida xotiraga
-# yuklaydi (~1.2 GB). Ikkita worker konteynerni xotira limitidan
-# chiqarib yuboradi. Yuklama ortsa WEB_CONCURRENCY bilan koʻtariladi.
-CMD uvicorn app:app \
-      --host :: \
-      --port "${PORT:-8000}" \
-      --workers "${WEB_CONCURRENCY:-1}"
+# Port, host va workerlar soni run.py da belgilanadi (u PORT oʻzgaruvchisini
+# Python tomonida oʻqiydi). Buyruqda oʻzgaruvchi qolmagani uchun exec shakli
+# xavfsiz: platforma buyruqni shellsiz uzatganda ham "$PORT" matn holida
+# qolib ketmaydi.
+CMD ["python", "run.py"]
