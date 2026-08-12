@@ -73,11 +73,15 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
     try {
       const r = await api.tabelTekshir(tabel);
 
+      // Tabel raqami SERVERDAGI kadrlar bazasidan tekshiriladi.
+      // Topilmasa — foydalanuvchi shu yerning oʻzida, aniq matn bilan
+      // xabardor qilinadi va keyingi bosqichga oʻtkazilmaydi.
       if (!r.bor) {
         setErr(
-          mode === "register"
-            ? "Bu tabel raqami kadrlar bazasida yoʻq. Depo kadrlar boʻlimiga murojaat qiling — avval siz bazaga kiritilishingiz kerak"
-            : "Bunday tabel raqami kadrlar bazasida topilmadi"
+          `${tabel.trim()} — bunday tabel raqami kadrlar bazasida yoʻq. ` +
+          (mode === "register"
+            ? "Avval depo kadrlar boʻlimi sizni bazaga kiritishi kerak"
+            : "Raqamni tekshirib qayta kiriting yoki depo kadrlar boʻlimiga murojaat qiling")
         );
         return;
       }
@@ -262,7 +266,12 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                     <Field
                       label="Tabel raqami"
                       value={tabel}
-                      onChange={setTabel}
+                      // Raqam tahrirlanganda eski xato yoʻqoladi — ekranda
+                      // «topilmadi» yozuvi qolib, chalkashtirmasin
+                      onChange={(v) => {
+                        setTabel(v);
+                        if (err) setErr("");
+                      }}
                       placeholder="masalan: 10427"
                       inputMode="numeric"
                       autoFocus
@@ -485,14 +494,23 @@ function Qadamlar({ joriy, royxat }: { joriy: Stage; royxat: boolean }) {
 }
 
 function Xabar({ turi, children }: { turi: "err" | "info"; children: React.ReactNode }) {
-  const uslub =
-    turi === "err"
-      ? "border-red-300 bg-red-50 text-red-600"
-      : "border-sky-300 bg-sky-50 text-sky-800";
+  const xato = turi === "err";
+  const uslub = xato
+    ? "border-red-300 bg-red-50 text-red-700"
+    : "border-sky-300 bg-sky-50 text-sky-800";
   return (
-    <p className={`mt-4 rounded-lg border px-3 py-2 text-[12.5px] leading-relaxed ${uslub}`}>
-      {children}
-    </p>
+    <div
+      role={xato ? "alert" : undefined}
+      className={`mt-4 flex items-start gap-2 rounded-xl border-2 px-3.5 py-3 text-[13px] leading-relaxed ${uslub}`}
+    >
+      {xato && (
+        <svg viewBox="0 0 24 24" className="mt-[1px] h-4 w-4 shrink-0" aria-hidden>
+          <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path d="M12 7v6M12 16.5v.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      )}
+      <span className="min-w-0">{children}</span>
+    </div>
   );
 }
 
