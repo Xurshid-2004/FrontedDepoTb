@@ -165,6 +165,9 @@ export interface Signature {
   userId: string;
   sana: string;
   hash: string;
+  /** Imzo qoʻyilgan paytdagi F.I.Sh. va lavozim (serverda saqlanadi) */
+  fio?: string;
+  lavozim?: string;
 }
 
 export interface JournalEntry {

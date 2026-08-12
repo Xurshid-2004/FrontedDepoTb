@@ -204,7 +204,7 @@ export default function FaceCapture({
         </p>
       )}
 
-      <div className="mt-3 shrink-0 space-y-1">
+      <div className="mt-3 shrink-0 space-y-2">
         {/* Avtomatik urinishlar tugagach — qoʻlda boshqaruv */}
         {avtoTugadi && holat !== "xato" && (
           <button
@@ -215,12 +215,31 @@ export default function FaceCapture({
             Qayta urinish
           </button>
         )}
+
+        {/* Oʻtkazib yuborish — yoʻqolib ketmasligi uchun ajratilgan,
+            toʻliq enli tugma koʻrinishida. Kamera ishlamasa yoki yuz
+            tanilmasa foydalanuvchi shu yerdan chiqib ketadi. */}
+        <div className="flex items-center gap-2 pt-0.5">
+          <span className="h-px flex-1 bg-slate-200" />
+          <span className="text-[10.5px] uppercase tracking-[0.2em] text-slate-400">yoki</span>
+          <span className="h-px flex-1 bg-slate-200" />
+        </div>
         <button
           type="button"
           onClick={onSkip}
           disabled={band}
-          className="block w-full py-1.5 text-center text-[13px] font-semibold text-sky-700 underline-offset-4 hover:underline disabled:opacity-40"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-sky-500 bg-sky-50 text-[14.5px] font-bold text-sky-800 shadow-sm transition hover:bg-sky-100 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
         >
+          <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" aria-hidden>
+            <path
+              d="M6 6l9 6-9 6V6zM19 5v14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
           {skipLabel}
         </button>
       </div>

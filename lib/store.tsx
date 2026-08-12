@@ -78,8 +78,10 @@ type Ctx = {
   updateRequest: (reqId: string, patch: { lines?: RequestLine[]; bugField?: BugalterFields }) => Promise<void>;
   advance: (reqId: string, izoh?: string) => Promise<void>;
   reject: (reqId: string, izoh: string) => Promise<void>;
-  addJournal: (e: Omit<JournalEntry, "id">) => Promise<void>;
-  signJournal: (id: string, izoh: string) => Promise<void>;
+  /** Jurnalga yozuv qoʻshadi. Server qabul qilsa `true` qaytadi. */
+  addJournal: (e: Omit<JournalEntry, "id">) => Promise<boolean>;
+  /** 7-ustunni tasdiqlaydi (QR imzo). Server qabul qilsa `true`. */
+  signJournal: (id: string, izoh: string) => Promise<boolean>;
   stockIn: (itemId: string, soni: number, izoh: string) => Promise<void>;
   toggleTalon: (workerId: string, raqam: 1 | 2 | 3, sabab?: string) => Promise<void>;
   addKip: (k: Omit<Kip, "id" | "tugash" | "imzoId">) => Promise<void>;
@@ -352,10 +354,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     /* --- jurnal --- */
     addJournal: async (e) => {
-      await yugur(() => api.addJournal(e as unknown as Record<string, unknown>));
+      // `yugur` xato boʻlsa null qaytaradi — chaqiruvchi shundan
+      // muvaffaqiyatni biladi va soxta «saqlandi» xabari chiqmaydi.
+      const r = await yugur(() => api.addJournal(e as unknown as Record<string, unknown>));
+      return !!r?.ok;
     },
     signJournal: async (id, izoh) => {
-      await yugur(() => api.signJournal(id, izoh));
+      const r = await yugur(() => api.signJournal(id, izoh));
+      return !!r?.ok;
     },
 
     /* --- ombor --- */

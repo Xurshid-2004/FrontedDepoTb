@@ -107,17 +107,24 @@ export default function Admin() {
   const [pinVal, setPinVal] = useState("");
   const [addNorm, setAddNorm] = useState(false);
 
-  const workers = useMemo(() => {
+  /** Roʻyxat uzun (300+ xodim) — standart holatda bir qismi koʻrsatiladi */
+  const [hammasi, setHammasi] = useState(false);
+
+  const topilgan = useMemo(() => {
     const s = q.trim().toLowerCase();
-    const base = db.workers;
-    if (!s) return base.slice(0, 60);
-    return base.filter(
+    if (!s) return db.workers;
+    return db.workers.filter(
       (w) =>
         fio(w).toLowerCase().includes(s) ||
         w.tabel.includes(s) ||
         positionNames(db, w).toLowerCase().includes(s)
     );
   }, [db, q]);
+
+  const workers = useMemo(
+    () => (hammasi || q.trim() ? topilgan : topilgan.slice(0, 60)),
+    [topilgan, hammasi, q]
+  );
 
   const item = edit ? db.items.find((i) => i.id === edit) : null;
   const activePos = db.positions.filter((p) => !p.arxiv);
@@ -173,6 +180,22 @@ export default function Admin() {
             <Btn variant="primary" onClick={() => setAddWorker(true)}>+ Yangi ishchi</Btn>
             <Btn variant="gold" onClick={() => setBulk(true)}>Ommaviy import</Btn>
           </div>
+
+          {/* Nechtasi koʻrinayotgani — roʻyxat qisqartirilganda aytiladi */}
+          <div className="mb-3 flex flex-wrap items-center gap-3 text-[12.5px] text-slate-500">
+            <span>
+              {q.trim()
+                ? `Qidiruv natijasi: ${topilgan.length} ta`
+                : `Jami ${topilgan.length} ta xodim · koʻrsatilmoqda ${workers.length} ta`}
+            </span>
+            {!q.trim() && topilgan.length > workers.length && (
+              <Btn size="sm" onClick={() => setHammasi(true)}>Hammasini koʻrsatish</Btn>
+            )}
+            {!q.trim() && hammasi && topilgan.length > 60 && (
+              <Btn size="sm" onClick={() => setHammasi(false)}>Qisqartirish</Btn>
+            )}
+          </div>
+
           <Panel pad={false}>
             <Table head={["", "Tabel", "F.I.Sh.", "Lavozim", "Sex", "Rollar", "Holat", "Amallar"]} min={1180}>
               {workers.map((w) => (

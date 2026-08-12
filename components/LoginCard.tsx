@@ -85,13 +85,13 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
       setHolat(r);
 
       if (mode === "login") {
-        // Hali roʻyxatdan oʻtmagan — roʻyxat oqimiga oʻtkazamiz
+        // Hali roʻyxatdan oʻtmagan — roʻyxat oqimiga oʻtkazamiz.
+        // Birinchi qadam DOIM PIN: xodim tabel raqamini teradi va oʻziga
+        // parol (PIN) yaratadi. Face ID — keyingi, ixtiyoriy qadam.
         if (r.royxatKerak) {
           setMode("register");
-          setInfo(
-            `${r.fio} — siz hali roʻyxatdan oʻtmagansiz. Yuzingizni qayd etib, PIN oʻrnating`
-          );
-          setStage(r.faceYoqilgan ? "face" : "pin");
+          setInfo(`${r.fio} — siz hali roʻyxatdan oʻtmagansiz. Oʻzingizga PIN parol yarating`);
+          setStage("pin");
           return;
         }
         // Yuz sozlangan boʻlsa avval Face ID, boʻlmasa toʻgʻridan PIN
@@ -106,8 +106,8 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
         );
         return;
       }
-      setInfo(`${r.fio} — maʼlumot tasdiqlandi`);
-      setStage(r.faceYoqilgan ? "face" : "pin");
+      setInfo(`${r.fio} — maʼlumot tasdiqlandi. Endi oʻzingizga PIN parol yarating`);
+      setStage("pin");
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Serverga ulanib boʻlmadi");
     } finally {
@@ -441,11 +441,19 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
 
 /** Qadamlar chizigʻi — foydalanuvchi qayerdaligini va nima qolganini koʻradi */
 function Qadamlar({ joriy, royxat }: { joriy: Stage; royxat: boolean }) {
-  const qadam: { k: Stage; l: string }[] = [
-    { k: "form", l: "Tabel raqami" },
-    { k: "face", l: royxat ? "Yuzni qayd etish" : "Shaxsni tasdiqlash" },
-    { k: "pin", l: royxat ? "PIN oʻrnatish" : "Kirish" },
-  ];
+  // Roʻyxatdan oʻtishda tartib: tabel → PIN → (ixtiyoriy) Face ID.
+  // Kirishda: tabel → Face ID → PIN.
+  const qadam: { k: Stage; l: string }[] = royxat
+    ? [
+        { k: "form", l: "Tabel raqami" },
+        { k: "pin", l: "PIN parol yaratish" },
+        { k: "face", l: "Face ID (ixtiyoriy)" },
+      ]
+    : [
+        { k: "form", l: "Tabel raqami" },
+        { k: "face", l: "Shaxsni tasdiqlash" },
+        { k: "pin", l: "Kirish" },
+      ];
   const n = qadam.findIndex((q) => q.k === joriy);
 
   return (

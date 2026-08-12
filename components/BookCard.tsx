@@ -19,11 +19,17 @@ export default function BookCard({
   title,
   subtitle,
   accent = "#38bdf8",
+  /** Muqova va ichki sahifadagi kichik sarlavha (masalan, depo nomi) */
+  label = "Yo D-26",
+  /** Keng sahifa — koʻp ustunli jadvallar uchun (7 ustunli TB jurnali) */
+  keng = false,
   children,
 }: {
   title: string;
   subtitle: string;
   accent?: string;
+  label?: string;
+  keng?: boolean;
   children?: React.ReactNode;
 }) {
   const [phase, setPhase] = useState<Phase>("closed");
@@ -97,7 +103,7 @@ export default function BookCard({
           <div className="relative flex h-full flex-col justify-between p-6">
             <div>
               <p className="text-[10px] uppercase tracking-[0.32em]" style={{ color: accent }}>
-                Yo D-26
+                {label}
               </p>
               <h3 className="mt-3 text-[19px] font-semibold leading-snug text-white">{title}</h3>
               <p className="mt-2 text-[13px] leading-relaxed text-slate-400">{subtitle}</p>
@@ -167,7 +173,9 @@ export default function BookCard({
                 <div className="relative flex" style={{ transformStyle: "preserve-3d" }}>
                   {/* ichki sahifa */}
                   <motion.div
-                    className="relative w-[min(90vw,860px)] overflow-hidden rounded-r-xl rounded-l-sm border border-slate-200 bg-[#f8fafc]"
+                    className={`relative overflow-hidden rounded-r-xl rounded-l-sm border border-slate-200 bg-[#f8fafc] ${
+                      keng ? "w-[min(97vw,1480px)]" : "w-[min(90vw,860px)]"
+                    }`}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.35 }}
@@ -177,11 +185,11 @@ export default function BookCard({
                       className="absolute inset-y-0 left-0 w-6"
                       style={{ background: "linear-gradient(90deg, rgba(15,23,42,.12), transparent)" }}
                     />
-                    <div className="max-h-[74vh] overflow-auto p-6 md:p-8">
+                    <div className={`overflow-auto p-6 md:p-8 ${keng ? "max-h-[88vh]" : "max-h-[74vh]"}`}>
                       <div className="mb-5 flex items-start justify-between gap-4">
                         <div>
                           <p className="text-[10px] uppercase tracking-[0.32em] font-semibold" style={{ color: accent }}>
-                            Yo D-26
+                            {label}
                           </p>
                           <h3 className="mt-2 text-xl font-semibold text-slate-900">{title}</h3>
                         </div>
@@ -211,7 +219,7 @@ export default function BookCard({
                     <div className="flex h-full flex-col justify-between p-6">
                       <div>
                         <p className="text-[10px] uppercase tracking-[0.32em]" style={{ color: accent }}>
-                          Yo D-26
+                          {label}
                         </p>
                         <h3 className="mt-3 text-[19px] font-semibold leading-snug text-white">{title}</h3>
                       </div>
