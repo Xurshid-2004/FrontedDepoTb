@@ -14,8 +14,16 @@
 
 import type { DB } from "./types";
 
-/** Django manzili. Boʻsh boʻlsa — shu domendan (Caddy /api ni proxy qiladi). */
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
+/** Django manzili. Boʻsh boʻlsa — shu domendan (Caddy yoki Vercel rewrite
+ *  soʻrovni Django'ga uzatadi).
+ *
+ *  Vercel'da NEXT_PUBLIC_API_BASE ataylab eʼtiborsiz qoldiriladi: panelda
+ *  u eski, oʻchirilgan servis manziliga sozlangan qolib ketgan va soʻrovlar
+ *  oʻsha yerga ketib 503 qaytarardi. U yerda manzil boʻsh boʻlishi kerak —
+ *  qolganini next.config.mjs dagi rewrite hal qiladi. */
+export const API_BASE = process.env.NEXT_PUBLIC_API_PROXY
+  ? ""
+  : (process.env.NEXT_PUBLIC_API_BASE ?? "");
 
 const PREFIX = "/api/v1";
 const AKEY = "tb_access";

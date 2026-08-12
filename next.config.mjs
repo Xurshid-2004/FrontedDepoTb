@@ -10,6 +10,23 @@ const nextConfig = {
   },
   serverExternalPackages: ["pdf-lib", "@pdf-lib/fontkit"],
 
+  // Vercel'da API manzili panel oʻzgaruvchisidan EMAS, quyidagi rewrite
+  // orqali aniqlanadi.
+  //
+  // Sabab: panelda NEXT_PUBLIC_API_BASE eski servis manziliga sozlangan
+  // qolib ketgan edi (tb-api-production-a420) — u endi oʻchirilgan va
+  // 503/429 qaytaradi. Brauzer soʻrovlari oʻsha yerga ketgani uchun
+  // kirish ishlamasdi. Panel oʻzgaruvchisi build'ga yozilib qolgani
+  // uchun rewrite ham chetlab oʻtilardi: lib/api.ts manzil boʻsh
+  // boʻlmasa toʻliq URL ishlatadi.
+  //
+  // Bu bayroq lib/api.ts ga manzilni boʻsh qoldirishni aytadi: soʻrov
+  // shu domendan ketadi va rewrite uni Django'ga uzatadi. Backend
+  // manzilini oʻzgartirish kerak boʻlsa — BACKEND_URL (rewrite manbasi).
+  env: {
+    NEXT_PUBLIC_API_PROXY: process.env.VERCEL ? "1" : "",
+  },
+
   // Vercel'da frontend va Django alohida domenlarda turadi. Brauzer
   // soʻrovni shu domenga yuboradi, Vercel esa uni Django'ga uzatadi —
   // shunda NEXT_PUBLIC_API_BASE ni sozlash shart emas (u build vaqtida
