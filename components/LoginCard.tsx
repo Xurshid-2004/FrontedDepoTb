@@ -16,7 +16,7 @@
    yaʼni admin qoʻshgan yoki ommaviy import qilgan ishchi.
 ------------------------------------------------------------------ */
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import Locomotive from "./Locomotive";
 import PinPad from "./PinPad";
@@ -51,6 +51,13 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
   const [faceBand, setFaceBand] = useState(false);
 
   const canSubmit = stage === "form" && !tekshirmoqda && tabel.trim().length >= 3;
+
+  /** Xato chiqqanda uni koʻrinadigan joyga surib qoʻyamiz — past
+      ekranda karta ichidagi scroll uni yashirib qoʻymasin. */
+  const xatoRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (err) xatoRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [err]);
 
   const boshdan = (m: Mode) => {
     setMode(m);
@@ -180,7 +187,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
   const royxat = mode === "register";
 
   return (
-    <TouchRipple className="relative w-full max-w-[980px] rounded-[28px]">
+    <TouchRipple className="relative w-full max-w-[1120px] rounded-[28px]">
       <div className="glass-strong relative w-full overflow-hidden rounded-[28px]">
         {/* diagonal koʻk panel — login/registratsiya almashganda sirgʻaladi */}
         <motion.div
@@ -208,7 +215,10 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
             scroll boʻlmaydi. Balandlik shu yerda cheklanadi, mazmun esa
             ichkarida moslashadi (kamera qolgan joyni egallab, kerak
             boʻlsa kichrayadi). */}
-        <div className="relative grid h-[min(680px,calc(100dvh-7rem))] overflow-hidden md:grid-cols-2">
+        {/* Balandlik: ekranga sigʻadi, ammo avvalgidan kengroq — mazmun
+            (xato xabari, «Hisobingiz yoʻqmi?», xavfsizlik eslatmasi)
+            koʻrinmas qismga tushib qolmasin. */}
+        <div className="relative grid h-[min(760px,calc(100dvh-4rem))] overflow-hidden md:grid-cols-2">
           {/* CHAP: forma */}
           <motion.div
             className="order-2 flex flex-col px-7 py-6 md:order-1 md:px-11 md:py-7"
@@ -279,16 +289,24 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                     />
                   </div>
 
+                  {/* Xato AYNAN maydon ostida — tugmadan pastda boʻlsa,
+                      past ekranda kartaning koʻrinmas qismiga tushib
+                      qolardi va foydalanuvchi «hech narsa boʻlmadi» deb
+                      oʻylardi. */}
+                  {err && (
+                    <div ref={xatoRef}>
+                      <Xabar turi="err">{err}</Xabar>
+                    </div>
+                  )}
+
                   <button
                     type="button"
                     disabled={!canSubmit}
                     onClick={submit}
-                    className="relative mt-8 flex h-12 w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#1b6fe0] to-[#38bdf8] font-semibold text-slate-900 disabled:cursor-not-allowed disabled:opacity-35"
+                    className="relative mt-6 flex h-12 w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#1b6fe0] to-[#38bdf8] font-semibold text-slate-900 disabled:cursor-not-allowed disabled:opacity-35"
                   >
                     {tekshirmoqda ? "Tekshirilmoqda…" : "Davom etish"}
                   </button>
-
-                  {err && <Xabar turi="err">{err}</Xabar>}
 
                   {/* Rejimni almashtirish — koʻzga tashlanadigan qilib ajratilgan */}
                   <div className="mt-7 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3.5 text-center">
