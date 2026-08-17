@@ -24,7 +24,16 @@ import type { DB, Signature, Worker } from "@/lib/types";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const DJANGO = process.env.DJANGO_URL ?? process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8000";
+/* Django manzili. Bu marshrut brauzerdan emas, Vercel serveridan chaqiriladi
+   — shuning uchun rewrite oʻrniga toʻliq manzil kerak.
+
+   Zaxira qiymat next.config.mjs dagi rewrite manzili bilan BIR XIL boʻlishi
+   kerak: sahifalar va hujjat generatori bitta backend'ni koʻrsin. Lokal
+   ishlaganda VERCEL boʻsh — oʻz kompyuteringizdagi Django ishlatiladi. */
+const DJANGO =
+  process.env.DJANGO_URL ||
+  process.env.BACKEND_URL ||
+  (process.env.VERCEL ? "https://164.92.205.84.sslip.io" : "http://127.0.0.1:8000");
 
 const xato = (matn: string, kod = 400) =>
   Response.json({ error: matn }, { status: kod });

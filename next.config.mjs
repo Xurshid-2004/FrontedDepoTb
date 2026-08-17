@@ -39,10 +39,18 @@ const nextConfig = {
   //
   // Faqat /api/v1/* uzatiladi — /api/documents/* Next.js'ning oʻz
   // marshruti (PDF yigʻadi) va u joyida qolishi kerak.
+  // Zaxira manzil — Vercel panelida BACKEND_URL sozlanmagan boʻlsa ishlatiladi.
+  // Backend DigitalOcean Droplet'da (Frankfurt), Postgres va HTTPS shu
+  // serverning oʻzida. sslip.io IP'ni domenga aylantiradi — shuning uchun
+  // Let's Encrypt sertifikat bera oladi va domen sotib olish shart emas.
+  //
+  // Bu qiymat app/api/documents/[turi]/[id]/route.ts dagi zaxira bilan
+  // BIR XIL boʻlishi kerak — sahifalar va hujjat generatori ayni bitta
+  // backend'ga murojaat qilishi uchun.
   async rewrites() {
     const backend =
       process.env.BACKEND_URL ||
-      (process.env.VERCEL ? "https://bacenddepotb-production.up.railway.app" : "");
+      (process.env.VERCEL ? "https://164.92.205.84.sslip.io" : "");
 
     if (!backend) return [];
 
