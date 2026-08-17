@@ -176,7 +176,11 @@ export default function FaceCapture({
       ) : (
         // flex-1 + min-h-0: kamera qolgan joyni egallaydi va kerak boʻlsa
         // kichrayadi — shuning uchun karta hech qachon scroll'ga tushmaydi
-        <div className="relative mx-auto mt-3 w-full min-h-[150px] max-w-[300px] flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-slate-900">
+        /* Telefonda karta balandligi mazmunga qarab oʻlchanadi — bu yerda
+           `flex-1` choʻzilmaydi va oyna eng kichik oʻlchamida qolardi.
+           240 px yuzni joylashtirish uchun yetarli eng kichik oʻlcham.
+           Katta ekranda avvalgidek: kamera boʻsh joyni egallaydi. */
+        <div className="relative mx-auto mt-3 min-h-[240px] w-full max-w-[300px] flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 md:min-h-[150px]">
           <video
             ref={videoRef}
             playsInline

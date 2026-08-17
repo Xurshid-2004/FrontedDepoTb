@@ -68,7 +68,7 @@ export default function Arizalar() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Raqam, F.I.Sh. yoki tabel"
-              className="h-10 w-[220px]"
+              className="h-11 w-full sm:h-10 sm:w-[220px]"
             />
             {!isApprover && (
               <Link href="/ishchi"><Btn variant="primary">+ Ariza yuborish</Btn></Link>

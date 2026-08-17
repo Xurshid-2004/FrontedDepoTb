@@ -55,10 +55,10 @@ export default function KipPage() {
       <PageHead
         title="KIP — Mashinist yoʻriqchisi kabineti"
         sub={`Menga biriktirilgan ${mine.length} ta mashinist va yordamchi. KIP: liniya/stansiya, sana, muddat (oy) va QR imzo.`}
-        right={<Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="F.I.Sh., tabel, kolonna" className="h-10 w-[250px]" />}
+        right={<Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="F.I.Sh., tabel, kolonna" className="h-11 w-full sm:h-10 sm:w-[250px]" />}
       />
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {buckets.map((b) => (
           <Stat key={b.q} label={`${b.q}-qism · ${b.l}`} value={b.rows.length} color={b.c} />
         ))}

@@ -48,10 +48,12 @@ export default function DownloadButton({
         onClick={() => (s === "idle" ? setS("loading") : s === "done" ? reset() : null)}
         layout
         transition={{ type: "spring", stiffness: 320, damping: 28 }}
-        className={`relative grid h-12 place-items-center overflow-hidden rounded-full border font-semibold ${
+        /* Ranglar oq fon uchun. Ilgari ular toʻq mavzudan qolgan edi
+           (och havorang matn) va oq kartada deyarli koʻrinmasdi. */
+        className={`relative grid h-12 max-w-full place-items-center overflow-hidden rounded-full border font-semibold ${
           s === "done"
-            ? "border-emerald-400/70 bg-emerald-400/10 text-emerald-300"
-            : "border-sky-400/60 bg-sky-400/10 text-sky-200"
+            ? "border-emerald-400 bg-emerald-50 text-emerald-700"
+            : "border-sky-400 bg-sky-50 text-sky-700"
         }`}
         style={{ width: s === "loading" ? 48 : 184 }}
       >

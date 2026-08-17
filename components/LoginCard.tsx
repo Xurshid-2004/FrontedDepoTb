@@ -22,6 +22,7 @@ import Locomotive from "./Locomotive";
 import PinPad from "./PinPad";
 import FaceCapture from "./FaceCapture";
 import { TouchRipple } from "./Fx";
+import { useIsMobile } from "./ui";
 import { useStore } from "@/lib/store";
 import { api, ApiError, type TabelHolat } from "@/lib/api";
 
@@ -42,6 +43,13 @@ const EASE = [0.76, 0, 0.24, 1] as const;
 
 export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
   const { login, faceLogin, register } = useStore();
+
+  /* Telefonda karta bitta ustun boʻladi. Login va roʻyxat oqimlari
+     orasidagi «sirgʻalish» animatsiyasi ikki ustunli maket uchun
+     oʻylangan: bitta ustunda u mazmunni ekrandan chiqarib yuboradi va
+     ekran boʻsh qolib koʻrinadi. Shuning uchun kichik ekranda surish
+     oʻchiriladi — bosqichlar oddiy almashadi. */
+  const mobil = useIsMobile();
 
   const [mode, setMode] = useState<Mode>("login");
   const [stage, setStage] = useState<Stage>("form");
@@ -115,8 +123,22 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
           setStage("pin");
           return;
         }
-        // Yuz sozlangan boʻlsa avval Face ID, boʻlmasa toʻgʻridan PIN
-        setStage(r.faceBor && r.faceYoqilgan ? "face" : "pin");
+        // Tartib: tabel → Face ID → PIN.
+        //
+        // Yuz tanish xizmati yoqilgan boʻlsa DOIM avval Face ID soʻraladi.
+        // Ilgari bu qadam faqat yuzi allaqachon qayd etilgan xodimga
+        // koʻrsatilardi (`faceBor`), qolganlar toʻgʻridan-toʻgʻri PIN'ga
+        // tushardi va Face ID borligini bilmasdi ham.
+        //
+        // Yuzi yoʻq xodim uchun server darrov «bu hisob uchun sozlanmagan»
+        // deb javob beradi — u holda kutib turmasdan PIN'ga oʻtiladi
+        // (`yuzOlindi`ga qarang), soʻng kirgach Face ID qayd etish
+        // taklif qilinadi.
+        //
+        // Xizmat umuman sozlanmagan boʻlsa (`faceYoqilgan: false` —
+        // serverda FACE_SERVICE_URL yoʻq) kamera ochilmaydi: u yerda
+        // solishtirish uchun hech narsa yoʻq va bu faqat vaqt oladi.
+        setStage(r.faceYoqilgan ? "face" : "pin");
         return;
       }
 
@@ -160,6 +182,24 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
         onAuthed();
         return;
       }
+
+      // Qayta urinishning maʼnosi bormi?
+      //
+      // Yoʻq — agar bu hisobda saqlangan yuz boʻlmasa (401) yoki yuz
+      // tanish xizmati javob bermayotgan boʻlsa (503). Bunday holatda
+      // kamera yana ikki marta urinib, xodimni 10 soniya kutdirardi va
+      // baribir shu natijani berardi. Shuning uchun darrov 3-bosqichga —
+      // PIN'ga oʻtamiz va sababni aytamiz.
+      const foydasiz = r.status === 503 || (r.status === 401 && !holat?.faceBor);
+      if (foydasiz) {
+        setInfo(r.xato ?? "Yuz bilan kirib boʻlmadi — PIN bilan kiring");
+        setFaceErr("");
+        setStage("pin");
+        return;
+      }
+
+      // Ha — yuz qayd etilgan, ammo mos kelmadi (yorugʻlik, burchak).
+      // FaceCapture oʻzi yana urinadi, soʻng qoʻlda boshqaruvni beradi.
       setFaceErr(r.xato ?? "Yuz mos kelmadi");
     } finally {
       setFaceBand(false);
@@ -259,15 +299,20 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
         {/* Balandlik: ekranga sigʻadi, ammo avvalgidan kengroq — mazmun
             (xato xabari, «Hisobingiz yoʻqmi?», xavfsizlik eslatmasi)
             koʻrinmas qismga tushib qolmasin. */}
-        <div className="relative grid h-[min(760px,calc(100dvh-4rem))] overflow-hidden md:grid-cols-2">
+        {/* Telefonda: yuqorida ixcham koʻk sarlavha, ostida forma
+            (`auto` + `1fr` — forma qolgan joyni egallaydi va kerak
+            boʻlsa oʻz ichida suriladi). Balandlik ekranga qarab
+            hisoblanadi, pastdagi © yozuvi uchun ham joy qoladi.
+            Katta ekranda: avvalgidek ikki ustun. */}
+        <div className="relative grid max-h-[min(760px,calc(100dvh-5.5rem))] grid-rows-[auto_minmax(0,1fr)] overflow-hidden md:h-[min(760px,calc(100dvh-4rem))] md:max-h-none md:grid-cols-2 md:grid-rows-none">
           {/* CHAP: forma */}
           <motion.div
-            className="order-2 flex flex-col px-7 py-6 md:order-1 md:px-11 md:py-7"
-            animate={{ x: royxat ? "100%" : 0, opacity: 1 }}
+            className="order-2 flex min-h-0 flex-col px-5 py-4 md:order-1 md:px-11 md:py-7"
+            animate={{ x: mobil ? 0 : royxat ? "100%" : 0, opacity: 1 }}
             transition={{ duration: 0.85, ease: EASE }}
           >
             {/* --- tashkilot sarlavhasi --- */}
-            <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
+            <div className="flex items-center gap-3 border-b border-slate-200 pb-3 md:pb-4">
               <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#1b6fe0] to-[#38bdf8] text-[14px] font-black text-white">
                 TB
               </span>
@@ -301,19 +346,21 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.25 }}
                 >
-                  <p className="text-[11px] uppercase tracking-[0.35em] text-sky-700">
+                  {/* Harflar orasi telefonda kichraytirildi — 0.35em bilan
+                      bu satr ikkiga boʻlinib, ortiqcha joy egallardi */}
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-sky-700 md:text-[11px] md:tracking-[0.35em]">
                     TCH-6 · Buxoro lokomotiv deposi
                   </p>
-                  <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
+                  <h1 className="mt-2 text-[25px] font-bold tracking-tight text-slate-900 md:mt-3 md:text-3xl">
                     {royxat ? "Roʻyxatdan oʻtish" : "Tizimga kirish"}
                   </h1>
-                  <p className="mt-2 text-sm text-slate-500">
+                  <p className="mt-1.5 text-[13px] text-slate-500 md:mt-2 md:text-sm">
                     {royxat
                       ? "Tabel raqamingiz kadrlar bazasi bilan solishtiriladi"
                       : "Tabel raqamingizni kiriting"}
                   </p>
 
-                  <div className="mt-8">
+                  <div className="mt-5 md:mt-8">
                     <Field
                       label="Tabel raqami"
                       value={tabel}
@@ -344,13 +391,15 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                     type="button"
                     disabled={!canSubmit}
                     onClick={submit}
-                    className="relative mt-6 flex h-12 w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#1b6fe0] to-[#38bdf8] font-semibold text-slate-900 disabled:cursor-not-allowed disabled:opacity-35"
+                    /* Matn oq rangda: koʻk gradient ustida toʻq matn
+                       oʻqilmasdi va tugma «oʻchiq» boʻlib koʻrinardi */
+                    className="relative mt-5 flex h-12 w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#1b6fe0] to-[#38bdf8] font-semibold text-white shadow-[0_10px_30px_-12px_rgba(56,189,248,.9)] transition active:scale-[.99] disabled:cursor-not-allowed disabled:opacity-35 md:mt-6"
                   >
                     {tekshirmoqda ? "Tekshirilmoqda…" : "Davom etish"}
                   </button>
 
                   {/* Rejimni almashtirish — koʻzga tashlanadigan qilib ajratilgan */}
-                  <div className="mt-7 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3.5 text-center">
+                  <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-center md:mt-7 md:py-3.5">
                     <p className="text-[14px] font-medium text-slate-700">
                       {royxat ? "Hisobingiz bormi?" : "Hisobingiz yoʻqmi?"}
                     </p>
@@ -476,7 +525,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
             </div>
 
             {/* --- xavfsizlik eslatmasi --- */}
-            <div className="mt-6 border-t border-slate-200 pt-3.5">
+            <div className="mt-4 shrink-0 border-t border-slate-200 pt-3 md:mt-6 md:pt-3.5">
               <p className="flex items-center justify-center gap-1.5 text-[11px] text-slate-500">
                 <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0" aria-hidden>
                   <path
@@ -497,31 +546,48 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
             </div>
           </motion.div>
 
-          {/* OʻNG: mascot */}
+          {/* OʻNG: mascot.
+              Telefonda lokomotiv koʻrsatilmaydi — u ekranning yarmini
+              egallardi, rasm foni esa oq (shaffof emas) boʻlgani uchun
+              koʻk kartada oq toʻrtburchak boʻlib chiqardi. Uning oʻrniga
+              ixcham koʻk sarlavha: matn oʻsha-oʻsha, ammo oʻqiladi
+              (ilgari oq matn oq karta ustida koʻrinmasdi) va joy 5 barobar
+              kam ketadi. Katta ekranda hammasi avvalgidek. */}
           <motion.div
-            className="order-1 flex flex-col items-center justify-center px-7 py-6 md:order-2 md:py-10"
-            animate={{ x: royxat ? "-100%" : 0 }}
+            className="order-1 flex items-center gap-4 bg-[linear-gradient(135deg,#1c5c9e_0%,#2f8ff0_58%,#4a9fd8_100%)] px-5 py-3.5 md:order-2 md:flex-col md:justify-center md:gap-0 md:bg-none md:px-7 md:py-10"
+            animate={{ x: mobil ? 0 : royxat ? "-100%" : 0 }}
             transition={{ duration: 0.85, ease: EASE }}
           >
-            <div className="origin-center scale-[0.68] md:scale-100">
+            <div className="hidden md:block">
               <Locomotive blind={blind || stage === "pin"} size={220} />
             </div>
-            <p className="mt-3 max-w-[280px] text-center text-lg font-semibold text-white md:mt-6">
-              {stage === "pin"
-                ? "Faralar oʻchdi — kodingizni koʻrmayapman"
-                : stage === "face"
-                  ? "Kameraga tabassum qiling"
-                  : royxat
-                    ? "Yangi ishchimisiz?"
-                    : "Xush kelibsiz!"}
-            </p>
-            <p className="mt-2 max-w-[300px] text-center text-[13px] text-white/80">
-              {stage === "pin"
-                ? "PIN shifrlangan holda saqlanadi — hech kim koʻra olmaydi"
-                : stage === "face"
-                  ? "Surat emas, faqat raqamli belgi saqlanadi"
-                  : "Texnika xavfsizligi va omborxona — bitta tizimda"}
-            </p>
+
+            {/* Telefondagi ixcham belgi — lokomotiv oʻrnida */}
+            <span
+              aria-hidden
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-white/20 text-[14px] font-black text-white ring-1 ring-white/40 md:hidden"
+            >
+              TB
+            </span>
+
+            <div className="min-w-0 md:mt-6 md:flex md:flex-col md:items-center">
+              <p className="text-[14.5px] font-semibold leading-snug text-white md:max-w-[280px] md:text-center md:text-lg">
+                {stage === "pin"
+                  ? "Faralar oʻchdi — kodingizni koʻrmayapman"
+                  : stage === "face"
+                    ? "Kameraga tabassum qiling"
+                    : royxat
+                      ? "Yangi ishchimisiz?"
+                      : "Xush kelibsiz!"}
+              </p>
+              <p className="mt-0.5 text-[11.5px] leading-snug text-white/85 md:mt-2 md:max-w-[300px] md:text-center md:text-[13px]">
+                {stage === "pin"
+                  ? "PIN shifrlangan holda saqlanadi — hech kim koʻra olmaydi"
+                  : stage === "face"
+                    ? "Surat emas, faqat raqamli belgi saqlanadi"
+                    : "Texnika xavfsizligi va omborxona — bitta tizimda"}
+              </p>
+            </div>
           </motion.div>
         </div>
       </div>
@@ -543,11 +609,9 @@ function Qadamlar({
 }) {
   // Roʻyxatdan oʻtishda tartib: tabel → PIN → (ixtiyoriy) Face ID.
   //
-  // Kirishda tartib serverning javobiga qarab oʻzgaradi. Avval bu roʻyxat
-  // qatʼiy [tabel → Face ID → PIN] edi va yuz tanish oʻtkazib yuborilganda
-  // ham «Shaxsni tasdiqlash» bajarilgan qadam sifatida koʻk boʻlib turardi —
-  // aslida u bosqich umuman boʻlmagan. Endi faqat haqiqatda boʻladigan
-  // qadamlar chiziladi.
+  // Kirishda: tabel → Face ID → PIN. Yuz tanish xizmati serverda
+  // sozlanmagan boʻlsa Face ID qadami umuman chizilmaydi — boʻlmaydigan
+  // bosqichni koʻrsatish chalgʻitadi.
   let qadam: { k: Stage; l: string }[];
   if (royxat) {
     qadam = [
@@ -555,19 +619,16 @@ function Qadamlar({
       { k: "pin", l: "PIN parol yaratish" },
       { k: "face", l: "Face ID (ixtiyoriy)" },
     ];
-  } else if (holat?.faceYoqilgan && holat.faceBor) {
-    // Yuz qayd etilgan — kirish yuz bilan boshlanadi, PIN zaxira
-    qadam = [
-      { k: "form", l: "Tabel raqami" },
-      { k: "face", l: "Shaxsni tasdiqlash" },
-      { k: "pin", l: "Kirish" },
-    ];
   } else if (holat?.faceYoqilgan) {
-    // Yuz hali yoʻq — PIN bilan kiriladi, soʻng Face ID taklif qilinadi
+    // Yuz tanish yoqilgan — tartib doim bir xil:
+    // tabel → Face ID → PIN (zaxira yoʻl).
+    //
+    // Yuzi hali qayd etilmagan xodim ham shu chiziqni koʻradi: u Face ID
+    // bosqichidan oʻtolmaydi va 3-bosqichga — PIN'ga tushadi.
     qadam = [
       { k: "form", l: "Tabel raqami" },
-      { k: "pin", l: "Kirish" },
-      { k: "face-setup", l: "Face ID (ixtiyoriy)" },
+      { k: "face", l: "Face ID" },
+      { k: "pin", l: "PIN bilan kirish" },
     ];
   } else {
     // Yuz tanish oʻchiq — faqat PIN
@@ -576,10 +637,13 @@ function Qadamlar({
       { k: "pin", l: "Kirish" },
     ];
   }
-  const n = qadam.findIndex((q) => q.k === joriy);
+  // `face-setup` — kirgandan KEYINGI ixtiyoriy qadam, roʻyxatda yoʻq.
+  // Unda barcha bosqichlar bajarilgan deb koʻrsatiladi, aks holda
+  // chiziq boʻshab qolardi (findIndex -1 qaytaradi).
+  const n = joriy === "face-setup" ? qadam.length : qadam.findIndex((q) => q.k === joriy);
 
   return (
-    <ol className="flex items-center gap-1.5 py-4" aria-label="Kirish bosqichlari">
+    <ol className="flex items-center gap-1.5 py-3 md:py-4" aria-label="Kirish bosqichlari">
       {qadam.map((q, i) => {
         const otgan = i < n;
         const faol = i === n;

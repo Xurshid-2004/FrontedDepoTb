@@ -135,19 +135,26 @@ export default function Hisobot() {
       />
 
       <Panel className="mb-6">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Field label="Hisobot turi">
-            <Select value={kind} onChange={(e) => setKind(e.target.value as Kind)}>
-              {KINDS.map((k) => <option key={k.k} value={k.k}>{k.l}</option>)}
-            </Select>
-          </Field>
+        {/* Telefonda: hisobot turi butun enda (nomlari uzun — yarim
+            ustunga sigʻmay qirqilardi), ikkita sana yonma-yon, tugma
+            esa pastda toʻliq enda. Katta ekranda avvalgidek — bir qator. */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          <div className="col-span-2 lg:col-span-1">
+            <Field label="Hisobot turi">
+              <Select value={kind} onChange={(e) => setKind(e.target.value as Kind)}>
+                {KINDS.map((k) => <option key={k.k} value={k.k}>{k.l}</option>)}
+              </Select>
+            </Field>
+          </div>
           <Field label="Sanadan">
             <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
           </Field>
           <Field label="Sanagacha">
             <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           </Field>
-          <div className="flex items-end"><DownloadButton /></div>
+          <div className="col-span-2 flex items-end lg:col-span-1">
+            <DownloadButton />
+          </div>
         </div>
       </Panel>
 

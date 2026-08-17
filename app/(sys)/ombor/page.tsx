@@ -35,13 +35,13 @@ export default function Ombor() {
         sub="Maxsus kiyim, poyabzal va shaxsiy himoya vositalari qoldigʻi, kirim-chiqim harakati"
         right={
           <>
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buyum yoki kod" className="h-10 w-[220px]" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buyum yoki kod" className="h-11 w-full sm:h-10 sm:w-[220px]" />
             {can("stock.write") && <Btn variant="primary" onClick={() => setKirim(true)}>+ Kirim</Btn>}
           </>
         }
       />
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <Stat label="Buyum turlari" value={db.items.length} />
         <Stat label="Jami qoldiq" value={rows.reduce((a, x) => a + x.st.qoldiq, 0)} color="#f2b544" />
         <Stat label="Kam qolgan (< 30)" value={kam} color={kam ? "#ef4444" : "#22c55e"} />

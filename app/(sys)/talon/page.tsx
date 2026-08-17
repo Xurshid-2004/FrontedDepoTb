@@ -38,10 +38,10 @@ export default function TalonPage() {
       <PageHead
         title="Talonlar va TB imtixoni"
         sub="Guvohnoma ichidagi 1/2/3-sonli ogohlantirish talonlari. TB xodimi tizim ichida oladi yoki qaytarib beradi."
-        right={<Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="F.I.Sh. yoki tabel" className="h-10 w-[250px]" />}
+        right={<Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="F.I.Sh. yoki tabel" className="h-11 w-full sm:h-10 sm:w-[250px]" />}
       />
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <Stat label="Olingan talonlar" value={olingan} color={olingan ? "#ef4444" : "#22c55e"} />
         <Stat label="Imtixon muddati yaqin (10 kun)" value={examYaqin} color="#f59e0b" />
         <Stat label="Imtixon muddati oʻtgan" value={examOtgan} color="#ef4444" />
@@ -73,11 +73,14 @@ export default function TalonPage() {
                         <button
                           disabled={!can("talon.write")}
                           onClick={() => setAct({ wid: w.id, raqam: r, olingan: on })}
-                          className="rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition disabled:cursor-default"
+                          /* Telefonda balandlik oshirildi — 31 px'lik
+                             tugmaga barmoq bilan aniq tegish qiyin */
+                          className="rounded-lg border px-3 py-2.5 text-[11.5px] font-semibold transition disabled:cursor-default sm:px-2.5 sm:py-1.5 sm:text-[11px]"
                           style={{
                             borderColor: on ? "#ef444466" : `${C[r]}55`,
                             background: on ? "rgba(239,68,68,.12)" : `${C[r]}12`,
-                            color: on ? "#fca5a5" : C[r],
+                            /* Oq fonda och-pushti yozuv oʻqilmasdi */
+                            color: on ? "#b91c1c" : C[r],
                           }}
                         >
                           {on ? "olingan" : "joyida"}

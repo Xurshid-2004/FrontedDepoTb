@@ -167,7 +167,10 @@ export default function PinPad({
             <button
               type="button"
               onClick={reset}
-              className="mt-6 rounded-lg px-3 py-1.5 text-[12.5px] text-slate-500 transition hover:bg-slate-100 hover:text-sky-700"
+              /* Balandligi barmoq uchun yetarli (44 px) — 31 px'lik
+                 tugmaga tegish qiyin edi, ayniqsa PIN xato terilganda
+                 shoshib bosishadi. */
+              className="mt-5 min-h-[44px] rounded-lg px-4 py-2.5 text-[12.5px] text-slate-500 transition hover:bg-slate-100 hover:text-sky-700 md:mt-6"
             >
               Kodni tozalash
             </button>

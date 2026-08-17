@@ -60,8 +60,15 @@ type Ctx = {
   canFeature: (f: FeatureKey) => boolean;
 
   login: (tabel: string, pin: string) => Promise<"ok" | "pin" | "xato">;
-  /** Yuz bilan kirish — mos kelmasa {ok:false} qaytadi va PIN'ga oʻtiladi */
-  faceLogin: (tabel: string, frames: string[]) => Promise<{ ok: boolean; xato?: string }>;
+  /** Yuz bilan kirish — mos kelmasa {ok:false} qaytadi va PIN'ga oʻtiladi.
+   *
+   *  `status` — serverning javob kodi. U orqali «yuz mos kelmadi» (401,
+   *  qayta urinish maʼnoli) bilan «bu hisobda yuz yoʻq / xizmat ishlamayapti»
+   *  (qayta urinish befoyda) holatlari ajratiladi. */
+  faceLogin: (
+    tabel: string,
+    frames: string[]
+  ) => Promise<{ ok: boolean; xato?: string; status?: number }>;
   /** Roʻyxatdan oʻtish — frames boʻsh boʻlsa faqat PIN bilan */
   register: (
     tabel: string,
@@ -283,7 +290,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {
       // Yuz mos kelmasa bu ODATIY holat — chaqiruvchi PIN'ga oʻtadi,
       // shuning uchun global xatoga yozilmaydi.
-      return { ok: false, xato: e instanceof ApiError ? e.message : "Yuz tekshirilmadi" };
+      return {
+        ok: false,
+        xato: e instanceof ApiError ? e.message : "Yuz tekshirilmadi",
+        status: e instanceof ApiError ? e.status : undefined,
+      };
     }
   }, [kirdi]);
 

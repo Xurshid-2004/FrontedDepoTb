@@ -32,10 +32,14 @@ function nextKirishVideo(): string {
 const FALLBACK_TOTAL = 11000; // metadata kelmasa — zaxira davomiylik (ms)
 const FLASH_AT = 0.94;
 
-type Mode = "checking" | "video" | "fallback";
+type Mode = "video" | "fallback";
 
 export default function TrainIntro({ onFinish }: { onFinish: () => void }) {
-  const [mode, setMode] = useState<Mode>("checking");
+  // Video darrov mount qilinadi — mavjudligini oldindan tekshirmaymiz, chunki
+  // tekshiruv so'rovi tugamaguncha brauzer videoni yuklashni boshlay olmaydi.
+  // Fayl yo'q bo'lsa <video onError> baribir fallback'ga o'tkazadi.
+  const [mode, setMode] = useState<Mode>("video");
+  const [started, setStarted] = useState(false);
   const [t, setT] = useState(0);
   const vref = useRef<HTMLVideoElement | null>(null);
   const totalRef = useRef(FALLBACK_TOTAL);
@@ -49,31 +53,22 @@ export default function TrainIntro({ onFinish }: { onFinish: () => void }) {
     onFinish();
   };
 
+  // Mount bo'lishi bilan o'ynatishni boshlaymiz (autoPlay'ga qo'shimcha zaxira).
   useEffect(() => {
-    let alive = true;
-    fetch(V, { method: "HEAD" })
-      .then((r) => alive && setMode(r.ok ? "video" : "fallback"))
-      .catch(() => alive && setMode("fallback"));
-    return () => {
-      alive = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const el = vref.current;
+    if (!el) return;
+    el.muted = true;
+    el.defaultMuted = true;
+    el.playbackRate = 1.0;
+    el.play().catch(() => setTimeout(() => el.play().catch(() => {}), 150));
   }, []);
 
+  // Kinematik taymer video haqiqatan oqishni boshlagach ishga tushadi —
+  // aks holda bufer paytida animatsiya videodan oldinga ketib qolardi.
   useEffect(() => {
-    if (mode !== "video") return;
+    if (mode !== "video" || !started) return;
     const start = performance.now();
     let raf = 0;
-
-    const el = vref.current;
-    if (el) {
-      el.muted = true;
-      el.defaultMuted = true;
-      el.currentTime = 0;
-      el.playbackRate = 1.0;
-      if (el.duration && isFinite(el.duration)) totalRef.current = el.duration * 1000;
-      el.play().catch(() => setTimeout(() => el.play().catch(() => {}), 150));
-    }
 
     const tick = (now: number) => {
       const k = Math.min((now - start) / totalRef.current, 1);
@@ -84,15 +79,7 @@ export default function TrainIntro({ onFinish }: { onFinish: () => void }) {
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode]);
-
-  if (mode === "checking") {
-    return (
-      <div className="fixed inset-0 z-[70] grid place-items-center bg-[#eef2f7]">
-        <div className="h-9 w-9 animate-spin rounded-full border-2 border-sky-200 border-t-sky-600" />
-      </div>
-    );
-  }
+  }, [mode, started]);
 
   if (mode === "fallback") return <TrainScene onFinish={onFinish} />;
 
@@ -111,10 +98,12 @@ export default function TrainIntro({ onFinish }: { onFinish: () => void }) {
       <video
         ref={vref}
         src={V}
+        autoPlay
         muted
         playsInline
         preload="auto"
         poster="/poster.jpg"
+        onPlaying={() => setStarted(true)}
         onEnded={finish}
         onError={() => setMode("fallback")}
         onLoadedMetadata={(e) => {

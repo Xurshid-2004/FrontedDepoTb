@@ -148,12 +148,17 @@ export default function Admin() {
         }
       />
 
-      <div className="mb-6 flex flex-wrap gap-2">
+      {/* Boʻlimlar chizigʻi.
+          Telefonda 9 ta tugma uch qatorga yoyilib, ekranning uchdan
+          birini egallardi. Endi ular bitta qatorda turadi va barmoq
+          bilan yon tomonga suriladi (scroll chizigʻi koʻrinmaydi).
+          Katta ekranda avvalgidek — hammasi bir vaqtda koʻrinadi. */}
+      <div className="no-scrollbar -mx-4 mb-5 flex gap-2 overflow-x-auto px-4 md:mx-0 md:mb-6 md:flex-wrap md:overflow-visible md:px-0">
         {TABS.map((x) => (
           <button
             key={x.k}
             onClick={() => setTab(x.k)}
-            className={`rounded-full px-4 py-2 text-[12.5px] font-medium transition ${
+            className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2.5 text-[12.5px] font-medium transition md:py-2 ${
               tab === x.k
                 ? "bg-sky-100 text-sky-700 ring-1 ring-sky-500"
                 : "border border-slate-200 text-slate-500 hover:text-slate-900"
@@ -167,7 +172,7 @@ export default function Admin() {
       {/* ===================== ISHCHILAR ===================== */}
       {tab === "ishchilar" && (
         <>
-          <div className="mb-5 grid gap-4 sm:grid-cols-4">
+          <div className="mb-5 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             <Stat label="Jami ishchi" value={db.workers.length} />
             <Stat label="Faol" value={db.workers.filter((w) => w.faol).length} color="#22c55e" />
             <Stat label="Lavozimlar" value={activePos.length} color="#a78bfa" />

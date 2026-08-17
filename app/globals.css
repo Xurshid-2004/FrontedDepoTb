@@ -19,6 +19,25 @@
 
 :root {
   color-scheme: light;
+
+  /* Telefon «qulog'i» va pastki chizigʻi — barcha qatlamlar shu
+     oʻzgaruvchilardan foydalanadi. Brauzerda 0, ilova rejimida haqiqiy
+     qiymat: shunda mazmun hech qachon vırez ostida qolmaydi. */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+
+  /* Ilova karkasi oʻlchamlari — bitta joyda saqlanadi, chunki ularga
+     sarlavha, pastki menyu va asosiy maydon bir vaqtda tayanadi. */
+  --header-h: 56px;
+  --tabbar-h: 62px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --header-h: 64px;
+  }
 }
 
 html,
@@ -29,10 +48,76 @@ body {
   color: #0d1b2a;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  /* Telefonni yon holatga burganda brauzer matnni oʻzicha kattalashtiradi
+     va tayyor maketni buzadi — buni oʻchiramiz. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
   overflow-x: hidden;
+  /* Bosilganda koʻrinadigan kulrang kvadrat — brauzer belgisi. Ilovada
+     bunday narsa boʻlmaydi, uning oʻrniga oʻz `:active` holatlarimiz. */
+  -webkit-tap-highlight-color: transparent;
+  /* Sahifa chetiga yetganda butun ilovaning silkinishi va «tortib
+     yangilash» harakati — brauzer odati. Ilovada bu boʻlmasligi kerak. */
+  overscroll-behavior-y: none;
+}
+
+/* Telefonda `background-attachment: fixed` har scrollda fonni qaytadan
+   chizadi — bu sezilarli sekinlashuv. Fon baribir bir xil gradient,
+   shuning uchun kichik ekranda oddiy rejimga oʻtkazamiz. */
+@media (max-width: 1023px) {
+  html,
+  body {
+    background-attachment: scroll;
+  }
+}
+
+/* Bosish 300 ms kechikmasdan ishlaydi va ikki marta bosganda sahifa
+   kattalashib ketmaydi — ilovadagidek darhol javob. */
+a,
+button,
+[role="button"],
+label,
+select,
+summary {
+  touch-action: manipulation;
+}
+
+/* Boshqaruv elementlaridagi yozuvlar tasodifan belgilanmaydi (uzoq
+   bosganda chiqadigan koʻk ajratma). Jadval va matn mazmuni bunga
+   kirmaydi — u yerda nusxa olish kerak boʻladi. */
+button,
+[role="button"],
+nav,
+.app-nolabel {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* iOS maydonga bosilganda shrift 16px dan kichik boʻlsa sahifani
+   kattalashtirib yuboradi va qaytarmaydi — maket buziladi. Telefonda
+   barcha kiritish maydonlari kamida 16px. */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Harakatni kamaytirish soʻralgan boʻlsa — animatsiyalar deyarli
+   toʻxtaydi. Bu tizim sozlamasi, mazmun esa oʻzgarmaydi. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ---------- utilities ---------- */
@@ -166,6 +251,217 @@ body {
 @keyframes lampPulse {
   0%, 100% { opacity: .92; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.08); }
+}
+
+/* =====================================================================
+   ILOVA KARKASI — telefon uchun
+   ===================================================================== */
+
+/* Xavfsiz zona yordamchilari */
+.pt-safe { padding-top: var(--safe-t); }
+.pb-safe { padding-bottom: var(--safe-b); }
+.pl-safe { padding-left: var(--safe-l); }
+.pr-safe { padding-right: var(--safe-r); }
+.px-safe { padding-left: var(--safe-l); padding-right: var(--safe-r); }
+.mb-safe { margin-bottom: var(--safe-b); }
+.h-safe-b { height: var(--safe-b); }
+
+/* Pastki menyu balandligi + xavfsiz zona — sahifa oxiridagi mazmun
+   menyu ostida qolib ketmasligi uchun. */
+.pb-tabbar { padding-bottom: calc(var(--tabbar-h) + var(--safe-b)); }
+
+/* Gorizontal roʻyxatlar (filtr chiplari, tab'lar) — barmoq bilan
+   suriladi, ammo scroll chizigʻi koʻrinmaydi. Ilovadagidek. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Barmoq bilan surilganda toʻxtash nuqtalariga yopishadi */
+.snap-x-app {
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+.snap-x-app > * {
+  scroll-snap-align: start;
+}
+
+/* Bosilganda sal ichkariga bosilish — ilovaga xos javob */
+.tap-shrink {
+  transition: transform 0.12s ease;
+}
+.tap-shrink:active {
+  transform: scale(0.97);
+}
+
+/* Kamida 44×44 px — barmoq uchun ishonchli nishon (Apple/Google meʼyori) */
+@media (max-width: 767px) {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Telefonda scroll chizigʻi joy egallamaydi — ilovadagidek ustidan
+   suzib oʻtadi. */
+@media (max-width: 1023px) {
+  ::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+}
+
+/* Kartani ekran chetigacha choʻzish — telefonda ichki maydon behuda
+   ketmasin (sahifaning oʻz yon boʻshligʻini bekor qiladi). */
+@media (max-width: 639px) {
+  .bleed-x {
+    margin-left: -16px;
+    margin-right: -16px;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   JADVAL → KARTA (telefonda)
+
+   Keng jadvalni 380 px ekranga siqib boʻlmaydi, yonma-yon surish esa
+   noqulay. Shuning uchun telefonda har bir qator alohida kartaga
+   aylanadi va har bir katak yonida oʻz ustuni nomi turadi (nom
+   `data-label` orqali keladi — HTML tuzilishi oʻzgarmaydi, faqat
+   koʻrinish). Katta ekranda jadval oʻz holicha qoladi.
+   --------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  .table-cards {
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+  .table-cards > table {
+    min-width: 0 !important;
+    width: 100%;
+    display: block;
+    border-collapse: separate;
+  }
+  .table-cards thead {
+    /* Sarlavha qatori kerak emas — nomlar kataklar yonida turadi.
+       `display:none` emas: ekran oʻqiguvchi uchun saqlanadi. */
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .table-cards tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .table-cards tbody tr {
+    display: block;
+    border: 1px solid var(--color-line, #dde4ed);
+    border-radius: 16px;
+    background: #fff;
+    padding: 4px 14px;
+    box-shadow: 0 1px 2px rgba(13, 42, 85, 0.05), 0 10px 26px -20px rgba(13, 42, 85, 0.3);
+  }
+  .table-cards tbody tr:active {
+    background: #f8fafc;
+  }
+  .table-cards tbody td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    width: 100%;
+    padding: 9px 0;
+    border: 0;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: right;
+  }
+  .table-cards tbody tr td:last-child {
+    border-bottom: 0;
+  }
+  /* Ustun nomi — chapda, xira; qiymat oʻngda */
+  .table-cards tbody td[data-label]::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    max-width: 45%;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.5;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #94a3b8;
+  }
+  /* Nomsiz ustun (rasm, amallar tugmasi) — butun enni egallaydi */
+  .table-cards tbody td[data-label=""]::before,
+  .table-cards tbody td:not([data-label])::before {
+    content: none;
+  }
+  .table-cards tbody td[data-label=""],
+  .table-cards tbody td:not([data-label]) {
+    justify-content: flex-end;
+  }
+  /* «Yozuv yoʻq» kabi butun qatorni egallaydigan katak */
+  .table-cards tbody td[colspan]::before {
+    content: none;
+  }
+  .table-cards tbody td[colspan] {
+    justify-content: center;
+    text-align: center;
+    padding: 18px 0;
+  }
+  .table-cards tbody tr:has(td[colspan]) {
+    padding: 0 14px;
+  }
+}
+
+/* Planshet va kompyuterda keng jadval oʻz ramkasi ichida yon tomonga
+   suriladi. Chetdagi soya buni bildiradi: u faqat surish uchun joy
+   qolganda koʻrinadi va oxiriga yetganda oʻzi yoʻqoladi
+   (`background-attachment: local` shu ish uchun). */
+@media (min-width: 768px) {
+  .table-cards {
+    background:
+      linear-gradient(to right, #fff 28%, rgba(255, 255, 255, 0)) left center,
+      linear-gradient(to left, #fff 28%, rgba(255, 255, 255, 0)) right center,
+      radial-gradient(farthest-side at 0 50%, rgba(13, 42, 85, 0.13), transparent) left center,
+      radial-gradient(farthest-side at 100% 50%, rgba(13, 42, 85, 0.13), transparent) right center;
+    background-repeat: no-repeat;
+    background-size: 36px 100%, 36px 100%, 13px 100%, 13px 100%;
+    background-attachment: local, local, scroll, scroll;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   PASTKI VARAQ (bottom sheet)
+
+   Telefonda modal oynalar ekran markazida emas, pastdan koʻtariladi —
+   barmoq shu yerda va yopish uchun pastga surish tabiiy.
+   --------------------------------------------------------------------- */
+.sheet-grabber {
+  width: 42px;
+  height: 4px;
+  border-radius: 999px;
+  background: #cbd5e1;
+}
+
+/* Ilova rejimida (bosh ekrandan ochilganda) matn tanlanishi va uzun
+   bosishdagi menyular ilova hissini buzadi — mazmun matni bundan
+   mustasno. */
+@media (display-mode: standalone) {
+  body {
+    overscroll-behavior: none;
+  }
 }
 
 /* ---- Bosma hujjat izolyatsiyasi (Требование / MB-6) ---- */

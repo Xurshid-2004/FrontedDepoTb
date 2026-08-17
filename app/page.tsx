@@ -62,12 +62,15 @@ export default function Home() {
             key="auth"
             exit={{ opacity: 0, scale: 0.97, filter: "blur(8px)" }}
             transition={{ duration: 0.45 }}
-            className="relative grid h-dvh place-items-center overflow-hidden px-4 py-4"
+            /* Chetlardagi boʻshliq telefonda kichraytirildi va qurilma
+               «xavfsiz zonasi» hisobga olindi — karta vırez yoki pastki
+               chiziq ostida qolmaydi. */
+            className="relative grid h-dvh place-items-center overflow-hidden px-3 py-[max(0.75rem,var(--safe-t))] pb-[max(0.75rem,var(--safe-b))] sm:px-4 sm:py-4"
           >
             <div className="flex max-h-full w-full max-w-[1000px] flex-col justify-center">
               <LoginCard onAuthed={() => setStage("entering")} />
 
-              <p className="mt-4 shrink-0 text-center text-[11.5px] text-white/70 drop-shadow">
+              <p className="mt-3 shrink-0 text-center text-[10px] leading-snug text-white/70 drop-shadow sm:mt-4 sm:text-[11.5px]">
                 © {new Date().getFullYear()} Oʻzbekiston temir yoʻllari AJ · Buxoro
                 lokomotiv deposi (TCH-6) · Texnika xavfsizligi tizimi
               </p>

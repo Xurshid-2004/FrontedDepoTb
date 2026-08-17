@@ -74,11 +74,21 @@ export default function WorkerCoverflow() {
       </div>
 
       {/* coverflow */}
+      {/* Kartalar 3D karusel boʻlib yonma-yon turadi: markazdagisidan
+          chapga-oʻngga 132 px suriladi. Telefon eni bunga yetmaydi va
+          yon kartalar ekran chetidan qirqilib qolardi.
+
+          Yechim — butun karuselni kichraytirish. Oʻlchamlar va 3D
+          hisob-kitob oʻzgarmaydi (ular komponent mantigʻining bir
+          qismi), faqat koʻrinish miqyosi kichrayadi. */}
       <div
-        className="relative mt-10 h-[330px] w-full select-none"
+        className="relative mt-8 h-[262px] w-full select-none md:mt-10 md:h-[330px]"
         style={{ perspective: 1400 }}
       >
-        <div className="absolute inset-0 grid place-items-center" style={{ transformStyle: "preserve-3d" }}>
+        <div
+          className="absolute inset-0 grid origin-center scale-[0.74] place-items-center md:scale-100"
+          style={{ transformStyle: "preserve-3d" }}
+        >
           {list.map((w, i) => {
             const d = i - active;
             const abs = Math.abs(d);

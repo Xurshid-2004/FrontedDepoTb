@@ -144,7 +144,7 @@ export default function Dash() {
       )}
 
       {/* statistika */}
-      <div className="mb-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-7 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {canFeature("card.faolIshchilar") && (
           <Stat label="Faol ishchilar" value={db.workers.filter((w) => w.faol).length} />
         )}
