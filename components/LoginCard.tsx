@@ -26,7 +26,17 @@ import { useStore } from "@/lib/store";
 import { api, ApiError, type TabelHolat } from "@/lib/api";
 
 type Mode = "login" | "register";
-type Stage = "form" | "face" | "pin";
+/**
+ * `face-setup` — PIN bilan kirgandan KEYIN koʻrsatiladigan ixtiyoriy qadam.
+ *
+ * Nega kerak: kirishda Face ID faqat yuz avval qayd etilgan boʻlsa soʻraladi
+ * (`faceBor && faceYoqilgan`). Yuz tanish keyinroq yoqilgani uchun allaqachon
+ * roʻyxatdan oʻtgan xodimlarning HAMMASIDA `faceBor: false` edi — yaʼni ular
+ * uchun Face ID hech qachon soʻralmasdi va tizim bu haqda ogohlantirmasdi ham.
+ * Yagona yoʻl «Mening kabinetim» sahifasidagi panel edi, lekin undan xabardor
+ * boʻlish imkoni yoʻq. Endi xodim kirgan zahoti taklif koʻradi.
+ */
+type Stage = "form" | "face" | "pin" | "face-setup";
 
 const EASE = [0.76, 0, 0.24, 1] as const;
 
@@ -184,6 +194,37 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
     }
   };
 
+  /**
+   * PIN tekshiruvidan keyin: darrov kiritamizmi yoki Face ID taklif qilamizmi.
+   *
+   * Roʻyxatdan oʻtishda yuz allaqachon soʻralgan (`face` bosqichi) — takrorlamaymiz.
+   */
+  const pinTugadi = () => {
+    if (!royxat && holat?.faceYoqilgan && !holat.faceBor) {
+      setInfo("");
+      setPinErr("");
+      setStage("face-setup");
+      return;
+    }
+    onAuthed();
+  };
+
+  /** Kirgandan keyingi ixtiyoriy qadam: yuzni qayd etib, ichkariga oʻtish */
+  const yuzQaydEt = async (frames: string[]) => {
+    setFaceErr("");
+    setFaceBand(true);
+    try {
+      await api.setMyFace(frames);
+      onAuthed();
+    } catch (e) {
+      // Saqlanmasa ham xodimni tizimdan tashqarida qoldirmaymiz —
+      // PIN allaqachon tekshirilgan, u kirishga haqli.
+      setFaceErr(e instanceof ApiError ? e.message : "Saqlanmadi — keyinroq urinib koʻring");
+    } finally {
+      setFaceBand(false);
+    }
+  };
+
   const royxat = mode === "register";
 
   return (
@@ -241,7 +282,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
             </div>
 
             {/* --- qadamlar --- */}
-            <Qadamlar joriy={stage} royxat={royxat} />
+            <Qadamlar joriy={stage} royxat={royxat} holat={holat} />
 
             {/* Bosqichlar oddiy shartli render bilan almashadi.
                 AnimatePresence + mode="wait" bu yerda keraksiz murakkablik
@@ -358,6 +399,30 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                 </motion.div>
               )}
 
+              {/* ---------- 4: kirgandan keyin Face ID taklifi ---------- */}
+              {stage === "face-setup" && (
+                <motion.div
+                  key="face-setup"
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="flex min-h-0 flex-1 flex-col"
+                >
+                  <FaceCapture
+                    title="Face ID qoʻshasizmi?"
+                    hint="Bir marta qayd etsangiz, keyingi kirishlarda PIN terish shart emas"
+                    ishlayotgan={faceBand}
+                    xato={faceErr}
+                    onCapture={yuzQaydEt}
+                    /* Oʻtkazib yuborilsa ham xodim tizimga kiradi — PIN
+                       allaqachon tekshirilgan. Taklif keyingi kirishda
+                       qaytadan koʻrsatiladi (faceBor hamon false). */
+                    onSkip={onAuthed}
+                    skipLabel="Hozir emas — tizimga kirish"
+                  />
+                </motion.div>
+              )}
+
               {/* ---------- 3: PIN ---------- */}
               {stage === "pin" && (
                 <motion.div
@@ -386,7 +451,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                     onError={() =>
                       setPinErr((p) => p || (royxat ? "Roʻyxatdan oʻtilmadi" : "PIN notoʻgʻri — qayta urining"))
                     }
-                    onDone={onAuthed}
+                    onDone={pinTugadi}
                   />
 
                   {pinErr && <Xabar turi="err">{pinErr}</Xabar>}
@@ -467,20 +532,50 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
 /* ================= yordamchi koʻrinishlar ================= */
 
 /** Qadamlar chizigʻi — foydalanuvchi qayerdaligini va nima qolganini koʻradi */
-function Qadamlar({ joriy, royxat }: { joriy: Stage; royxat: boolean }) {
+function Qadamlar({
+  joriy,
+  royxat,
+  holat,
+}: {
+  joriy: Stage;
+  royxat: boolean;
+  holat: TabelHolat | null;
+}) {
   // Roʻyxatdan oʻtishda tartib: tabel → PIN → (ixtiyoriy) Face ID.
-  // Kirishda: tabel → Face ID → PIN.
-  const qadam: { k: Stage; l: string }[] = royxat
-    ? [
-        { k: "form", l: "Tabel raqami" },
-        { k: "pin", l: "PIN parol yaratish" },
-        { k: "face", l: "Face ID (ixtiyoriy)" },
-      ]
-    : [
-        { k: "form", l: "Tabel raqami" },
-        { k: "face", l: "Shaxsni tasdiqlash" },
-        { k: "pin", l: "Kirish" },
-      ];
+  //
+  // Kirishda tartib serverning javobiga qarab oʻzgaradi. Avval bu roʻyxat
+  // qatʼiy [tabel → Face ID → PIN] edi va yuz tanish oʻtkazib yuborilganda
+  // ham «Shaxsni tasdiqlash» bajarilgan qadam sifatida koʻk boʻlib turardi —
+  // aslida u bosqich umuman boʻlmagan. Endi faqat haqiqatda boʻladigan
+  // qadamlar chiziladi.
+  let qadam: { k: Stage; l: string }[];
+  if (royxat) {
+    qadam = [
+      { k: "form", l: "Tabel raqami" },
+      { k: "pin", l: "PIN parol yaratish" },
+      { k: "face", l: "Face ID (ixtiyoriy)" },
+    ];
+  } else if (holat?.faceYoqilgan && holat.faceBor) {
+    // Yuz qayd etilgan — kirish yuz bilan boshlanadi, PIN zaxira
+    qadam = [
+      { k: "form", l: "Tabel raqami" },
+      { k: "face", l: "Shaxsni tasdiqlash" },
+      { k: "pin", l: "Kirish" },
+    ];
+  } else if (holat?.faceYoqilgan) {
+    // Yuz hali yoʻq — PIN bilan kiriladi, soʻng Face ID taklif qilinadi
+    qadam = [
+      { k: "form", l: "Tabel raqami" },
+      { k: "pin", l: "Kirish" },
+      { k: "face-setup", l: "Face ID (ixtiyoriy)" },
+    ];
+  } else {
+    // Yuz tanish oʻchiq — faqat PIN
+    qadam = [
+      { k: "form", l: "Tabel raqami" },
+      { k: "pin", l: "Kirish" },
+    ];
+  }
   const n = qadam.findIndex((q) => q.k === joriy);
 
   return (
