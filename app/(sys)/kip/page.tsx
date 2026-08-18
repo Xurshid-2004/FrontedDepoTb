@@ -11,20 +11,14 @@ import {
 } from "@/components/ui";
 import IncidentFeed from "@/components/IncidentFeed";
 
-/** Holat kartalari. 1–4-qism — nizomdagi ogohlantirish bosqichlari (muddat
- *  tugashiga 3, 2, 0 kun va oʻtib ketgani). Birinchi karta — muddati hali
- *  yetmagan KIP'lar: yangi yozilgan KIP darrov shu yerda koʻrinadi, aks holda
- *  u 3 kun qolgunicha hech qaysi kartaga tushmasdi. */
+/** Holat kartalari — nizomdagi ogohlantirish bosqichlari: muddat
+ *  tugashiga 3 kun, 2 kun, bugun va oʻtib ketgani. */
 const QISM = [
-  { q: 0, l: "Muddat ichida", c: "#38bdf8" },
   { q: 1, l: "3 kun qoldi", c: "#22c55e" },
   { q: 2, l: "2 kun qoldi", c: "#f59e0b" },
   { q: 3, l: "Bugun tugaydi", c: "#f97316" },
   { q: 4, l: "Muddati oʻtdi", c: "#b91c1c" },
 ] as const;
-
-/** Karta sarlavhasi: «Muddat ichida» qism raqamiga ega emas. */
-const qismLabel = (q: number, l: string) => (q === 0 ? l : `${q}-qism · ${l}`);
 
 /** KIP roʻyxati lavozim boʻyicha ikkita jadvalga ajraladi: avval teplovoz,
  *  keyin elektrovoz. Yuqoridagi tugmalar oʻz jadvaliga surib boradi. */
@@ -228,18 +222,18 @@ export default function KipPage() {
         right={<Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="F.I.Sh., tabel, kolonna" className="h-11 w-full sm:h-10 sm:w-[250px]" />}
       />
 
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {buckets.map((b) => (
-          <Stat key={b.q} label={qismLabel(b.q, b.l)} value={b.rows.length} color={b.c} />
+          <Stat key={b.q} label={`${b.q}-qism · ${b.l}`} value={b.rows.length} color={b.c} />
         ))}
       </div>
 
-      {/* Rangli kartalar: muddat ichida + 4 ogohlantirish qismi */}
-      <div className="mb-7 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      {/* 4 rangli karta — ogohlantirish qismlari */}
+      <div className="mb-7 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {buckets.map((b) => (
           <div key={b.q} className="rounded-2xl border p-4" style={{ borderColor: `${b.c}55`, background: `${b.c}10` }}>
             <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: b.c }}>
-              {qismLabel(b.q, b.l)}
+              {b.q}-qism · {b.l}
             </p>
             <div className="mt-3 space-y-2">
               {b.rows.length === 0 && <p className="text-[12px] text-slate-500">Yoʻq</p>}
