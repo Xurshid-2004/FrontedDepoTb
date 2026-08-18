@@ -475,5 +475,10 @@ export const api = {
   addIncident: (turi: "tb" | "avariya", matn: string) =>
     amal("/incidents", "POST", { turi, matn }),
 
+  editIncident: (id: string, matn: string) =>
+    amal(`/incidents/${id}`, "PATCH", { matn }),
+
+  deleteIncident: (id: string) => amal(`/incidents/${id}`, "DELETE"),
+
   readNotification: (id?: string) => amal("/notifications/read", "POST", { id }),
 };

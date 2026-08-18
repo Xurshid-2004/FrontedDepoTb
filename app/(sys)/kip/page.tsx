@@ -38,7 +38,7 @@ const JADVALLAR = [
 ];
 
 export default function KipPage() {
-  const { db, me, can, addKip, addIncident } = useStore();
+  const { db, me, can, addKip, addIncident, editIncident, deleteIncident } = useStore();
   const t = useToast();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState<string | null>(null);
@@ -293,6 +293,10 @@ export default function KipPage() {
             entries={db.incidents.filter((i) => i.turi === "avariya")}
             canWrite={can("incident.avariya.write")}
             onAdd={(matn) => addIncident("avariya", matn)}
+            onEdit={(id, matn) => editIncident(id, matn)}
+            onDelete={(id) => deleteIncident(id)}
+            meId={me.id}
+            canManageAll={can("admin.users")}
             title="Mashinist yoʻriqchisi — avariyalar"
             subtitle="Tizimda roʻy bergan avariyalar haqida xabar — hammaga koʻrinadi"
             placeholder="Avariya haqida qisqacha yozing..."

@@ -116,6 +116,8 @@ type Ctx = {
   /** Ishchini oʻchirish (soft-delete). Xato boʻlsa matn qaytadi. */
   deleteWorker: (workerId: string) => Promise<string | null>;
   addIncident: (turi: IncidentEntry["turi"], matn: string) => Promise<void>;
+  editIncident: (id: string, matn: string) => Promise<void>;
+  deleteIncident: (id: string) => Promise<void>;
 };
 
 const C = createContext<Ctx | null>(null);
@@ -476,6 +478,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     /* --- xodisalar --- */
     addIncident: async (turi, matn) => {
       await yugur(() => api.addIncident(turi, matn));
+    },
+    editIncident: async (id, matn) => {
+      await yugur(() => api.editIncident(id, matn));
+    },
+    deleteIncident: async (id) => {
+      await yugur(() => api.deleteIncident(id));
     },
   };
 

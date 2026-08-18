@@ -27,8 +27,10 @@ const boshForma = () => ({
 });
 
 export default function TbPage() {
-  const { db, me, can, canFeature, addJournal, signJournal, addIncident, xato, tozalaXato } =
-    useStore();
+  const {
+    db, me, can, canFeature, addJournal, signJournal,
+    addIncident, editIncident, deleteIncident, xato, tozalaXato,
+  } = useStore();
   const t = useToast();
   const [addFor, setAddFor] = useState<1 | 2 | null>(null);
   const [signFor, setSignFor] = useState<string | null>(null);
@@ -157,6 +159,10 @@ export default function TbPage() {
             entries={db.incidents.filter((i) => i.turi === "tb")}
             canWrite={can("incident.tb.write")}
             onAdd={(matn) => addIncident("tb", matn)}
+            onEdit={(id, matn) => editIncident(id, matn)}
+            onDelete={(id) => deleteIncident(id)}
+            meId={me.id}
+            canManageAll={can("admin.users")}
             title="TB — baxtsiz xodisalar"
             subtitle="Tizimda roʻy bergan baxtsiz xodisalar haqida xabar — hammaga koʻrinadi"
             placeholder="Baxtsiz xodisa haqida qisqacha yozing..."
