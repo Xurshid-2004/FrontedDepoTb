@@ -3,6 +3,7 @@ import type {
   Card,
   DB,
   Norm,
+  Position,
   RequestStatus,
   Role,
   Worker,
@@ -68,6 +69,73 @@ export function normsFor(db: DB, positionId: string): Norm[] {
 export function workerPositionIds(w: Worker): string[] {
   if (w.positionIds && w.positionIds.length) return Array.from(new Set(w.positionIds));
   return [w.positionId];
+}
+
+/* ---------------- lokomotiv turi (elektrovoz / teplovoz) ---------------- */
+
+/** KIP roʻyxati lavozim boʻyicha ikkita jadvalga ajratiladi. */
+export type LokoTuri = "elektrovoz" | "teplovoz" | "boshqa";
+
+/** Matnni solishtirishga tayyorlash: kichik harf, apostrof/tire turlari
+ *  bir xillashtiriladi va ortiqcha boʻsh joy olib tashlanadi. Lavozimlar
+ *  qoʻlda kiritilgani uchun imlo har xil boʻladi. */
+function sodda(s?: string | null): string {
+  return (s ?? "")
+    .toLowerCase()
+    .replace(/[ʻʼ’‘`´']/g, "")
+    .replace(/[-–—._/]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Lavozim (yoki kolonna) nomidan lokomotiv turini aniqlash.
+ *  Backend `turi` maydonini ham yuboradi; bu yerdagi nom tekshiruvi — eski
+ *  backend, Vercel'dagi eski API yoki qoʻlda kiritilgan lavozim uchun zaxira
+ *  yoʻl. Imlo har xil: «elektravoz/teplavoz», kirillcha «электровоз», kolonna
+ *  jadvalidagi «El. mashinist» — hammasi hisobga olinadi. */
+export function positionTuri(nomi?: string | null): LokoTuri {
+  const s = sodda(nomi);
+  if (!s) return "boshqa";
+  if (/elektr[oa]voz|электровоз|\bel mashinist/.test(s)) return "elektrovoz";
+  if (/tepl[oa]voz|тепловоз/.test(s)) return "teplovoz";
+  return "boshqa";
+}
+
+/** Lavozim yozuvining turi — backend bergani ustun, boʻlmasa nomdan topiladi. */
+export function positionLoko(p?: Position | null): LokoTuri {
+  if (!p) return "boshqa";
+  if (p.turi === "elektrovoz" || p.turi === "teplovoz") return p.turi;
+  return positionTuri(p.nomi);
+}
+
+/** Ishchining lokomotiv turlari. Bir nechta lavozimi boʻlsa (masalan ham
+ *  elektrovoz, ham teplovoz mashinisti) — ikkala jadvalda ham koʻrinadi,
+ *  shunda hech kim roʻyxatdan tushib qolmaydi.
+ *
+ *  Lavozim nomi turni koʻrsatmasa — kolonna nomiga qaraladi: eski
+ *  maʼlumotda brigada aynan kolonnada yozilgan («Teplovoz mashinist /
+ *  yordamchi», «El. mashinist / yordamchi», «Manyovr teplovoz»). */
+export function workerLokoTurlari(db: DB, w: Worker): LokoTuri[] {
+  const turlar = new Set<LokoTuri>();
+  for (const pid of workerPositionIds(w)) {
+    turlar.add(positionLoko(positionById(db, pid)));
+  }
+  const aniq = Array.from(turlar).filter((t) => t !== "boshqa");
+  if (aniq.length) return aniq;
+
+  const kolonna = positionTuri(w.kolonna);
+  return kolonna === "boshqa" ? ["boshqa"] : [kolonna];
+}
+
+/** Ishchi shu turdagi jadvalga tushadimi? */
+export function workerLokoBor(db: DB, w: Worker, turi: LokoTuri): boolean {
+  return workerLokoTurlari(db, w).includes(turi);
+}
+
+/** Lokomotiv brigadasi xodimimi (mashinist yoki yordamchi)? KIP roʻyxatiga
+ *  faqat shular kiradi — boshqa lavozimlar chiqmaydi. */
+export function lokoBrigada(db: DB, w: Worker): boolean {
+  return workerLokoTurlari(db, w).some((t) => t !== "boshqa");
 }
 
 /** Ishchi ega boʻlgan barcha lavozim normalari (bir nechta lavozim boʻlsa — birlashtiriladi,

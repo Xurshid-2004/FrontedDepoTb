@@ -41,6 +41,9 @@ export interface Position {
   tartib: number;
   nomi: string;
   arxiv?: boolean; // soft-delete
+  /** Lokomotiv turi — backend lavozim nomidan hisoblab yuboradi.
+   *  KIP roʻyxati shu boʻyicha «Elektrovoz» va «Teplovoz» jadvallariga ajraladi. */
+  turi?: "elektrovoz" | "teplovoz" | "boshqa";
 }
 
 export interface Item {
