@@ -92,6 +92,8 @@ type Ctx = {
   stockIn: (itemId: string, soni: number, izoh: string) => Promise<void>;
   toggleTalon: (workerId: string, raqam: 1 | 2 | 3, sabab?: string) => Promise<void>;
   addKip: (k: Omit<Kip, "id" | "tugash" | "imzoId">) => Promise<void>;
+  editKip: (id: string, patch: { liniya?: string; sana?: string; muddatOy?: number }) => Promise<void>;
+  deleteKip: (id: string) => Promise<void>;
   setExam: (workerId: string, sana: string, davriylikOy: number) => Promise<void>;
   upsertItem: (it: Item) => Promise<void>;
   upsertNorm: (n: Norm) => Promise<void>;
@@ -388,6 +390,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     },
     addKip: async (k) => {
       await yugur(() => api.addKip(k as unknown as Record<string, unknown>));
+    },
+    editKip: async (id, patch) => {
+      await yugur(() => api.editKip(id, patch));
+    },
+    deleteKip: async (id) => {
+      await yugur(() => api.deleteKip(id));
     },
     setExam: async (workerId, sana, davriylikOy) => {
       await yugur(() => api.setExam(workerId, sana, davriylikOy));

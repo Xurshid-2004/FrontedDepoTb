@@ -418,6 +418,11 @@ export const api = {
 
   addKip: (k: Record<string, unknown>) => amal("/kips", "POST", k),
 
+  editKip: (id: string, patch: { liniya?: string; sana?: string; muddatOy?: number }) =>
+    amal(`/kips/${id}`, "PATCH", patch),
+
+  deleteKip: (id: string) => amal(`/kips/${id}`, "DELETE"),
+
   setExam: (workerId: string, sana: string, davriylikOy: number) =>
     amal("/exams", "POST", { workerId, sana, davriylikOy }),
 

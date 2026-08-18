@@ -5,7 +5,7 @@ import { useStore } from "@/lib/store";
 import {
   fmt, fio, fioShort, kipTone, lokoBrigada, positionById, positionNames, workerLokoBor,
 } from "@/lib/logic";
-import type { Worker } from "@/lib/types";
+import type { Kip, Worker } from "@/lib/types";
 import {
   Badge, Btn, Empty, Field, Input, Modal, PageHead, Panel, Select, Stat, Table, Td, Tr, useToast,
 } from "@/components/ui";
@@ -46,10 +46,15 @@ const JADVALLAR = [
 ];
 
 export default function KipPage() {
-  const { db, me, can, addKip, addIncident, editIncident, deleteIncident } = useStore();
+  const {
+    db, me, can, addKip, editKip, deleteKip,
+    addIncident, editIncident, deleteIncident,
+  } = useStore();
   const t = useToast();
   const [q, setQ] = useState("");
-  const [open, setOpen] = useState<string | null>(null);
+  /** Modal ikki holatda ishlaydi: yangi yozuv (kip yoʻq) va tahrirlash. */
+  const [open, setOpen] = useState<{ workerId: string; kip?: Kip } | null>(null);
+  const [ochir, setOchir] = useState<Kip | null>(null);
   const [f, setF] = useState({ liniya: "", sana: new Date().toISOString().slice(0, 10), muddatOy: 1 });
   const [tab, setTab] = useState<"elektrovoz" | "teplovoz">("teplovoz");
   const [faqatMenikilar, setFaqatMenikilar] = useState(false);
@@ -140,6 +145,40 @@ export default function KipPage() {
     refs[turi].current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  /* KIP'ni yozgan yoʻriqchi uni oʻzgartira oladi, administrator — istalganini.
+     Server ham shu qoidani tekshiradi. */
+  const boshqara = (k: Kip) =>
+    can("kip.write") && (k.yoriqchiId === me.id || can("admin.users"));
+
+  const yangiOch = (workerId: string) => {
+    setF({ liniya: "", sana: new Date().toISOString().slice(0, 10), muddatOy: 1 });
+    setOpen({ workerId });
+  };
+
+  const tahrirOch = (k: Kip) => {
+    setF({ liniya: k.liniya, sana: k.sana, muddatOy: k.muddatOy });
+    setOpen({ workerId: k.workerId, kip: k });
+  };
+
+  /** Kartadagi va jadvaldagi «Tahrirlash / Oʻchirish» tugmalari — bir xil. */
+  const kipTugmalar = (k: Kip, ixcham = false) =>
+    boshqara(k) ? (
+      <div className={`flex gap-1.5 ${ixcham ? "" : "justify-end"}`}>
+        <button
+          onClick={() => tahrirOch(k)}
+          className="rounded-lg border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-600 transition hover:border-sky-500 hover:text-sky-600"
+        >
+          Tahrirlash
+        </button>
+        <button
+          onClick={() => setOchir(k)}
+          className="rounded-lg border border-red-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-red-500 transition hover:bg-red-50"
+        >
+          Oʻchirish
+        </button>
+      </div>
+    ) : null;
+
   const qatorlar = (rows: typeof list) =>
     rows.map((w) => {
       const k = kipOf(w.id);
@@ -158,7 +197,10 @@ export default function KipPage() {
           <Td>{tone ? <Badge color={tone.color}>{tone.label}</Badge> : <Badge color="#64748b">KIP yoʻq</Badge>}</Td>
           <Td>
             {can("kip.write") && (
-              <Btn size="sm" variant="primary" onClick={() => setOpen(w.id)}>Yangi KIP</Btn>
+              <div className="flex flex-col items-end gap-1.5">
+                <Btn size="sm" variant="primary" onClick={() => yangiOch(w.id)}>Yangi KIP</Btn>
+                {k && kipTugmalar(k)}
+              </div>
             )}
           </Td>
         </Tr>
@@ -207,6 +249,7 @@ export default function KipPage() {
                   <div key={w.id} className="rounded-lg bg-white/70 px-3 py-2">
                     <p className="truncate text-[12.5px] font-medium text-slate-900">{fioShort(w)}</p>
                     <p className="truncate text-[11px] text-slate-500">{k.liniya} · {fmt(k.tugash)}</p>
+                    {boshqara(k) && <div className="mt-1.5">{kipTugmalar(k, true)}</div>}
                   </div>
                 );
               })}
@@ -313,7 +356,11 @@ export default function KipPage() {
         </div>
       )}
 
-      <Modal open={!!open} onClose={() => setOpen(null)} title="Yangi KIP yozuvi">
+      <Modal
+        open={!!open}
+        onClose={() => setOpen(null)}
+        title={open?.kip ? "KIP yozuvini tahrirlash" : "Yangi KIP yozuvi"}
+      >
         <div className="space-y-4">
           {/* Liniya erkin yoziladi: roʻyxatda yoʻq yoʻnalish yoki stansiya ham
               boʻlaveradi. Avval kiritilganlari pastda taklif sifatida chiqadi
@@ -345,7 +392,9 @@ export default function KipPage() {
             </Field>
           </div>
           <p className="rounded-lg border border-sky-300 bg-sky-50 px-3.5 py-2.5 text-[12px] text-sky-700">
-            4. Saqlaganingizda yozuv sizning QR imzoyingiz bilan tasdiqlanadi va ishchiga bildirishnoma yuboriladi.
+            {open?.kip
+              ? "4. Tahrirlanganda eski QR imzo bekor qilinadi va yozuv sizning yangi imzoyingiz bilan tasdiqlanadi."
+              : "4. Saqlaganingizda yozuv sizning QR imzoyingiz bilan tasdiqlanadi va ishchiga bildirishnoma yuboriladi."}
           </p>
           <div className="flex justify-end gap-3">
             <Btn onClick={() => setOpen(null)}>Bekor qilish</Btn>
@@ -353,18 +402,60 @@ export default function KipPage() {
               variant="primary"
               disabled={!f.liniya.trim() || !f.sana}
               onClick={() => {
-                addKip({
-                  workerId: open!,
-                  yoriqchiId: me.id,
-                  liniya: f.liniya.trim(),
-                  sana: f.sana,
-                  muddatOy: f.muddatOy,
-                });
+                const liniya = f.liniya.trim();
+                if (open?.kip) {
+                  editKip(open.kip.id, { liniya, sana: f.sana, muddatOy: f.muddatOy });
+                  t.show("KIP yozuvi yangilandi");
+                } else if (open) {
+                  addKip({
+                    workerId: open.workerId,
+                    yoriqchiId: me.id,
+                    liniya,
+                    sana: f.sana,
+                    muddatOy: f.muddatOy,
+                  });
+                  t.show("KIP yozildi va imzolandi");
+                }
                 setOpen(null);
-                t.show("KIP yozildi va imzolandi");
               }}
             >
-              Yozish va imzolash
+              {open?.kip ? "Saqlash va imzolash" : "Yozish va imzolash"}
+            </Btn>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Oʻchirish qaytarilmaydi: yozuv yoʻqoladi, QR imzo esa bekor qilinadi
+          (chop etilgan varaq skanerlansa «bekor qilingan» deb koʻrsatiladi). */}
+      <Modal open={!!ochir} onClose={() => setOchir(null)} title="KIP yozuvi oʻchirilsinmi?">
+        <div className="space-y-4">
+          {ochir && (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-[12.5px] text-slate-700">
+              <p className="font-semibold text-slate-900">
+                {(() => {
+                  const w = db.workers.find((x) => x.id === ochir.workerId);
+                  return w ? fioShort(w) : "Ishchi";
+                })()}
+              </p>
+              <p className="mt-1 text-slate-600">
+                {ochir.liniya} · {ochir.muddatOy} oy · tugash: {fmt(ochir.tugash)}
+              </p>
+            </div>
+          )}
+          <p className="text-[12px] text-slate-500">
+            Yozuv oʻchiriladi va QR imzo bekor qilinadi. Buni qaytarib boʻlmaydi.
+          </p>
+          <div className="flex justify-end gap-3">
+            <Btn onClick={() => setOchir(null)}>Bekor qilish</Btn>
+            <Btn
+              variant="danger"
+              onClick={() => {
+                if (ochir) deleteKip(ochir.id);
+                setOchir(null);
+                t.show("KIP yozuvi oʻchirildi");
+              }}
+            >
+              Oʻchirish
             </Btn>
           </div>
         </div>
