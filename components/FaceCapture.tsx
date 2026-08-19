@@ -152,6 +152,10 @@ export default function FaceCapture({
   const band = holat === "olinmoqda" || !!ishlayotgan;
   const avtoTugadi = urinish >= AVTO_MAX && !band;
 
+  /* Tugma belgisi matnga qarab tanlanadi: «keyinroq», «hozir emas» kabi
+     matnlarda soat, PIN yoʻlida esa qulf koʻrsatiladi. */
+  const keyinroq = /keyin|hozir emas/i.test(skipLabel);
+
   const holatMatni = band
     ? holat === "olinmoqda"
       ? "Kadrlar olinmoqda — qimirlamang"
@@ -174,13 +178,14 @@ export default function FaceCapture({
           {kameraXato}
         </div>
       ) : (
-        // flex-1 + min-h-0: kamera qolgan joyni egallaydi va kerak boʻlsa
-        // kichrayadi — shuning uchun karta hech qachon scroll'ga tushmaydi
-        /* Telefonda karta balandligi mazmunga qarab oʻlchanadi — bu yerda
-           `flex-1` choʻzilmaydi va oyna eng kichik oʻlchamida qolardi.
-           240 px yuzni joylashtirish uchun yetarli eng kichik oʻlcham.
-           Katta ekranda avvalgidek: kamera boʻsh joyni egallaydi. */
-        <div className="relative mx-auto mt-3 min-h-[240px] w-full max-w-[300px] flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 md:min-h-[150px]">
+        /* Kamera boʻsh joyni egallaydi (`flex-1`), eng kichik balandligi esa
+           ekranga qarab oʻlchanadi: `clamp(8.5rem, 24dvh, 15rem)`.
+
+           Ilgari bu qatʼiy 240 px (katta ekranda 150 px) edi. Past yoki
+           kattalashtirilgan ekranda oyna kichraya olmasdi va pastdagi
+           «PIN kod bilan kirish» tugmasini koʻrinmas qismga siqib chiqarardi —
+           foydalanuvchi uni scroll qilib izlashiga toʻgʻri kelardi. */
+        <div className="relative mx-auto mt-3 min-h-[clamp(8.5rem,24dvh,15rem)] w-full max-w-[300px] flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-slate-900">
           <video
             ref={videoRef}
             playsInline
@@ -208,13 +213,13 @@ export default function FaceCapture({
         </p>
       )}
 
-      <div className="mt-3 shrink-0 space-y-2">
+      <div className="sticky bottom-0 z-10 mt-3 shrink-0 space-y-2 border-t border-slate-100 bg-white/95 pb-0.5 pt-2.5 backdrop-blur-sm">
         {/* Avtomatik urinishlar tugagach — qoʻlda boshqaruv */}
         {avtoTugadi && holat !== "xato" && (
           <button
             type="button"
             onClick={() => setUrinish(0)}
-            className="flex h-11 w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#1b6fe0] to-[#38bdf8] text-[14px] font-semibold text-white"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-sky-300 bg-white text-[14px] font-semibold text-sky-700 transition hover:bg-sky-50 active:scale-[.99]"
           >
             Qayta urinish
           </button>
@@ -232,17 +237,33 @@ export default function FaceCapture({
           type="button"
           onClick={onSkip}
           disabled={band}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-sky-500 bg-sky-50 text-[14.5px] font-bold text-sky-800 shadow-sm transition hover:bg-sky-100 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
+          /* Rangli, toʻldirilgan tugma: kamera ishlamaganda foydalanuvchi
+             birinchi navbatda shuni koʻrishi kerak. Belgi nomiga mos —
+             PIN uchun qulf va tugmachalar, «keyinroq» uchun soat. */
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#1b6fe0] to-[#38bdf8] text-[14.5px] font-bold text-white shadow-[0_10px_26px_-12px_rgba(56,189,248,.95)] transition hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
         >
-          <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" aria-hidden>
-            <path
-              d="M6 6l9 6-9 6V6zM19 5v14"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+          <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0" aria-hidden>
+            {keyinroq ? (
+              /* soat — «keyinroq qoʻshaman» */
+              <path
+                d="M12 21a9 9 0 100-18 9 9 0 000 18zM12 7v5l3 2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            ) : (
+              /* qulf — PIN kod bilan kirish */
+              <path
+                d="M6 10V7a6 6 0 1112 0v3M5 10h14v11H5V10zm7 4.5v2.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            )}
           </svg>
           {skipLabel}
         </button>

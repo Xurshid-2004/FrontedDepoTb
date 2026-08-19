@@ -304,10 +304,10 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
             boʻlsa oʻz ichida suriladi). Balandlik ekranga qarab
             hisoblanadi, pastdagi © yozuvi uchun ham joy qoladi.
             Katta ekranda: avvalgidek ikki ustun. */}
-        <div className="relative grid max-h-[min(760px,calc(100dvh-5.5rem))] grid-rows-[auto_minmax(0,1fr)] overflow-hidden md:h-[min(760px,calc(100dvh-4rem))] md:max-h-none md:grid-cols-2 md:grid-rows-none">
+        <div className="relative grid max-h-[min(760px,calc(100dvh-4.5rem))] grid-rows-[auto_minmax(0,1fr)] overflow-hidden md:h-[min(760px,calc(100dvh-3rem))] md:max-h-none md:grid-cols-2 md:grid-rows-none">
           {/* CHAP: forma */}
           <motion.div
-            className="order-2 flex min-h-0 flex-col px-5 py-4 md:order-1 md:px-11 md:py-7"
+            className="order-2 flex min-h-0 flex-col px-5 py-4 md:order-1 md:px-11 md:py-[clamp(1rem,2.2dvh,1.75rem)]"
             animate={{ x: mobil ? 0 : royxat ? "100%" : 0, opacity: 1 }}
             transition={{ duration: 0.85, ease: EASE }}
           >
@@ -337,7 +337,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                 min-h-0 — flex bolasining standart `min-height:auto` qiymati
                 kichrayishga yoʻl qoʻymaydi va mazmun tashqariga chiqib
                 ketadi. Shusiz kamera kartani cho'zib yuborardi. */}
-            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pt-1">
+            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain pt-1">
               {/* ---------- 1: TABEL ---------- */}
               {stage === "form" && (
                 <motion.div
@@ -398,16 +398,43 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                     {tekshirmoqda ? "Tekshirilmoqda…" : "Davom etish"}
                   </button>
 
-                  {/* Rejimni almashtirish — koʻzga tashlanadigan qilib ajratilgan */}
-                  <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-center md:mt-7 md:py-3.5">
-                    <p className="text-[14px] font-medium text-slate-700">
+                  {/* Rejimni almashtirish. Savol va tugma bitta qatorda turadi —
+                      ilgari ular ustma-ust edi va past ekranda ikki qator
+                      boʻshliqni behuda egallardi. Tor ekranda qatorlarga
+                      boʻlinadi (`flex-wrap`), tugma esa hech qachon siqilib
+                      ketmaydi (`shrink-0`). */}
+                  <div className="mt-5 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-3 md:mt-7">
+                    <p className="text-[13.5px] font-medium text-slate-600">
                       {royxat ? "Hisobingiz bormi?" : "Hisobingiz yoʻqmi?"}
                     </p>
                     <button
                       type="button"
                       onClick={() => boshdan(royxat ? "login" : "register")}
-                      className="mt-1.5 text-[15.5px] font-bold text-sky-700 underline decoration-sky-300 decoration-2 underline-offset-4 transition hover:text-sky-900 hover:decoration-sky-600"
+                      className="inline-flex h-10 shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-[#0f7a4f] to-[#22c55e] px-4 text-[14px] font-bold text-white shadow-[0_8px_22px_-10px_rgba(34,197,94,.9)] transition hover:brightness-110 active:scale-[.98]"
                     >
+                      <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" aria-hidden>
+                        {royxat ? (
+                          /* kirish — eshikka kiruvchi strelka */
+                          <path
+                            d="M10 17l5-5-5-5M15 12H3m6-9h9a2 2 0 012 2v14a2 2 0 01-2 2H9"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        ) : (
+                          /* roʻyxat — yangi xodim qoʻshish */
+                          <path
+                            d="M15 20v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M8.5 8.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7zM19 8v6M22 11h-6"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        )}
+                      </svg>
                       {royxat ? "Tizimga kirish" : "Roʻyxatdan oʻtish"}
                     </button>
                   </div>
@@ -525,7 +552,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
             </div>
 
             {/* --- xavfsizlik eslatmasi --- */}
-            <div className="mt-4 shrink-0 border-t border-slate-200 pt-3 md:mt-6 md:pt-3.5">
+            <div className="mt-4 shrink-0 border-t border-slate-200 pt-3 md:mt-6 md:pt-3.5 [@media(max-height:700px)]:hidden">
               <p className="flex items-center justify-center gap-1.5 text-[11px] text-slate-500">
                 <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0" aria-hidden>
                   <path
@@ -643,7 +670,7 @@ function Qadamlar({
   const n = joriy === "face-setup" ? qadam.length : qadam.findIndex((q) => q.k === joriy);
 
   return (
-    <ol className="flex items-center gap-1.5 py-3 md:py-4" aria-label="Kirish bosqichlari">
+    <ol className="flex items-center gap-1.5 py-[clamp(0.5rem,1.4dvh,0.75rem)] md:py-[clamp(0.5rem,1.6dvh,1rem)]" aria-label="Kirish bosqichlari">
       {qadam.map((q, i) => {
         const otgan = i < n;
         const faol = i === n;
