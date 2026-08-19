@@ -2,8 +2,14 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import CursorTubes from "@/components/CursorTubes";
 import { StoreProvider } from "@/lib/store";
+import { ASOS_URL } from "@/lib/sayt";
 
 export const metadata: Metadata = {
+  // Nisbiy manzillar (sitemap, canonical, og:image) shu asosga nisbatan
+  // toʻliq URL'ga aylanadi. Boʻlmasa Next.js localhost'ni qoʻyadi.
+  metadataBase: new URL(ASOS_URL),
+  // Apex `www` ga yoʻnaltiriladi — kanonik manzil ham oʻsha boʻlsin.
+  alternates: { canonical: "/" },
   title: "TB tizimi — Buxoro lokomotiv deposi (TCH-6)",
   description:
     "Texnika xavfsizligi va omborxona boshqaruvining raqamli tizimi. TEMIRYOʻLINFRATUZILMA AJ, Buxoro lokomotiv deposi filiali.",
