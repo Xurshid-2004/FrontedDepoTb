@@ -236,11 +236,17 @@ export default function FaceCapture({
         <button
           type="button"
           onClick={onSkip}
-          disabled={band}
-          /* Rangli, toʻldirilgan tugma: kamera ishlamaganda foydalanuvchi
-             birinchi navbatda shuni koʻrishi kerak. Belgi nomiga mos —
-             PIN uchun qulf va tugmachalar, «keyinroq» uchun soat. */
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#1b6fe0] to-[#38bdf8] text-[14.5px] font-bold text-white shadow-[0_10px_26px_-12px_rgba(56,189,248,.95)] transition hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40"
+          /* Bu tugma HECH QACHON oʻchmaydi.
+
+             Ilgari u kadr olinayotganda va server javobini kutayotganda
+             (`disabled={band}`) bosilmasdi — kamera yuzni tanimay uzoq
+             urinsa, xodim PIN'ga oʻtolmay kutib turishga majbur edi.
+             Yuz bilan kirish — qulaylik, PIN esa asosiy yoʻl: undan
+             chiqish imkoni doim ochiq turishi kerak.
+
+             Yarim yoʻlda bosilsa, ketayotgan soʻrov natijasi eʼtiborsiz
+             qoldiriladi (LoginCard'dagi `faceBekor`). */
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#1b6fe0] to-[#38bdf8] text-[14.5px] font-bold text-white shadow-[0_10px_26px_-12px_rgba(56,189,248,.95)] transition hover:brightness-110 active:scale-[0.99]"
         >
           <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0" aria-hidden>
             {keyinroq ? (

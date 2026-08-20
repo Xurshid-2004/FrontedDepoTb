@@ -70,6 +70,15 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
 
   const canSubmit = stage === "form" && !tekshirmoqda && tabel.trim().length >= 3;
 
+  /** Yuz bosqichidan chiqilganini bildiradi.
+   *
+   *  «PIN kod bilan kirish» tugmasi endi kadr olinayotganda ham bosiladi.
+   *  Shuning uchun serverga ketgan `faceLogin` javobi xodim allaqachon PIN
+   *  terayotganda qaytishi mumkin — u holda javob eʼtiborsiz qoldiriladi,
+   *  aks holda ekran oʻz-oʻzidan almashib yoki xabar chiqib chalkashtirardi.
+   *  `state` emas, `ref`: qiymat oʻsha zahoti kerak, qayta render kutmasdan. */
+  const faceBekor = useRef(false);
+
   /** Xato chiqqanda uni koʻrinadigan joyga surib qoʻyamiz — past
       ekranda karta ichidagi scroll uni yashirib qoʻymasin. */
   const xatoRef = useRef<HTMLDivElement>(null);
@@ -78,6 +87,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
   }, [err]);
 
   const boshdan = (m: Mode) => {
+    faceBekor.current = false;
     setMode(m);
     setStage("form");
     setHolat(null);
@@ -138,6 +148,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
         // Xizmat umuman sozlanmagan boʻlsa (`faceYoqilgan: false` —
         // serverda FACE_SERVICE_URL yoʻq) kamera ochilmaydi: u yerda
         // solishtirish uchun hech narsa yoʻq va bu faqat vaqt oladi.
+        faceBekor.current = false;
         setStage(r.faceYoqilgan ? "face" : "pin");
         return;
       }
@@ -178,6 +189,11 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
     setFaceBand(true);
     try {
       const r = await faceLogin(tabel.trim(), frames);
+
+      // Xodim kutmasdan «PIN kod bilan kirish»ni bosgan boʻlsa — javob
+      // endi kerak emas: u PIN terayotgan boʻlishi mumkin.
+      if (faceBekor.current) return;
+
       if (r.ok) {
         onAuthed();
         return;
@@ -241,6 +257,10 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
    */
   const pinTugadi = () => {
     if (!royxat && holat?.faceYoqilgan && !holat.faceBor) {
+      // Yangi bosqich — bayroq tozalanadi. Aks holda yuz bosqichida
+      // qoʻyilgan «bekor» qiymati bu yerda ham saqlanib qolib, saqlash
+      // tugagach `onAuthed()` chaqirilmasdi va xodim ichkariga kirolmasdi.
+      faceBekor.current = false;
       setInfo("");
       setPinErr("");
       setStage("face-setup");
@@ -255,8 +275,10 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
     setFaceBand(true);
     try {
       await api.setMyFace(frames);
+      if (faceBekor.current) return;   // «Hozir emas» bosilgan — kirish oʻsha yerda hal boʻlgan
       onAuthed();
     } catch (e) {
+      if (faceBekor.current) return;
       // Saqlanmasa ham xodimni tizimdan tashqarida qoldirmaymiz —
       // PIN allaqachon tekshirilgan, u kirishga haqli.
       setFaceErr(e instanceof ApiError ? e.message : "Saqlanmadi — keyinroq urinib koʻring");
@@ -464,6 +486,11 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                     xato={faceErr}
                     onCapture={yuzOlindi}
                     onSkip={() => {
+                      // Kadr olinayotgan yoki server javobi kutilayotgan
+                      // boʻlsa ham chiqib ketish mumkin — natija eʼtiborsiz
+                      // qoladi va xodim PIN terishni davom ettiradi.
+                      faceBekor.current = true;
+                      setFaceBand(false);
                       setFaceErr("");
                       if (royxat) setKadrlar([]);
                       setStage("pin");
@@ -493,7 +520,11 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                     /* Oʻtkazib yuborilsa ham xodim tizimga kiradi — PIN
                        allaqachon tekshirilgan. Taklif keyingi kirishda
                        qaytadan koʻrsatiladi (faceBor hamon false). */
-                    onSkip={onAuthed}
+                    onSkip={() => {
+                      faceBekor.current = true;
+                      setFaceBand(false);
+                      onAuthed();
+                    }}
                     skipLabel="Hozir emas — tizimga kirish"
                   />
                 </motion.div>
@@ -537,6 +568,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                     <button
                       type="button"
                       onClick={() => {
+                        faceBekor.current = false;
                         setPinErr("");
                         setStage("face");
                       }}
