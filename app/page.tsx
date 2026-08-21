@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import LoginCard from "@/components/LoginCard";
 
@@ -58,20 +58,60 @@ export default function Home() {
     };
   }, []);
 
+  /* Fon videosi 3.7 MB — kirish ekranidagi eng katta yuk (butun `/state`
+     javobidan 26 barobar ogʻir). Telefonda mobil internetni behuda yeydi va
+     karta chiqishini sekinlashtiradi, holbuki u shunchaki bezak.
+
+     Shuning uchun video FAQAT keng ekranda va tez ulanishda yuklanadi.
+     Qolgan hollarda oʻsha videoning poster kadri (88 KB rasm) koʻrsatiladi —
+     koʻrinish deyarli oʻsha, trafik esa 40 barobar kam.
+
+     Qaror mount'dan keyin qabul qilinadi: serverda ulanish tezligi
+     nomaʼlum, shuning uchun boshlangʻich holat — yengil variant. */
+  const [videoOchilsin, setVideoOchilsin] = useState(false);
+
+  useEffect(() => {
+    const kichikEkran = window.matchMedia("(max-width: 767px)").matches;
+    const kamHarakat = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Brauzer ulanish haqida maʼlumot bersa — sekin tarmoq va «trafik tejash»
+    // rejimida ham video ochilmaydi. Bermasa, ekran kengligiga qaraladi.
+    const ulanish = (
+      navigator as Navigator & {
+        connection?: { saveData?: boolean; effectiveType?: string };
+      }
+    ).connection;
+    const sekin =
+      !!ulanish &&
+      (ulanish.saveData === true ||
+        ["slow-2g", "2g", "3g"].includes(ulanish.effectiveType ?? ""));
+
+    setVideoOchilsin(!kichikEkran && !kamHarakat && !sekin);
+  }, []);
+
   return (
     <main className="relative h-[var(--kirish-h,100dvh)] overflow-hidden">
-      {/* Kirish fon videosi */}
+      {/* Kirish foni — video yoki uning poster kadri */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <video
-          src="/kirish.mp4"
-          poster="/hero.jpg"
-          autoPlay
-          muted
-          loop
-          playsInline
-          className="absolute inset-0 h-full w-full scale-105 object-cover"
-          style={{ filter: "saturate(1.1) brightness(1.04)" }}
-        />
+        {videoOchilsin ? (
+          <video
+            src="/kirish.mp4"
+            poster="/hero.jpg"
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="absolute inset-0 h-full w-full scale-105 object-cover"
+            style={{ filter: "saturate(1.1) brightness(1.04)" }}
+          />
+        ) : (
+          <img
+            src="/hero.jpg"
+            alt=""
+            className="absolute inset-0 h-full w-full scale-105 object-cover"
+            style={{ filter: "saturate(1.1) brightness(1.04)" }}
+          />
+        )}
         {/* Yengil parda — video koʻrinib tursin, matn ham oʻqilsin */}
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(12,26,45,.32)_0%,rgba(16,32,54,.28)_45%,rgba(28,40,58,.38)_100%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(900px_520px_at_50%_18%,rgba(255,255,255,.14),transparent_70%)]" />
