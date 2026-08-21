@@ -1,16 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
 import LoginCard from "@/components/LoginCard";
-import TrainIntro from "@/components/TrainIntro";
-
-type Stage = "auth" | "entering";
 
 export default function Home() {
-  const [stage, setStage] = useState<Stage>("auth");
   const router = useRouter();
+
+  /* Ishchi paneli oldindan yuklab qoʻyiladi: xodim tabel raqamini terib
+     turganda brauzer `/dash` fayllarini fonda olib boʻladi va kirish
+     tugagach oʻtish bir zumda kechadi. */
+  useEffect(() => {
+    router.prefetch("/dash");
+    router.prefetch("/ishchi");   // oddiy ishchi `/dash` dan shu yerga oʻtkaziladi
+  }, [router]);
 
   // Kirish sahifasi bir ekranga sigʻadi — sahifa scroll'i butunlay yopiladi.
   // Boshqa sahifalarga oʻtganda avvalgi holat qaytariladi.
@@ -78,35 +81,32 @@ export default function Home() {
         />
       </div>
 
-      {stage === "entering" && <TrainIntro onFinish={() => router.push("/dash")} />}
-
       {/* Kirish kartasi holat yuklanishini KUTMAYDI. Ilgari u `ready`
           bayrogʻiga bogʻlangan edi — server sekin javob bersa yoki qayta
           ishga tushayotgan boʻlsa, bayroq koʻtarilmay ekranda faqat fon
           videosi qolardi. Kartaga db kerak emas: login() serverga
           toʻgʻridan-toʻgʻri murojaat qiladi va holatni oʻzi yuklaydi. */}
-      <AnimatePresence mode="wait">
-        {stage === "auth" && (
-          <motion.section
-            key="auth"
-            exit={{ opacity: 0, scale: 0.97, filter: "blur(8px)" }}
-            transition={{ duration: 0.45 }}
-            /* Chetlardagi boʻshliq telefonda kichraytirildi va qurilma
-               «xavfsiz zonasi» hisobga olindi — karta vırez yoki pastki
-               chiziq ostida qolmaydi. */
-            className="relative grid h-[var(--kirish-h,100dvh)] place-items-center overflow-hidden px-3 py-[max(0.75rem,var(--safe-t))] pb-[max(0.75rem,var(--safe-b))] sm:px-4 sm:py-4"
-          >
-            <div className="flex max-h-full w-full max-w-[1000px] flex-col justify-center">
-              <LoginCard onAuthed={() => setStage("entering")} />
+      {/* Chetlardagi boʻshliq telefonda kichraytirildi va qurilma «xavfsiz
+          zonasi» hisobga olindi — karta vırez yoki pastki chiziq ostida
+          qolmaydi. */}
+      <section className="relative grid h-[var(--kirish-h,100dvh)] place-items-center overflow-hidden px-3 py-[max(0.75rem,var(--safe-t))] pb-[max(0.75rem,var(--safe-b))] sm:px-4 sm:py-4">
+        <div className="flex max-h-full w-full max-w-[1000px] flex-col justify-center">
+              {/* Kirish tugashi bilan darrov ishchi paneliga oʻtiladi.
 
-              <p className="mt-3 shrink-0 text-center text-[10px] leading-snug text-white/70 drop-shadow sm:mt-4 sm:text-[11.5px]">
+                  Ilgari orada 11 soniyalik kinematik video oʻynardi. U
+                  chiroyli edi, lekin har kirishda 3 MB'lik fayl yuklanardi
+                  va xodim ishini boshlashdan oldin kutib turardi. Bundan
+                  tashqari video sahnasi (Three.js, ~560 KB) kirish
+                  sahifasining oʻz toʻplamiga ham qoʻshilib, birinchi
+                  yuklanishni sekinlashtirardi. */}
+          <LoginCard onAuthed={() => router.replace("/dash")} />
+
+          <p className="mt-3 shrink-0 text-center text-[10px] leading-snug text-white/70 drop-shadow sm:mt-4 sm:text-[11.5px]">
                 © {new Date().getFullYear()} Oʻzbekiston temir yoʻllari AJ · Buxoro
                 lokomotiv deposi (TCH-6) · Texnika xavfsizligi tizimi
               </p>
-            </div>
-          </motion.section>
-        )}
-      </AnimatePresence>
+        </div>
+      </section>
     </main>
   );
 }
