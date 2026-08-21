@@ -26,8 +26,37 @@ export default function Home() {
     };
   }, []);
 
+  /* Telefonda ekran klaviaturasi ochilganda kirish kartasi uning ostida
+     qolib ketardi: PIN kataklari ham, «Kodni tozalash» ham koʻrinmasdi va
+     sahifa scroll'i yopiq boʻlgani uchun ularga yetib ham boʻlmasdi.
+
+     Sabab — `100dvh` klaviaturani hisobga olmaydi: u brauzer paneliga qarab
+     oʻlchanadi, klaviatura ochilganda esa oʻzgarmaydi. Haqiqiy koʻrinadigan
+     balandlikni faqat `visualViewport` biladi. Uni CSS oʻzgaruvchisiga
+     yozamiz va karta shunga qarab kichrayadi — natijada hamma narsa
+     klaviatura ustida qoladi.
+
+     Qoʻllab-quvvatlamaydigan brauzerda oʻzgaruvchi qoʻyilmaydi va CSS
+     avvalgidek `100dvh` zaxira qiymatidan foydalanadi. */
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const html = document.documentElement;
+    const olcha = () => html.style.setProperty("--kirish-h", `${Math.round(vv.height)}px`);
+
+    olcha();
+    vv.addEventListener("resize", olcha);
+    vv.addEventListener("scroll", olcha);
+    return () => {
+      vv.removeEventListener("resize", olcha);
+      vv.removeEventListener("scroll", olcha);
+      html.style.removeProperty("--kirish-h");
+    };
+  }, []);
+
   return (
-    <main className="relative h-dvh overflow-hidden">
+    <main className="relative h-[var(--kirish-h,100dvh)] overflow-hidden">
       {/* Kirish fon videosi */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <video
@@ -65,7 +94,7 @@ export default function Home() {
             /* Chetlardagi boʻshliq telefonda kichraytirildi va qurilma
                «xavfsiz zonasi» hisobga olindi — karta vırez yoki pastki
                chiziq ostida qolmaydi. */
-            className="relative grid h-dvh place-items-center overflow-hidden px-3 py-[max(0.75rem,var(--safe-t))] pb-[max(0.75rem,var(--safe-b))] sm:px-4 sm:py-4"
+            className="relative grid h-[var(--kirish-h,100dvh)] place-items-center overflow-hidden px-3 py-[max(0.75rem,var(--safe-t))] pb-[max(0.75rem,var(--safe-b))] sm:px-4 sm:py-4"
           >
             <div className="flex max-h-full w-full max-w-[1000px] flex-col justify-center">
               <LoginCard onAuthed={() => setStage("entering")} />

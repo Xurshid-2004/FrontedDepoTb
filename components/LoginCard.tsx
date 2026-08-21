@@ -326,7 +326,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
             boʻlsa oʻz ichida suriladi). Balandlik ekranga qarab
             hisoblanadi, pastdagi © yozuvi uchun ham joy qoladi.
             Katta ekranda: avvalgidek ikki ustun. */}
-        <div className="relative grid max-h-[min(760px,calc(100dvh-4.5rem))] grid-rows-[auto_minmax(0,1fr)] overflow-hidden md:h-[min(760px,calc(100dvh-3rem))] md:max-h-none md:grid-cols-2 md:grid-rows-none">
+        <div className="relative grid max-h-[min(760px,calc(var(--kirish-h,100dvh)-4.5rem))] grid-rows-[auto_minmax(0,1fr)] overflow-hidden md:h-[min(760px,calc(var(--kirish-h,100dvh)-3rem))] md:max-h-none md:grid-cols-2 md:grid-rows-none">
           {/* CHAP: forma */}
           <motion.div
             className="order-2 flex min-h-0 flex-col px-5 py-4 md:order-1 md:px-11 md:py-[clamp(1rem,2.2dvh,1.75rem)]"
@@ -409,16 +409,25 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                     </div>
                   )}
 
-                  <button
-                    type="button"
-                    disabled={!canSubmit}
-                    onClick={submit}
-                    /* Matn oq rangda: koʻk gradient ustida toʻq matn
-                       oʻqilmasdi va tugma «oʻchiq» boʻlib koʻrinardi */
-                    className="relative mt-5 flex h-12 w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#1b6fe0] to-[#38bdf8] font-semibold text-white shadow-[0_10px_30px_-12px_rgba(56,189,248,.9)] transition active:scale-[.99] disabled:cursor-not-allowed disabled:opacity-35 md:mt-6"
-                  >
-                    {tekshirmoqda ? "Tekshirilmoqda…" : "Davom etish"}
-                  </button>
+                  {/* «Davom etish» karta pastida yopishib turadi.
+
+                      Telefonda tabel maydoniga bosilganda ekran klaviaturasi
+                      koʻrinadigan joyning yarmini egallaydi va tugma uning
+                      ostida qolib ketardi — sahifa scroll'i yopiq boʻlgani
+                      uchun unga yetib ham boʻlmasdi. Endi tugma doim koʻzda:
+                      mazmun kerak boʻlsa uning ORQASIDAN suriladi. */}
+                  <div className="sticky bottom-0 z-10 -mx-1 mt-5 bg-white/95 px-1 pb-1 pt-2 backdrop-blur-sm md:static md:mx-0 md:mt-6 md:bg-transparent md:p-0 md:backdrop-blur-none">
+                    <button
+                      type="button"
+                      disabled={!canSubmit}
+                      onClick={submit}
+                      /* Matn oq rangda: koʻk gradient ustida toʻq matn
+                         oʻqilmasdi va tugma «oʻchiq» boʻlib koʻrinardi */
+                      className="relative flex h-12 w-full items-center justify-center rounded-xl bg-gradient-to-r from-[#1b6fe0] to-[#38bdf8] font-semibold text-white shadow-[0_10px_30px_-12px_rgba(56,189,248,.9)] transition active:scale-[.99] disabled:cursor-not-allowed disabled:opacity-35"
+                    >
+                      {tekshirmoqda ? "Tekshirilmoqda…" : "Davom etish"}
+                    </button>
+                  </div>
 
                   {/* Rejimni almashtirish. Savol va tugma bitta qatorda turadi —
                       ilgari ular ustma-ust edi va past ekranda ikki qator
@@ -584,7 +593,14 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
             </div>
 
             {/* --- xavfsizlik eslatmasi --- */}
-            <div className="mt-4 shrink-0 border-t border-slate-200 pt-3 md:mt-6 md:pt-3.5 [@media(max-height:700px)]:hidden">
+            {/* PIN terilayotganda telefonda yashiriladi: ekran klaviaturasi
+                joyning yarmini egallaydi va bu izoh matni kataklarni pastga
+                surib yuborardi. Katta ekranda oʻz oʻrnida qoladi. */}
+            <div
+              className={`mt-4 shrink-0 border-t border-slate-200 pt-3 md:mt-6 md:pt-3.5 [@media(max-height:700px)]:hidden ${
+                stage === "pin" ? "hidden md:block" : ""
+              }`}
+            >
               <p className="flex items-center justify-center gap-1.5 text-[11px] text-slate-500">
                 <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0" aria-hidden>
                   <path

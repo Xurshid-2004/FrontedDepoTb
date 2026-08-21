@@ -107,7 +107,7 @@ export default function PinPad({
             <p className="mt-1 text-center text-[12.5px] text-slate-500">{hint}</p>
 
             <div
-              className="relative mt-7 flex items-center justify-center gap-3"
+              className="relative mt-4 flex items-center justify-center gap-3 md:mt-7"
               onClick={() => inputRef.current?.focus()}
             >
               {Array.from({ length }).map((_, i) => {
@@ -170,7 +170,7 @@ export default function PinPad({
               /* Balandligi barmoq uchun yetarli (44 px) — 31 px'lik
                  tugmaga tegish qiyin edi, ayniqsa PIN xato terilganda
                  shoshib bosishadi. */
-              className="mt-5 min-h-[44px] rounded-lg px-4 py-2.5 text-[12.5px] text-slate-500 transition hover:bg-slate-100 hover:text-sky-700 md:mt-6"
+              className="mt-3 min-h-[44px] rounded-lg px-4 py-2.5 text-[12.5px] text-slate-500 transition hover:bg-slate-100 hover:text-sky-700 md:mt-6"
             >
               Kodni tozalash
             </button>
