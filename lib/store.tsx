@@ -107,6 +107,22 @@ type Ctx = {
   archivePosition: (id: string, arxiv: boolean) => Promise<void>;
   addUnit: (u: string) => Promise<void>;
   removeUnit: (u: Unit) => Promise<void>;
+  /** Kolonna yaratish/tahrirlash (admin). Saqlangan kolonna id qaytadi. */
+  kolonnaUpsert: (k: {
+    id?: string; nomi: string; turi?: string;
+    instruktorId?: string | null; izoh?: string; faol?: boolean;
+  }) => Promise<string | null>;
+  /** Ishchini kolonnaga biriktirish/koʻchirish (null — biriktirishni olib tashlaydi). */
+  kolonnaAssign: (workerId: string, kolonnaId: string | null) => Promise<void>;
+  /* --- yoʻriqnoma (TNU-19) --- */
+  smenaBoshla: (tur: "kunduzgi" | "tungi", mazmun: string, xulosa: string) => Promise<void>;
+  smenaYop: () => Promise<void>;
+  /** Barkod QR matni bilan skan. Yaratilgan qator id yoki xato matni qaytadi. */
+  yoriqnomaSkan: (
+    payload: string,
+    opts?: { kitobTuri?: "tnu19" | "instruktor"; yoriqTuri?: string; mazmun?: string }
+  ) => Promise<{ id: string } | { xato: string }>;
+  yoriqnomaTasdiqla: (yozuvId: string, opts?: { yoriqTuri?: string; mazmun?: string }) => Promise<void>;
   setRoleAccess: (role: Role, key: AccessKey, value: boolean | null) => Promise<void>;
   setPositionAccess: (positionId: string, key: AccessKey, value: boolean | null) => Promise<void>;
   setUserAccess: (workerId: string, key: AccessKey, value: boolean | null) => Promise<void>;
@@ -136,7 +152,8 @@ function bosh(): DB {
     positions: [], items: [], norms: [], workers: [], cards: [], requests: [],
     journal: [], stock: [], moves: [], talons: [], exams: [], kips: [],
     notifications: [], incidents: [], audit: [],
-    lines: [], units: [],
+    lines: [], units: [], kolonnalar: [],
+    yoriqnoma: { aktivSmena: null, aktivKitob: null, instruktorKolonna: null, aktivInstruktorKitob: null },
     access: { roleOverrides: {}, positionOverrides: {}, userOverrides: {} },
     seq: 0,
   };
@@ -470,6 +487,38 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     },
     removeUnit: async (u) => {
       await yugur(() => api.removeUnit(u));
+    },
+
+    /* --- kolonnalar --- */
+    kolonnaUpsert: async (k) => {
+      const r = await yugur(() => api.kolonnaUpsert(k));
+      return (r as { id?: string } | null)?.id ?? null;
+    },
+    kolonnaAssign: async (workerId, kolonnaId) => {
+      await yugur(() => api.kolonnaAssign(workerId, kolonnaId));
+    },
+
+    /* --- yoʻriqnoma (TNU-19) --- */
+    smenaBoshla: async (tur, mazmun, xulosa) => {
+      await yugur(() => api.smenaBoshla(tur, mazmun, xulosa));
+    },
+    smenaYop: async () => {
+      await yugur(() => api.smenaYop());
+    },
+    yoriqnomaSkan: async (payload, opts) => {
+      const tut: { xabar: string | null } = { xabar: null };
+      const r = await yugur(() =>
+        api.yoriqnomaSkan(payload, opts).catch((e: unknown) => {
+          tut.xabar = e instanceof ApiError ? e.message : "Kutilmagan xato";
+          throw e;
+        })
+      );
+      const id = (r as { id?: string } | null)?.id;
+      if (id) return { id };
+      return { xato: tut.xabar ?? "Skan amalga oshmadi" };
+    },
+    yoriqnomaTasdiqla: async (yozuvId, opts) => {
+      await yugur(() => api.yoriqnomaTasdiqla(yozuvId, opts));
     },
 
     /* --- ruxsatlar --- */

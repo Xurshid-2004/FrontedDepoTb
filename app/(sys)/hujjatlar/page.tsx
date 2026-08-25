@@ -1,25 +1,45 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
+import { api } from "@/lib/api";
 import { fmt, fio, itemById, money, positionById, STATUS_COLOR, STATUS_LABEL } from "@/lib/logic";
 import { Badge, Btn, Empty, Input, PageHead, Panel, Table, Td, Tr } from "@/components/ui";
 import WorkerFace from "@/components/WorkerFace";
+import KitobKarta, { type KitobInfo } from "@/components/KitobKarta";
 
-type View = "treb" | "mb6";
+type View = "treb" | "mb6" | "kitoblar";
 
 export default function Hujjatlar() {
-  const { db, me, roles, canFeature } = useStore();
+  const { db, me, roles, canFeature, can } = useStore();
   const [q, setQ] = useState("");
   const [view, setView] = useState<View>("treb");
+  const [kitoblar, setKitoblar] = useState<KitobInfo[]>([]);
 
   const pureIshchi = !!me && roles.length === 1 && roles[0] === "ishchi";
   const showMb6 = canFeature("doc.mb6");
   const showTreb = canFeature("doc.trebovanie");
   const showKitob = canFeature("doc.kitobcha");
+  // Kitoblar/kitobchalar (Yo D-26A/B) — koʻrish ruxsati bor rollarga
+  const showKitoblar = can("yoriqnoma.read");
+
+  useEffect(() => {
+    if (!showKitoblar) return;
+    api.yoriqnomaKitoblar().then((r) => setKitoblar(r.kitoblar || [])).catch(() => {});
+  }, [showKitoblar]);
 
   const s = q.trim().toLowerCase();
+
+  // Hujjatlar boʻlimida — faol (arxivlanmagan) kitoblar
+  const faolKitoblar = useMemo(() => {
+    let list = kitoblar.filter((k) => !k.arxiv);
+    if (s) list = list.filter((k) =>
+      k.kolonnaNomi.toLowerCase().includes(s) ||
+      (k.instruktorFio ?? "").toLowerCase().includes(s) ||
+      String(k.raqam).includes(s));
+    return list;
+  }, [kitoblar, s]);
 
   // Требованиеlar — barchasi (ishchi boʻlsa faqat oʻziniki)
   const reqs = useMemo(() => {
@@ -99,6 +119,16 @@ export default function Hujjatlar() {
             MB-6 kartochkalar ({workers.length})
           </button>
         )}
+        {showKitoblar && (
+          <button
+            onClick={() => setView("kitoblar")}
+            className={`rounded-full px-4 py-2 text-[12.5px] font-medium transition ${
+              view === "kitoblar" ? "bg-sky-100 text-sky-700 ring-1 ring-sky-500" : "border border-slate-200 text-slate-500 hover:text-slate-900"
+            }`}
+          >
+            Kitoblar ({faolKitoblar.length})
+          </button>
+        )}
       </div>
 
       {/* Требованиеlar roʻyxati */}
@@ -157,7 +187,20 @@ export default function Hujjatlar() {
         </Panel>
       )}
 
-      {!showTreb && !showMb6 && (
+      {/* Kitoblar — muqova koʻrinishida (kolonna + instruktor F.I.Sh.) */}
+      {showKitoblar && view === "kitoblar" && (
+        faolKitoblar.length === 0 ? (
+          <Panel><Empty text="Faol kitob topilmadi" /></Panel>
+        ) : (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {faolKitoblar.map((k) => (
+              <div key={k.id} className="h-[220px]"><KitobKarta info={k} /></div>
+            ))}
+          </div>
+        )
+      )}
+
+      {!showTreb && !showMb6 && !showKitoblar && (
         <Empty text="Sizning rolingiz uchun hujjat turlari yashirilgan (admin sozlamasi)" />
       )}
     </>

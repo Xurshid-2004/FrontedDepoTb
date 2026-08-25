@@ -41,7 +41,7 @@ const JADVALLAR = [
 
 export default function KipPage() {
   const {
-    db, me, can, addKip, editKip, deleteKip,
+    db, me, roles, can, addKip, editKip, deleteKip,
     addIncident, editIncident, deleteIncident,
   } = useStore();
   const t = useToast();
@@ -63,10 +63,16 @@ export default function KipPage() {
      Ilgari roʻyxat «yoʻriqchisi biriktirilgan» ishchilar bilan cheklangan edi
      va biriktirish qilinmagan bazada jadval butunlay boʻsh chiqardi. Endi
      asos — lavozim; biriktirish esa faqat pastdagi filtr. */
-  const lokoBarcha = useMemo(
-    () => db.workers.filter((w) => lokoBrigada(db, w)),
-    [db]
-  );
+  // Instruktor (mashinist yoʻriqchisi) — FAQAT oʻz kolonnasi maʼlumotlari.
+  // Admin/monitoring rollari — hammasini koʻradi (backend ham shu qoidada).
+  const meKol = db.yoriqnoma?.instruktorKolonna ?? null;
+  const kolonnaRejim = roles.includes("yoriqchi") && !roles.includes("admin");
+
+  const lokoBarcha = useMemo(() => {
+    let list = db.workers.filter((w) => lokoBrigada(db, w));
+    if (kolonnaRejim) list = list.filter((w) => !!meKol && w.kolonnaId === meKol.id);
+    return list;
+  }, [db, kolonnaRejim, meKol]);
   const mine = useMemo(
     () => (me ? lokoBarcha.filter((w) => w.yoriqchiId === me.id) : []),
     [lokoBarcha, me]
@@ -216,9 +222,13 @@ export default function KipPage() {
       {t.node}
       <PageHead
         title="KIP — Mashinist yoʻriqchisi kabineti"
-        sub={`Elektrovoz va teplovoz mashinistlari hamda yordamchilari — jami ${lokoBarcha.length} ta xodim${
-          mine.length ? `, shundan ${mine.length} tasi menga biriktirilgan` : ""
-        }. KIP: liniya/stansiya, sana, muddat (oy) va QR imzo.`}
+        sub={kolonnaRejim
+          ? (meKol
+              ? `Kolonna: ${meKol.nomi} — ${lokoBarcha.length} ta mashinist/yordamchi. Siz faqat oʻz kolonnangiz maʼlumotlarini koʻrasiz.`
+              : "Sizga hali kolonna biriktirilmagan — admin biriktirgach, kolonnangiz mashinistlari shu yerda koʻrinadi.")
+          : `Elektrovoz va teplovoz mashinistlari hamda yordamchilari — jami ${lokoBarcha.length} ta xodim${
+              mine.length ? `, shundan ${mine.length} tasi menga biriktirilgan` : ""
+            }. KIP: liniya/stansiya, sana, muddat (oy) va QR imzo.`}
         right={<Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="F.I.Sh., tabel, kolonna" className="h-11 w-full sm:h-10 sm:w-[250px]" />}
       />
 
@@ -281,7 +291,7 @@ export default function KipPage() {
         {/* Yoʻriqchi oʻziga biriktirilganlarni ajratib koʻrishi mumkin.
             Biriktirilgani boʻlmasa tugma umuman chiqmaydi — bosilsa boʻsh
             roʻyxat koʻrsatib chalkashtirmasin. */}
-        {mine.length > 0 && (
+        {!kolonnaRejim && mine.length > 0 && (
           <Btn
             variant={faqatMenikilar ? "ok" : "ghost"}
             onClick={() => setFaqatMenikilar((v) => !v)}

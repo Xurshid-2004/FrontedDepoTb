@@ -1,28 +1,65 @@
 "use client";
 
-import { use } from "react";
+/* ------------------------------------------------------------------
+   QR imzo tekshiruvi — YAGONA IMZO TIZIMI.
+
+   Ilgari bu sahifa imzoni brauzerdagi lokal `store` boʻyicha, hatto
+   id boshiga qarab «taxmin» qilib tasdiqlardi (xavfsiz emas edi).
+   Endi HAQIQAT bitta joyda — Django `/api/v1/verify/<id>` endpointida.
+   Sahifa faqat serverdan kelgan javobni koʻrsatadi.
+------------------------------------------------------------------ */
+
+import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import { useStore } from "@/lib/store";
-import { fmtDT, fio } from "@/lib/logic";
-import { Badge, Btn, Panel } from "@/components/ui";
+import { API_BASE } from "@/lib/api";
+import { Btn, Panel } from "@/components/ui";
+
+const DOC: Record<string, string> = {
+  journal: "Yo D-26 nazorat jurnali",
+  requisition: "Требование (Форма МУ№27)",
+  card: "Shaxsiy kartochka MB-6",
+  kip: "KIP maʼlumotnomasi",
+  card_id: "Xodim ID kartasi",
+};
+
+interface Natija {
+  ok: boolean;
+  docType?: string;
+  field?: string;
+  sana?: string;
+  hash?: string;
+  bekor?: boolean;
+  butun?: boolean;
+  imzolagan?: { fio: string; lavozim: string };
+  error?: string;
+}
 
 export default function Verify({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { db, ready } = useStore();
+  const [holat, setHolat] = useState<"kutish" | "topildi" | "yoq">("kutish");
+  const [r, setR] = useState<Natija | null>(null);
 
-  const sig =
-    db.journal.map((j) => j.imzo).find((s) => s?.id === id) ??
-    db.requests.flatMap((r) => r.imzolar).find((s) => s.id === id);
+  useEffect(() => {
+    const ctrl = new AbortController();
+    fetch(`${API_BASE}/api/v1/verify/${id}`, { signal: ctrl.signal })
+      .then(async (resp) => {
+        const data: Natija = await resp.json().catch(() => ({ ok: false }));
+        if (resp.ok && data && data.docType) {
+          setR(data);
+          setHolat("topildi");
+        } else {
+          setR(data);
+          setHolat("yoq");
+        }
+      })
+      .catch(() => setHolat("yoq"));
+    return () => ctrl.abort();
+  }, [id]);
 
-  const known = !!sig || id.startsWith("c1") || id.startsWith("sig_") || id.startsWith("ks");
-  const signer = sig ? db.workers.find((w) => w.id === sig.userId) : null;
-
-  const DOC: Record<string, string> = {
-    journal: "Yo D-26 nazorat jurnali",
-    requisition: "Требование (Форма МУ№27)",
-    card: "Shaxsiy kartochka MB-6",
-    kip: "KIP maʼlumotnomasi",
-  };
+  const sana = r?.sana
+    ? new Date(r.sana).toLocaleString("uz-UZ", { dateStyle: "medium", timeStyle: "short" })
+    : "—";
+  const haqiqiy = holat === "topildi" && !!r?.ok;
 
   return (
     <main className="grid min-h-dvh place-items-center px-4 py-10">
@@ -38,39 +75,44 @@ export default function Verify({ params }: { params: Promise<{ id: string }> }) 
             </p>
           </div>
 
-          {!ready ? (
+          {holat === "kutish" ? (
             <p className="py-10 text-center text-[13px] text-slate-500">Tekshirilmoqda…</p>
-          ) : known ? (
+          ) : haqiqiy ? (
             <>
               <div className="mb-6 rounded-2xl border border-emerald-300 bg-emerald-50 p-5 text-center">
                 <p className="text-[26px]">✓</p>
                 <p className="mt-2 text-[16px] font-semibold text-emerald-600">Imzo HAQIQIY</p>
                 <p className="mt-1 text-[12px] text-emerald-700">
-                  Hujjat imzolangandan keyin oʻzgartirilmagan
+                  {r?.docType === "card_id"
+                    ? "Karta haqiqiy — bu tabel raqamiga tegishli"
+                    : "Hujjat imzolangandan keyin oʻzgartirilmagan"}
                 </p>
               </div>
 
               <div className="space-y-3">
-                <Row l="Imzolagan shaxs" v={signer ? fio(signer) : "TB tizimi foydalanuvchisi"} />
-                <Row l="Lavozimi" v={signer?.roles.join(", ") ?? "—"} />
-                <Row l="Korxona" v={`${db.depo.nomi} (${db.depo.kod})`} />
-                <Row l="Hujjat turi" v={sig ? DOC[sig.docType] : "Tizim hujjati"} />
-                <Row l="Maydon" v={sig?.field ?? "—"} />
-                <Row l="Imzolangan vaqt" v={sig ? fmtDT(sig.sana) : "—"} />
+                <Row l="Imzolagan shaxs" v={r?.imzolagan?.fio || "TB tizimi foydalanuvchisi"} />
+                <Row l="Lavozimi" v={r?.imzolagan?.lavozim || "—"} />
+                <Row l="Hujjat turi" v={DOC[r?.docType ?? ""] ?? "Tizim hujjati"} />
+                <Row l="Maydon" v={r?.field || "—"} />
+                <Row l="Imzolangan vaqt" v={sana} />
                 <Row l="Imzo identifikatori" v={id} mono />
               </div>
 
               <p className="mt-6 text-center text-[11px] leading-relaxed text-slate-500">
-                Xavfsizlik uchun bu sahifada shaxsiy maʼlumotlar (tabel raqami, oʻlchamlar, narxlar)
+                Xavfsizlik uchun bu sahifada shaxsiy maʼlumotlar (oʻlchamlar, narxlar)
                 koʻrsatilmaydi.
               </p>
             </>
           ) : (
             <div className="rounded-2xl border border-red-300 bg-red-50 p-5 text-center">
               <p className="text-[26px]">✕</p>
-              <p className="mt-2 text-[16px] font-semibold text-red-600">Imzo topilmadi</p>
+              <p className="mt-2 text-[16px] font-semibold text-red-600">
+                {r?.bekor ? "Imzo BEKOR qilingan" : r?.butun === false ? "Imzo BUZILGAN" : "Imzo topilmadi"}
+              </p>
               <p className="mt-1 text-[12px] text-red-600">
-                QR kod notoʻgʻri yoki hujjat oʻzgartirilgan boʻlishi mumkin
+                {r?.bekor
+                  ? "Bu imzo bekor qilingan — hujjat amaldagi emas"
+                  : "QR kod notoʻgʻri yoki hujjat oʻzgartirilgan boʻlishi mumkin"}
               </p>
             </div>
           )}

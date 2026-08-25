@@ -10,6 +10,7 @@ export type Role =
   | "tb_xodim"
   | "ombor_mudiri"
   | "yoriqchi"
+  | "depo_navbatchisi"
   | "sex_boshligi"
   | "ishchi";
 
@@ -21,9 +22,87 @@ export const ROLE_LABEL: Record<Role, string> = {
   tb_xodim: "TB xodimi",
   ombor_mudiri: "Omborxona mudiri",
   yoriqchi: "Mashinist yoʻriqchisi",
+  depo_navbatchisi: "Depo navbatchisi",
   sex_boshligi: "Sex boʻlimi boshligʻi",
   ishchi: "Ishchi",
 };
+
+export type KolonnaTuri =
+  | "elektrovoz" | "teplovoz" | "manyovr"
+  | "yuk" | "yolovchi" | "xojalik" | "boshqa";
+
+export const KOLONNA_TURI_LABEL: Record<KolonnaTuri, string> = {
+  elektrovoz: "Elektrovoz",
+  teplovoz: "Teplovoz",
+  manyovr: "Manyovr",
+  yuk: "Yuk tashish",
+  yolovchi: "Yoʻlovchi tashish",
+  xojalik: "Xoʻjalik",
+  boshqa: "Boshqa",
+};
+
+export interface Kolonna {
+  id: string;
+  nomi: string;
+  turi: KolonnaTuri;
+  instruktorId?: string;
+  izoh?: string;
+  faol: boolean;
+  ishchiSoni: number;
+}
+
+/* --- Yoʻriqnoma kitobchalari (TNU-19 / instruktor) --- */
+
+export type YoriqTuri = "joriy" | "birlamchi" | "navbatdan" | "davriy";
+
+export interface YoriqnomaYozuv {
+  id: string;
+  kitobId: string;
+  bet: number;
+  qator: number;
+  sana: string;
+  ishchiId: string;
+  fio: string;
+  lavozimQisqa: string;
+  yoriqTuri: YoriqTuri;
+  mazmun: string;
+  xulosa: string;
+  beruvchiId?: string;
+  beruvchiFio?: string;
+  beruvchiLavozim: string;
+  oluvchiImzoId?: string;
+  beruvchiImzoId?: string;
+  tasdiqlangan: boolean;
+}
+
+export interface AktivSmena {
+  id: string;
+  tur: "kunduzgi" | "tungi";
+  mazmun: string;
+  xulosa: string;
+  boshlangan: string;
+}
+
+export interface AktivKitob {
+  id: string;
+  raqam: number;
+  joriyBet: number;
+  sigim: number;
+  yozuvSoni: number;
+}
+
+export interface InstruktorKolonna {
+  id: string;
+  nomi: string;
+  turi: KolonnaTuri;
+}
+
+export interface YoriqnomaHolat {
+  aktivSmena: AktivSmena | null;
+  aktivKitob: AktivKitob | null;
+  instruktorKolonna: InstruktorKolonna | null;
+  aktivInstruktorKitob: AktivKitob | null;
+}
 
 export type Unit = "dona" | "kg" | "metr" | "sm" | "juft";
 
@@ -85,6 +164,7 @@ export interface Worker {
   telefon?: string;
   roles: Role[];
   yoriqchiId?: string;
+  kolonnaId?: string;
   faol: boolean;
   imzoId?: string;
 
@@ -313,6 +393,8 @@ export interface DB {
   audit: AuditLog[];
   lines: string[];
   units: Unit[];
+  kolonnalar: Kolonna[];
+  yoriqnoma: YoriqnomaHolat;
   access: AccessState;
   seq: number;
 }

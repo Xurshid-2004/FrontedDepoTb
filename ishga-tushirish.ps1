@@ -1,4 +1,4 @@
-# =====================================================================
+﻿# =====================================================================
 #  TB tizimi - lokal ishga tushirish (Windows)
 #  Buxoro lokomotiv deposi (TCH-6)
 #
@@ -43,11 +43,38 @@ try { $null = & python --version 2>$null } catch {
 
 # --- 2b. Virtual muhit (Bacend\.venv) ---
 # Backend paketlari tizim Python'iga emas, shu muhitga o'rnatiladi.
-$py = Join-Path $bacend ".venv\Scripts\python.exe"
-if (-not (Test-Path $py)) {
+# Muhit mavjud bo'lsa ham ISHLAYOTGANINI tekshiramiz: eski venv o'zini
+# yaratgan Python (masalan C:\Python314) o'chirilgan/ko'chirilgan bo'lsa,
+# .venv\Scripts\python.exe "did not find executable" xatosini beradi.
+# Bunda venv buzilgan — o'chirib qayta yaratamiz.
+$venvDir = Join-Path $bacend ".venv"
+$py = Join-Path $venvDir "Scripts\python.exe"
+
+# Venv butunmi — buzilgan python.exe ni ISHGA TUSHIRMASDAN aniqlaymiz.
+# pyvenv.cfg dagi "home" bazaviy Python papkasini ko'rsatadi; u yo'q
+# bo'lsa (masalan C:\Python314 o'chirilgan), venv buzilgan.
+$venvOk = $false
+if (Test-Path $py) {
+    $cfg = Join-Path $venvDir "pyvenv.cfg"
+    if (Test-Path $cfg) {
+        $satr = Select-String -Path $cfg -Pattern '^\s*home\s*=\s*(.+)$' | Select-Object -First 1
+        if ($satr) {
+            $bazaPy = Join-Path ($satr.Matches[0].Groups[1].Value.Trim()) "python.exe"
+            if (Test-Path $bazaPy) { $venvOk = $true }
+        }
+    }
+}
+if (-not $venvOk) {
+    if (Test-Path $venvDir) {
+        Yoz "  Buzilgan virtual muhit o'chirilmoqda..." Yellow
+        Remove-Item -Recurse -Force $venvDir -ErrorAction SilentlyContinue
+    }
     Yoz "  Virtual muhit yaratilmoqda (bir marta)..." Yellow
-    & python -m venv (Join-Path $bacend ".venv")
-    if ($LASTEXITCODE -ne 0) { Yoz "  XATO: venv yaratilmadi." Red; Read-Host; exit 1 }
+    & python -m venv $venvDir
+    if (($LASTEXITCODE -ne 0) -or -not (Test-Path $py)) {
+        Yoz "  XATO: venv yaratilmadi. 'python' ishlaydimi (python --version)?" Red
+        Read-Host "`n  Yopish uchun Enter"; exit 1
+    }
 }
 
 # --- 3. Sozlama fayllari ---
@@ -87,6 +114,20 @@ if ($LASTEXITCODE -ne 0) {
 
 # --- 6. Boshlang'ich normativ ma'lumot ---
 & $py manage.py seed
+
+# --- 6b. Yagona imzo tizimi: ID-karta imzolari ---
+# Karta kaliti .env da bo'lmasa, depo-id-secret.key faylidan o'qiladi
+# (yangi karta chiqarish uchun). Verify uchun kalit shart emas.
+$keyFile = "C:\Users\ANUBIS PC\Desktop\tb_kitobchalari\id_kartalar\depo-id-secret.key"
+if ((Test-Path $keyFile) -and -not $env:CARD_HMAC_KEY) {
+    $env:CARD_HMAC_KEY = (Get-Content $keyFile -Raw).Trim()
+}
+# 706 ta karta imzosini yagona Signature tizimiga import qiladi (idempotent)
+$imzoCsv = "C:\Users\ANUBIS PC\Desktop\tb_kitobchalari\imzolar_royxati.csv"
+if (Test-Path $imzoCsv) {
+    Yoz "  ID-karta imzolari import qilinmoqda..." Gray
+    & $py manage.py import_imzolar --csv $imzoCsv
+}
 Pop-Location
 
 # --- 7. Ikkala xizmatni ishga tushirish ---

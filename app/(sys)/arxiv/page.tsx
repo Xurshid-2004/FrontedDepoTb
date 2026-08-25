@@ -1,24 +1,46 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
+import { api } from "@/lib/api";
 import { fmt, fio, itemById, money, positionById, STATUS_COLOR, STATUS_LABEL } from "@/lib/logic";
 import { Badge, Btn, Empty, Input, PageHead, Panel, Table, Td, Tr } from "@/components/ui";
 import WorkerFace from "@/components/WorkerFace";
+import KitobKarta, { type KitobInfo } from "@/components/KitobKarta";
 
-type View = "treb" | "mb6";
+type View = "kitoblar" | "treb" | "mb6";
 
 export default function Arxiv() {
-  const { db, me, canFeature } = useStore();
+  const { db, me, canFeature, can } = useStore();
   const [q, setQ] = useState("");
-  const [view, setView] = useState<View>("treb");
+  const [view, setView] = useState<View>("kitoblar");
+  const [kitoblar, setKitoblar] = useState<KitobInfo[]>([]);
 
   const showMb6 = canFeature("doc.mb6");
   const showTreb = canFeature("doc.trebovanie");
   const showKitob = canFeature("doc.kitobcha");
+  const showKitoblar = can("yoriqnoma.read");
+
+  useEffect(() => {
+    if (!showKitoblar) return;
+    api.yoriqnomaKitoblar().then((r) => setKitoblar(r.kitoblar || [])).catch(() => {});
+  }, [showKitoblar]);
 
   const s = q.trim().toLowerCase();
+
+  // Arxiv — faqat arxivlangan kitoblar, tartib bilan (turi, kolonna, №)
+  const arxivKitoblar = useMemo(() => {
+    let list = kitoblar.filter((k) => k.arxiv);
+    if (s) list = list.filter((k) =>
+      k.kolonnaNomi.toLowerCase().includes(s) ||
+      (k.instruktorFio ?? "").toLowerCase().includes(s) ||
+      String(k.raqam).includes(s));
+    return [...list].sort((a, b) =>
+      a.turi !== b.turi ? a.turi.localeCompare(b.turi)
+        : a.kolonnaNomi !== b.kolonnaNomi ? a.kolonnaNomi.localeCompare(b.kolonnaNomi)
+          : b.raqam - a.raqam);
+  }, [kitoblar, s]);
 
   // Требования arxivi — RAD ETILGANLAR SAQLANMAYDI
   const reqs = useMemo(() => {
@@ -79,6 +101,16 @@ export default function Arxiv() {
         <div className="min-w-[260px] flex-1">
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tabel, F.I.Sh. yoki hujjat raqami boʻyicha qidiring" />
         </div>
+        {showKitoblar && (
+          <button
+            onClick={() => setView("kitoblar")}
+            className={`rounded-full px-4 py-2 text-[12.5px] font-medium transition ${
+              view === "kitoblar" ? "bg-sky-100 text-sky-700 ring-1 ring-sky-500" : "border border-slate-200 text-slate-500 hover:text-slate-900"
+            }`}
+          >
+            Kitoblar ({arxivKitoblar.length})
+          </button>
+        )}
         {showTreb && (
           <button
             onClick={() => setView("treb")}
@@ -100,6 +132,19 @@ export default function Arxiv() {
           </button>
         )}
       </div>
+
+      {/* Arxivlangan kitoblar — muqova koʻrinishida, tartib bilan */}
+      {showKitoblar && view === "kitoblar" && (
+        arxivKitoblar.length === 0 ? (
+          <Panel><Empty text="Arxivlangan kitob yoʻq (kitob 700 bet toʻlgach arxivга oʻtadi)" /></Panel>
+        ) : (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {arxivKitoblar.map((k) => (
+              <div key={k.id} className="h-[220px]"><KitobKarta info={k} /></div>
+            ))}
+          </div>
+        )
+      )}
 
       {showTreb && view === "treb" && (
         <Panel pad={false}>

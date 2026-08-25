@@ -112,6 +112,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     { href: "/hisobot", label: "Hisobotlar", perm: "report.read", feat: "nav.hisobot" },
     { href: "/hujjatlar", label: "Hujjatlar", feat: "nav.hujjatlar" },
     { href: "/arxiv", label: "Arxiv", feat: "nav.arxiv" },
+    { href: "/tb-kitobchalari", label: "TB kitobchalari", perm: "yoriqnoma.read", feat: "nav.yoriqnoma" },
+    { href: "/kolonnalar", label: "Kolonnalar", perm: "kolonna.manage", feat: "nav.kolonnalar" },
     { href: "/ishchi", label: "Mening kabinetim" },
     { href: "/admin", label: "Administrator", perm: "admin.users" },
   ];
@@ -121,7 +123,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   // qoʻlda terib ochish mumkin. Server baribir rad etadi (403), ammo
   // foydalanuvchi buzuq sahifa va tushunarsiz xato oʻrniga aniq xabar
   // koʻrishi kerak.
-  const joriyBolim = navAll.find((n) => n.href !== "/dash" && path.startsWith(n.href));
+  const joriyBolim = navAll.find((n) => n.href !== "/dash" && (path === n.href || path.startsWith(n.href + "/")));
   const ruxsatYoq =
     !!joriyBolim &&
     ((!!joriyBolim.perm && !can(joriyBolim.perm)) ||

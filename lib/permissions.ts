@@ -28,7 +28,10 @@ export type Perm =
   | "incident.tb.write"
   | "incident.tb.read"
   | "incident.avariya.write"
-  | "incident.avariya.read";
+  | "incident.avariya.read"
+  | "kolonna.manage"
+  | "yoriqnoma.write"
+  | "yoriqnoma.read";
 
 export const ALL_PERMS: Perm[] = [
   "journal.read", "journal.write", "journal.sign",
@@ -41,6 +44,7 @@ export const ALL_PERMS: Perm[] = [
   "report.read", "report.download",
   "admin.users", "admin.norms", "admin.settings",
   "incident.tb.write", "incident.tb.read", "incident.avariya.write", "incident.avariya.read",
+  "kolonna.manage", "yoriqnoma.write", "yoriqnoma.read",
 ];
 
 export const PERM_LABEL: Record<Perm, string> = {
@@ -71,6 +75,9 @@ export const PERM_LABEL: Record<Perm, string> = {
   "incident.tb.read": "TB: baxtsiz xodisalarni koʻrish",
   "incident.avariya.write": "Yoʻriqchi: avariya yozish",
   "incident.avariya.read": "Yoʻriqchi: avariyalarni koʻrish",
+  "kolonna.manage": "Kolonnalarni boshqarish",
+  "yoriqnoma.write": "Yoʻriqnoma jurnaliga yozish (skan/tasdiqlash)",
+  "yoriqnoma.read": "Yoʻriqnoma jurnallarini koʻrish",
 };
 
 export const ROLE_PERMS: Record<Role, Perm[]> = {
@@ -80,6 +87,7 @@ export const ROLE_PERMS: Record<Role, Perm[]> = {
     "request.approve3", "stock.read", "card.read",
     "talon.read", "kip.read", "report.read", "report.download",
     "incident.tb.read", "incident.avariya.read",
+    "yoriqnoma.read",
   ],
   bosh_xisobchi: [
     "journal.read", "request.approve2", "stock.read", "card.read",
@@ -107,6 +115,13 @@ export const ROLE_PERMS: Record<Role, Perm[]> = {
     "kip.read", "kip.write", "talon.read", "journal.read",
     "report.read", "report.download",
     "incident.avariya.write", "incident.avariya.read", "incident.tb.read",
+    "yoriqnoma.write", "yoriqnoma.read",
+  ],
+  depo_navbatchisi: [
+    "journal.read", "card.read", "talon.read",
+    "report.read", "report.download",
+    "yoriqnoma.write", "yoriqnoma.read",
+    "incident.tb.read", "incident.avariya.read",
   ],
   sex_boshligi: [
     "journal.read", "card.read", "stock.read", "talon.read", "kip.read",
@@ -151,6 +166,8 @@ export type FeatureKey =
   | "nav.arizalar"       // Arizalar
   | "nav.hujjatlar"      // Hujjatlar boʻlimi (tabel boʻyicha qidiruv)
   | "nav.arxiv"          // Hujjatlar arxivi (yakuniy + blankalar)
+  | "nav.kolonnalar"     // Kolonnalar (admin)
+  | "nav.yoriqnoma"      // Yoʻriqnoma kitobchalari (TB kitobchalari)
   // hujjatlar
   | "doc.trebovanie"     // Требование (MU-27)
   | "doc.mb6"            // MB-6 kartochka
@@ -159,6 +176,7 @@ export type FeatureKey =
 export const ALL_FEATURES: FeatureKey[] = [
   "card.mehnat", "card.ombor", "card.faolIshchilar", "card.buyumTuri", "card.choraTadbir", "card.kip",
   "nav.tb", "nav.ombor", "nav.kip", "nav.talon", "nav.hisobot", "nav.arizalar", "nav.hujjatlar", "nav.arxiv",
+  "nav.kolonnalar", "nav.yoriqnoma",
   "doc.trebovanie", "doc.mb6", "doc.kitobcha",
 ];
 
@@ -177,6 +195,8 @@ export const FEATURE_LABEL: Record<FeatureKey, string> = {
   "nav.arizalar": "Boʻlim: Arizalar",
   "nav.hujjatlar": "Boʻlim: Hujjatlar (tabel qidiruv)",
   "nav.arxiv": "Boʻlim: Hujjatlar arxivi",
+  "nav.kolonnalar": "Boʻlim: Kolonnalar (admin)",
+  "nav.yoriqnoma": "Boʻlim: Yoʻriqnoma kitobchalari (TB kitobchalari)",
   "doc.trebovanie": "Hujjat: Требование (MU-27)",
   "doc.mb6": "Hujjat: MB-6 kartochka",
   "doc.kitobcha": "Hujjat: TB jamoatchilik nazorati kitobchasi",
@@ -184,7 +204,7 @@ export const FEATURE_LABEL: Record<FeatureKey, string> = {
 
 export const FEATURE_GROUPS: { title: string; keys: FeatureKey[] }[] = [
   { title: "Bosh sahifa kartalari", keys: ["card.mehnat", "card.ombor", "card.faolIshchilar", "card.buyumTuri", "card.choraTadbir", "card.kip"] },
-  { title: "Boʻlimlar (menyu)", keys: ["nav.tb", "nav.ombor", "nav.kip", "nav.talon", "nav.hisobot", "nav.arizalar", "nav.hujjatlar", "nav.arxiv"] },
+  { title: "Boʻlimlar (menyu)", keys: ["nav.tb", "nav.ombor", "nav.kip", "nav.talon", "nav.hisobot", "nav.arizalar", "nav.hujjatlar", "nav.arxiv", "nav.kolonnalar", "nav.yoriqnoma"] },
   { title: "Hujjatlar", keys: ["doc.trebovanie", "doc.mb6", "doc.kitobcha"] },
 ];
 
@@ -206,7 +226,9 @@ export const ROLE_FEATURES: Record<Role, FeatureKey[]> = {
   // Omborxona mudiri: ombor + buyum turlari kartalari
   ombor_mudiri: ["card.ombor", "card.buyumTuri", "nav.ombor", "nav.hisobot", "nav.arizalar", "nav.hujjatlar", ...ALL_DOCS],
   // Mashinist yoʻriqchisi: faqat KIP kartasi; TB jurnali va Talonlar yashirin
-  yoriqchi: ["card.kip", "nav.kip", "nav.hisobot", "nav.arizalar", "nav.hujjatlar", ...ALL_DOCS],
+  yoriqchi: ["card.kip", "nav.kip", "nav.hisobot", "nav.arizalar", "nav.hujjatlar", "nav.yoriqnoma", ...ALL_DOCS],
+  // Depo navbatchisi: yoʻriqnoma jurnali (TNU-19) + hisobot/hujjatlar
+  depo_navbatchisi: ["nav.yoriqnoma", "nav.hisobot", "nav.hujjatlar", ...ALL_DOCS],
   // Ishchi: bosh sahifada karta yoʻq; faqat arizalar boʻlimi
   ishchi: ["nav.arizalar", ...ALL_DOCS],
 };

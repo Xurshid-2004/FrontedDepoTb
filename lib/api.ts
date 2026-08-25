@@ -466,6 +466,52 @@ export const api = {
   addLine: (nomi: string) => amal("/lines", "POST", { nomi }),
   removeLine: (nomi: string) => amal("/lines", "DELETE", { nomi }),
 
+  /* ---------------- kolonnalar (instruktor guruhlari) ---------------- */
+
+  kolonnaUpsert: (k: {
+    id?: string; nomi: string; turi?: string;
+    instruktorId?: string | null; izoh?: string; faol?: boolean;
+  }) => amal("/kolonnalar", "POST", k),
+
+  kolonnaAssign: (workerId: string, kolonnaId: string | null) =>
+    amal("/kolonnalar/assign", "POST", { workerId, kolonnaId }),
+
+  /* ---------------- yoʻriqnoma kitobchalari (TNU-19) ---------------- */
+
+  smenaBoshla: (tur: "kunduzgi" | "tungi", mazmun: string, xulosa: string) =>
+    amal("/yoriqnoma/smena", "POST", { tur, mazmun, xulosa }),
+
+  smenaYop: () => amal("/yoriqnoma/smena/yop", "POST", {}),
+
+  /** Barkod QR matni bilan skan → qator yaratadi (ishchi imzosi darhol).
+   *  Instruktor uchun kitobTuri="instruktor" (+ yoriqTuri/mazmun ixtiyoriy). */
+  yoriqnomaSkan: (
+    payload: string,
+    opts?: { kitobTuri?: "tnu19" | "instruktor"; yoriqTuri?: string; mazmun?: string }
+  ) => amal("/yoriqnoma/skan", "POST", { payload, ...(opts || {}) }),
+
+  yoriqnomaTasdiqla: (
+    yozuvId: string,
+    opts?: { yoriqTuri?: string; mazmun?: string }
+  ) => amal(`/yoriqnoma/tasdiqla/${yozuvId}`, "POST", opts || {}),
+
+  /** Foydalanuvchi koʻra oladigan kitoblar roʻyxati (monitoring/arxiv). */
+  yoriqnomaKitoblar: () =>
+    so("/yoriqnoma/kitoblar", "GET") as Promise<{
+      kitoblar: {
+        id: string; turi: string; raqam: number; kolonnaNomi: string;
+        kolonnaTuri?: string; instruktorFio?: string;
+        arxiv: boolean; joriyBet: number; sigim: number; yozuvSoni: number;
+      }[];
+    }>,
+
+  /** Kitob qatorlarini oʻqiydi (holatдан alohida). */
+  yoriqnomaKitob: (turi = "tnu19", kitobId?: string) =>
+    so(`/yoriqnoma/kitob?turi=${turi}${kitobId ? `&kitobId=${kitobId}` : ""}`, "GET") as Promise<{
+      kitob: { id: string; turi: string; raqam: number; joriyBet: number; sigim: number; arxiv: boolean } | null;
+      yozuvlar: import("./types").YoriqnomaYozuv[];
+    }>,
+
   /* ---------------- ruxsatlar ---------------- */
 
   setAccess: (
