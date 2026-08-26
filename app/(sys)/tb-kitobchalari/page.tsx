@@ -169,10 +169,11 @@ export default function TbKitobchalariPage() {
     } else {
       // Instruktor (Yo D-26) — har ishchiga alohida varaq: boshda F.I.Sh + Kasbi,
       // jadval asl shaklga mos (Imzolar guruhlangan: oʻtuvchi | oʻtkazuvchi).
-      const guruh = new Map();
+      const guruh = new Map<string, { fio: string; lavozim: string; list: YoriqnomaYozuv[] }>();
       rows.forEach((y) => {
-        if (!guruh.has(y.ishchiId)) guruh.set(y.ishchiId, { fio: y.fio, lavozim: y.lavozimQisqa, list: [] });
-        guruh.get(y.ishchiId).list.push(y);
+        let g = guruh.get(y.ishchiId);
+        if (!g) { g = { fio: y.fio, lavozim: y.lavozimQisqa, list: [] }; guruh.set(y.ishchiId, g); }
+        g.list.push(y);
       });
       const varaqlar = await Promise.all([...guruh.values()].map(async (g) => {
         const qatorlar = await Promise.all(g.list.map(async (y) => {
