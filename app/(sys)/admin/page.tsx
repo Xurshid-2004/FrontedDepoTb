@@ -18,37 +18,42 @@ import WorkerFace from "@/components/WorkerFace";
 type Tab = "ishchilar" | "buyumlar" | "lavozimlar" | "normalar" | "ruxsatlar" | "korinish" | "parollar" | "sozlama" | "audit";
 
 /* Har boʻlimning oʻz rangi bor — admin qayerdaligini rangdan ham biladi.
-   Tanlanmagan tugma ham toʻq matnli: ilgari `text-slate-500` edi va oq
-   fonda deyarli koʻrinmasdi. Tailwind sinf nomlari toʻliq yozilgan —
-   ular kodda soʻzma-soʻz turishi shart, aks holda uslub yigʻilmaydi. */
+   Tugmalar toʻq (500) rangda toʻldirilgan, matn oq va qalin.
+
+   Tanlangan boʻlim yana ham toʻqroq (700) va atrofida oq oraliqli halqa
+   bor — shunda ranglar bir xil oilada boʻlsa ham qaysi biri ochiqligi
+   darrov koʻrinadi.
+
+   Tailwind sinf nomlari toʻliq yozilgan: ular kodda soʻzma-soʻz turishi
+   shart, aks holda uslub yigʻilmay qoladi. */
 const TABS: { k: Tab; l: string; faol: string; sokin: string }[] = [
   { k: "ishchilar", l: "Ishchilar",
-    faol: "bg-sky-600 text-white ring-sky-600",
-    sokin: "bg-sky-50 text-sky-800 ring-sky-200 hover:bg-sky-100" },
+    faol: "bg-sky-700 ring-sky-500 ring-offset-2",
+    sokin: "bg-sky-500 ring-sky-500 hover:bg-sky-600" },
   { k: "buyumlar", l: "Buyumlar va narxlar",
-    faol: "bg-amber-600 text-white ring-amber-600",
-    sokin: "bg-amber-50 text-amber-800 ring-amber-200 hover:bg-amber-100" },
+    faol: "bg-amber-700 ring-amber-500 ring-offset-2",
+    sokin: "bg-amber-500 ring-amber-500 hover:bg-amber-600" },
   { k: "lavozimlar", l: "Lavozimlar",
-    faol: "bg-violet-600 text-white ring-violet-600",
-    sokin: "bg-violet-50 text-violet-800 ring-violet-200 hover:bg-violet-100" },
+    faol: "bg-violet-700 ring-violet-500 ring-offset-2",
+    sokin: "bg-violet-500 ring-violet-500 hover:bg-violet-600" },
   { k: "normalar", l: "31-ilova normalari",
-    faol: "bg-teal-600 text-white ring-teal-600",
-    sokin: "bg-teal-50 text-teal-800 ring-teal-200 hover:bg-teal-100" },
+    faol: "bg-teal-700 ring-teal-500 ring-offset-2",
+    sokin: "bg-teal-500 ring-teal-500 hover:bg-teal-600" },
   { k: "ruxsatlar", l: "Ruxsatlar",
-    faol: "bg-emerald-600 text-white ring-emerald-600",
-    sokin: "bg-emerald-50 text-emerald-800 ring-emerald-200 hover:bg-emerald-100" },
+    faol: "bg-emerald-700 ring-emerald-500 ring-offset-2",
+    sokin: "bg-emerald-500 ring-emerald-500 hover:bg-emerald-600" },
   { k: "korinish", l: "Koʻrinish",
-    faol: "bg-indigo-600 text-white ring-indigo-600",
-    sokin: "bg-indigo-50 text-indigo-800 ring-indigo-200 hover:bg-indigo-100" },
+    faol: "bg-indigo-700 ring-indigo-500 ring-offset-2",
+    sokin: "bg-indigo-500 ring-indigo-500 hover:bg-indigo-600" },
   { k: "parollar", l: "Parollar",
-    faol: "bg-rose-600 text-white ring-rose-600",
-    sokin: "bg-rose-50 text-rose-800 ring-rose-200 hover:bg-rose-100" },
+    faol: "bg-rose-700 ring-rose-500 ring-offset-2",
+    sokin: "bg-rose-500 ring-rose-500 hover:bg-rose-600" },
   { k: "sozlama", l: "Sozlamalar",
-    faol: "bg-cyan-600 text-white ring-cyan-600",
-    sokin: "bg-cyan-50 text-cyan-800 ring-cyan-200 hover:bg-cyan-100" },
+    faol: "bg-cyan-700 ring-cyan-500 ring-offset-2",
+    sokin: "bg-cyan-500 ring-cyan-500 hover:bg-cyan-600" },
   { k: "audit", l: "Audit-log",
-    faol: "bg-slate-700 text-white ring-slate-700",
-    sokin: "bg-slate-100 text-slate-700 ring-slate-300 hover:bg-slate-200" },
+    faol: "bg-slate-700 ring-slate-500 ring-offset-2",
+    sokin: "bg-slate-500 ring-slate-500 hover:bg-slate-600" },
 ];
 
 /* ------------ yordamchi: fayl → base64 data URL ------------ */
@@ -308,8 +313,8 @@ export default function Admin() {
           <button
             key={x.k}
             onClick={() => setTab(x.k)}
-            className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2.5 text-[12.5px] font-semibold ring-1 transition md:py-2 ${
-              tab === x.k ? `${x.faol} shadow-sm` : x.sokin
+            className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2.5 text-[12.5px] font-semibold text-white ring-1 transition md:py-2 ${
+              tab === x.k ? `${x.faol} shadow-md` : x.sokin
             }`}
           >
             {x.l}
