@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useStore, type ImportRow, type WorkerYozuv } from "@/lib/store";
 import { fmt, fmtDT, fio, fioShort, iso, itemById, money, positionById, positionNames, qidiruvMos, TODAY } from "@/lib/logic";
@@ -17,16 +17,38 @@ import WorkerFace from "@/components/WorkerFace";
 
 type Tab = "ishchilar" | "buyumlar" | "lavozimlar" | "normalar" | "ruxsatlar" | "korinish" | "parollar" | "sozlama" | "audit";
 
-const TABS: { k: Tab; l: string }[] = [
-  { k: "ishchilar", l: "Ishchilar" },
-  { k: "buyumlar", l: "Buyumlar va narxlar" },
-  { k: "lavozimlar", l: "Lavozimlar" },
-  { k: "normalar", l: "31-ilova normalari" },
-  { k: "ruxsatlar", l: "Ruxsatlar" },
-  { k: "korinish", l: "Koʻrinish" },
-  { k: "parollar", l: "Parollar" },
-  { k: "sozlama", l: "Sozlamalar" },
-  { k: "audit", l: "Audit-log" },
+/* Har boʻlimning oʻz rangi bor — admin qayerdaligini rangdan ham biladi.
+   Tanlanmagan tugma ham toʻq matnli: ilgari `text-slate-500` edi va oq
+   fonda deyarli koʻrinmasdi. Tailwind sinf nomlari toʻliq yozilgan —
+   ular kodda soʻzma-soʻz turishi shart, aks holda uslub yigʻilmaydi. */
+const TABS: { k: Tab; l: string; faol: string; sokin: string }[] = [
+  { k: "ishchilar", l: "Ishchilar",
+    faol: "bg-sky-600 text-white ring-sky-600",
+    sokin: "bg-sky-50 text-sky-800 ring-sky-200 hover:bg-sky-100" },
+  { k: "buyumlar", l: "Buyumlar va narxlar",
+    faol: "bg-amber-600 text-white ring-amber-600",
+    sokin: "bg-amber-50 text-amber-800 ring-amber-200 hover:bg-amber-100" },
+  { k: "lavozimlar", l: "Lavozimlar",
+    faol: "bg-violet-600 text-white ring-violet-600",
+    sokin: "bg-violet-50 text-violet-800 ring-violet-200 hover:bg-violet-100" },
+  { k: "normalar", l: "31-ilova normalari",
+    faol: "bg-teal-600 text-white ring-teal-600",
+    sokin: "bg-teal-50 text-teal-800 ring-teal-200 hover:bg-teal-100" },
+  { k: "ruxsatlar", l: "Ruxsatlar",
+    faol: "bg-emerald-600 text-white ring-emerald-600",
+    sokin: "bg-emerald-50 text-emerald-800 ring-emerald-200 hover:bg-emerald-100" },
+  { k: "korinish", l: "Koʻrinish",
+    faol: "bg-indigo-600 text-white ring-indigo-600",
+    sokin: "bg-indigo-50 text-indigo-800 ring-indigo-200 hover:bg-indigo-100" },
+  { k: "parollar", l: "Parollar",
+    faol: "bg-rose-600 text-white ring-rose-600",
+    sokin: "bg-rose-50 text-rose-800 ring-rose-200 hover:bg-rose-100" },
+  { k: "sozlama", l: "Sozlamalar",
+    faol: "bg-cyan-600 text-white ring-cyan-600",
+    sokin: "bg-cyan-50 text-cyan-800 ring-cyan-200 hover:bg-cyan-100" },
+  { k: "audit", l: "Audit-log",
+    faol: "bg-slate-700 text-white ring-slate-700",
+    sokin: "bg-slate-100 text-slate-700 ring-slate-300 hover:bg-slate-200" },
 ];
 
 /* ------------ yordamchi: fayl → base64 data URL ------------ */
@@ -52,33 +74,161 @@ function parseRows(text: string): ImportRow[] {
     .filter((r) => r.tabel && r.familiya && r.ism);
 }
 
-/* ------------ tri-state ketma-ketligi: standart → yoq → yashir → standart ------------ */
-function nextState(s: boolean | undefined): boolean | null {
-  if (s === undefined) return true;
-  if (s === true) return false;
+/* ------------------------------------------------------------------
+   Ruxsat holati — uch qiymat
+
+     null (standart) — rol yoki lavozimdan nima kelsa, oʻsha
+     true  (ochiq)   — shu odamga majburan ochiladi
+     false (yopiq)   — shu odamga majburan yopiladi
+
+   Ilgari bu ✓ / ✕ / + / — belgilari bilan koʻrsatilardi va nima
+   tanlanganini taxmin qilishga toʻgʻri kelardi. Endi soʻz bilan yozilgan.
+------------------------------------------------------------------ */
+
+export type Holat = boolean | null;
+
+/** `undefined` (yozuv yoʻq) ham, `null` ham — «standart» degani. */
+function holatOl(v: boolean | null | undefined): Holat {
+  return v === undefined ? null : v;
+}
+
+const HOLAT_RANG: Record<string, string> = {
+  standart: "text-slate-500",
+  ochiq: "text-emerald-700",
+  yopiq: "text-rose-700",
+};
+
+/**
+ * Uchta tugmachali tanlov — lavozim va shaxs kartalari uchun.
+ * Bu yerda joy yetarli, shuning uchun uchala variant ham koʻrinib turadi.
+ */
+function HolatTanlov({
+  holat, def, onSet, ozgargan,
+}: {
+  holat: Holat;
+  def: boolean;
+  onSet: (v: Holat) => void;
+  ozgargan?: boolean;
+}) {
+  const variantlar: { v: Holat; matn: string; izoh: string; rang: string }[] = [
+    {
+      v: null,
+      matn: "Standart",
+      izoh: def ? "Standart boʻyicha OCHIQ" : "Standart boʻyicha YOPIQ",
+      rang: "standart",
+    },
+    { v: true, matn: "Ochiq", izoh: "Majburan ochiladi", rang: "ochiq" },
+    { v: false, matn: "Yopiq", izoh: "Majburan yopiladi", rang: "yopiq" },
+  ];
+
+  return (
+    <div
+      className={`flex overflow-hidden rounded-lg border ${
+        ozgargan ? "border-amber-400 ring-1 ring-amber-200" : "border-slate-200"
+      }`}
+    >
+      {variantlar.map((x) => {
+        const tanlangan = holat === x.v;
+        return (
+          <button
+            key={String(x.v)}
+            type="button"
+            title={x.izoh}
+            onClick={() => onSet(x.v)}
+            className={`px-2.5 py-1 text-[11.5px] font-medium transition-colors ${
+              tanlangan
+                ? `bg-slate-100 ${HOLAT_RANG[x.rang]}`
+                : "text-slate-400 hover:bg-slate-50"
+            }`}
+          >
+            {x.matn}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Rol matritsasi uchun ixcham katak.
+ *
+ * U yerda 9 ta rol ustuni bor — uchta tugmacha sigʻmaydi. Shuning uchun
+ * bitta tugma boʻlib, bosilganda aylanadi: standart → ochiq → yopiq.
+ * Soʻzlar esa yuqoridagi tanlov bilan bir xil, shunda ikkalasi bir tilda
+ * gapiradi. Yulduzcha — «bu rol standarti, oʻzgartirilmagan».
+ */
+function SozKatak({
+  holat, def, onCycle, ozgargan,
+}: {
+  holat: Holat;
+  def: boolean;
+  onCycle: () => void;
+  ozgargan?: boolean;
+}) {
+  const standart = holat === null;
+  const amaldagi = standart ? def : holat === true;
+  const matn = standart ? (def ? "Ochiq*" : "Yopiq*") : amaldagi ? "Ochiq" : "Yopiq";
+
+  return (
+    <button
+      type="button"
+      onClick={onCycle}
+      title={
+        standart
+          ? `Rol standarti: ${def ? "ochiq" : "yopiq"} — bosib oʻzgartiring`
+          : amaldagi
+            ? "Majburan ochiq"
+            : "Majburan yopiq"
+      }
+      className={`mx-auto w-[62px] rounded-md py-1 text-[11px] font-medium hover:bg-slate-100 ${
+        standart ? "text-slate-400" : amaldagi ? "text-emerald-700" : "text-rose-700"
+      } ${ozgargan ? "ring-1 ring-amber-400" : standart ? "" : "ring-1 ring-inset ring-slate-200"}`}
+    >
+      {matn}
+    </button>
+  );
+}
+
+/** Bosilganda: standart → ochiq → yopiq → standart */
+function nextState(s: boolean | null | undefined): Holat {
+  const h = holatOl(s);
+  if (h === null) return true;
+  if (h === true) return false;
   return null;
 }
 
-function TriCell({ state, def, onCycle }: { state: boolean | undefined; def: boolean; onCycle: () => void }) {
-  const label = state === true ? "✓" : state === false ? "✕" : def ? "+" : "—";
-  const color = state === true ? "#16a34a" : state === false ? "#dc2626" : def ? "#94a3b8" : "#cbd5e1";
-  const title =
-    state === undefined
-      ? `Standart (${def ? "yoniq" : "yashirin"}) — bosib override qiling`
-      : state
-        ? "Majburan yoniq"
-        : "Majburan yashirin";
+/* ------------------------------------------------------------------
+   Saqlanmagan oʻzgarishlar
+
+   Ilgari har bosish darrov serverga ketardi — admin nima oʻzgarganini
+   koʻrmasdan qolardi va tasodifiy bosilgan tugma shu zahoti kuchga
+   kirardi. Endi oʻzgarishlar shu yerda toʻplanadi va «Saqlash» bosilgach
+   birgalikda yuboriladi.
+------------------------------------------------------------------ */
+
+type Qoralama = Record<string, Holat>;
+
+function SaqlashPaneli({
+  soni, saqlanmoqda, onSaqla, onBekor,
+}: {
+  soni: number;
+  saqlanmoqda: boolean;
+  onSaqla: () => void;
+  onBekor: () => void;
+}) {
+  if (!soni) return null;
   return (
-    <button
-      onClick={onCycle}
-      title={title}
-      className={`mx-auto grid h-7 w-7 place-items-center rounded-md hover:bg-slate-100 ${
-        state !== undefined ? "ring-1 ring-inset" : ""
-      }`}
-      style={{ color, boxShadow: state !== undefined ? `inset 0 0 0 1px ${color}55` : undefined }}
-    >
-      <span className="text-[14px] font-bold leading-none">{label}</span>
-    </button>
+    <div className="sticky bottom-2 z-20 mt-3 flex items-center gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 shadow-sm">
+      <span className="text-[12px] font-medium text-amber-900">
+        {soni} ta oʻzgarish saqlanmagan
+      </span>
+      <Btn size="sm" className="ml-auto" onClick={onBekor} disabled={saqlanmoqda}>
+        Bekor qilish
+      </Btn>
+      <Btn size="sm" variant="primary" onClick={onSaqla} disabled={saqlanmoqda}>
+        {saqlanmoqda ? "Saqlanmoqda..." : "Saqlash"}
+      </Btn>
+    </div>
   );
 }
 
@@ -158,10 +308,8 @@ export default function Admin() {
           <button
             key={x.k}
             onClick={() => setTab(x.k)}
-            className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2.5 text-[12.5px] font-medium transition md:py-2 ${
-              tab === x.k
-                ? "bg-sky-100 text-sky-700 ring-1 ring-sky-500"
-                : "border border-slate-200 text-slate-500 hover:text-slate-900"
+            className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2.5 text-[12.5px] font-semibold ring-1 transition md:py-2 ${
+              tab === x.k ? `${x.faol} shadow-sm` : x.sokin
             }`}
           >
             {x.l}
@@ -361,7 +509,7 @@ export default function Admin() {
           db={db}
           userSel={userSel} setUserSel={setUserSel} userQ={userQ} setUserQ={setUserQ}
           setRoleAccess={setRoleAccess} setPositionAccess={setPositionAccess} setUserAccess={setUserAccess}
-          note="«+» — standart yoniq, «—» — standart yashirin. Katakni bosib override qiling: ✓ majburan yoniq, ✕ majburan yashirin, yana bosilsa standartga qaytadi. Ustuvorlik: shaxs → lavozim → rol."
+          note="Har bir ruxsat uchta holatda boʻladi: «Standart» — rol yoki lavozimdan nima kelsa oʻsha; «Ochiq» — majburan beriladi; «Yopiq» — majburan olib qoʻyiladi. Oʻzgartirgach «Saqlash» tugmasini bosing. Ustuvorlik: shaxs → lavozim → rol."
         />
       )}
 
@@ -375,7 +523,7 @@ export default function Admin() {
           db={db}
           userSel={userSel} setUserSel={setUserSel} userQ={userQ} setUserQ={setUserQ}
           setRoleAccess={setRoleAccess} setPositionAccess={setPositionAccess} setUserAccess={setUserAccess}
-          note="Kartalar, boʻlimlar va hujjatlar qaysi rolda / qaysi lavozimda / qaysi ishchida koʻrinishini boshqaring."
+          note="Kartalar, boʻlimlar va hujjatlar qaysi rolda / qaysi lavozimda / qaysi ishchida koʻrinishini boshqaring. Uchta holat: «Standart», «Ochiq», «Yopiq». Oʻzgartirgach «Saqlash» tugmasini bosing."
         />
       )}
 
@@ -770,9 +918,9 @@ function AccessSection({
   note: string;
   userSel: string; setUserSel: (v: string) => void;
   userQ: string; setUserQ: (v: string) => void;
-  setRoleAccess: (role: Role, key: AccessKey, value: boolean | null) => void;
-  setPositionAccess: (positionId: string, key: AccessKey, value: boolean | null) => void;
-  setUserAccess: (workerId: string, key: AccessKey, value: boolean | null) => void;
+  setRoleAccess: (role: Role, key: AccessKey, value: boolean | null) => Promise<boolean>;
+  setPositionAccess: (positionId: string, key: AccessKey, value: boolean | null) => Promise<boolean>;
+  setUserAccess: (workerId: string, key: AccessKey, value: boolean | null) => Promise<boolean>;
 }) {
   const roles = Object.keys(ROLE_LABEL) as Role[];
   const roleDef = (r: Role, k: AccessKey) =>
@@ -780,8 +928,66 @@ function AccessSection({
 
   const groupedKeys = groups ?? [{ title: "", keys: keys as FeatureKey[] }];
 
+  const t = useToast();
+
+  /* Saqlanmagan oʻzgarishlar. Har karta oʻz qoralamasini tutadi:
+     rol matritsasida kalit `${rol}|${ruxsat}`, qolganlarida shunchaki
+     ruxsat kaliti. Qiymat — yangi holat (null = standart). */
+  const [rolQoralama, setRolQoralama] = useState<Qoralama>({});
+  const [lavQoralama, setLavQoralama] = useState<Qoralama>({});
+  const [shaxsQoralama, setShaxsQoralama] = useState<Qoralama>({});
+  const [saqlanmoqda, setSaqlanmoqda] = useState("");
+
   const [posSel, setPosSel] = useState<string>("");
   const selPosition = db.positions.find((p) => p.id === posSel) || null;
+
+  /* Boshqa lavozim/ishchi tanlansa qoralama tozalanadi — aks holda bir
+     odam uchun qilingan oʻzgarish boshqasiga yozilib ketardi. */
+  useEffect(() => setLavQoralama({}), [posSel]);
+  useEffect(() => setShaxsQoralama({}), [userSel]);
+
+  /** Qoralamadagi qiymat boʻlsa oʻsha, boʻlmasa bazadagi holat. */
+  const koringan = (qoralama: Qoralama, kalit: string, saqlangan: boolean | undefined): Holat =>
+    kalit in qoralama ? qoralama[kalit] : holatOl(saqlangan);
+
+  /** Oʻzgarish qoralamaga yoziladi; bazadagi qiymatga qaytarilsa — oʻchiriladi. */
+  const belgila = (
+    setter: React.Dispatch<React.SetStateAction<Qoralama>>,
+    kalit: string,
+    yangi: Holat,
+    saqlangan: boolean | undefined
+  ) =>
+    setter((oldingi) => {
+      const keyingi = { ...oldingi };
+      if (yangi === holatOl(saqlangan)) delete keyingi[kalit];
+      else keyingi[kalit] = yangi;
+      return keyingi;
+    });
+
+  /** «Saqlash» — qoralamadagi hamma oʻzgarishni ketma-ket yuboradi. */
+  const saqla = async (
+    nomi: string,
+    qoralama: Qoralama,
+    tozala: () => void,
+    yubor: (kalit: string, qiymat: Holat) => Promise<boolean>
+  ) => {
+    const jami = Object.entries(qoralama);
+    setSaqlanmoqda(nomi);
+    try {
+      for (const [kalit, qiymat] of jami) {
+        // Birinchi xatoda toʻxtaymiz va qoralamani SAQLAB qolamiz — admin
+        // nima saqlanmaganini koʻradi va qayta urinib koʻra oladi.
+        if (!(await yubor(kalit, qiymat))) {
+          t.show("Saqlanmadi — qayta urinib koʻring");
+          return;
+        }
+      }
+      tozala();
+      t.show(jami.length === 1 ? "Saqlandi" : `${jami.length} ta oʻzgarish saqlandi`);
+    } finally {
+      setSaqlanmoqda("");
+    }
+  };
 
   const selWorker = db.workers.find((w) => w.id === userSel) || null;
   /* Ism ham, tabel ham bitta satrda qidiriladi — xodim qaysi birini
@@ -797,6 +1003,7 @@ function AccessSection({
 
   return (
     <div className="space-y-6">
+      {t.node}
       <p className="text-[12px] leading-relaxed text-slate-500">{note}</p>
 
       {/* ROL MATRITSASI */}
@@ -834,17 +1041,21 @@ function AccessSection({
                         {label(k)}
                       </td>
                       {roles.map((r) => {
-                        const st = db.access.roleOverrides[r]?.[k];
-                        const disabled = r === "admin";
+                        const saqlangan = db.access.roleOverrides[r]?.[k];
+                        const kalit = `${r}|${k}`;
+                        const holat = koringan(rolQoralama, kalit, saqlangan);
                         return (
                           <td key={r} className="border-b border-slate-200 px-2 py-1.5 text-center">
-                            {disabled ? (
-                              <span className="text-emerald-600">✓</span>
+                            {r === "admin" ? (
+                              <span className="text-[11px] font-medium text-emerald-700">Ochiq</span>
                             ) : (
-                              <TriCell
-                                state={st}
+                              <SozKatak
+                                holat={holat}
                                 def={roleDef(r, k)}
-                                onCycle={() => setRoleAccess(r, k, nextState(st))}
+                                ozgargan={kalit in rolQoralama}
+                                onCycle={() =>
+                                  belgila(setRolQoralama, kalit, nextState(holat), saqlangan)
+                                }
                               />
                             )}
                           </td>
@@ -856,6 +1067,19 @@ function AccessSection({
               ))}
             </tbody>
           </table>
+        </div>
+        <div className="px-4 pb-3">
+          <SaqlashPaneli
+            soni={Object.keys(rolQoralama).length}
+            saqlanmoqda={saqlanmoqda === "rol"}
+            onBekor={() => setRolQoralama({})}
+            onSaqla={() =>
+              saqla("rol", rolQoralama, () => setRolQoralama({}), (kalit, qiymat) => {
+                const [rol, ruxsat] = kalit.split("|");
+                return setRoleAccess(rol as Role, ruxsat as AccessKey, qiymat);
+              })
+            }
+          />
         </div>
       </Panel>
 
@@ -874,6 +1098,7 @@ function AccessSection({
         {!selPosition ? (
           <Empty text="Override sozlash uchun lavozim tanlang — bu ustuvorlik roldan yuqori, shaxsdan past" />
         ) : (
+          <>
           <div className="overflow-hidden rounded-xl border border-slate-200">
             {groupedKeys.map((g) => (
               <div key={g.title || "all"}>
@@ -881,18 +1106,39 @@ function AccessSection({
                   <div className="bg-slate-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">{g.title}</div>
                 )}
                 {g.keys.map((k) => {
-                  const st = db.access.positionOverrides[selPosition.id]?.[k];
+                  const saqlangan = db.access.positionOverrides[selPosition.id]?.[k];
+                  const holat = koringan(lavQoralama, k, saqlangan);
+                  /* Lavozim uchun «standart» — rol nima bersa oʻsha. */
+                  const def = roles.some((r) => {
+                    const ro = db.access.roleOverrides[r]?.[k];
+                    return ro !== undefined ? ro : roleDef(r, k);
+                  });
                   return (
                     <div key={k} className="flex items-center gap-3 border-t border-slate-100 px-3 py-2">
                       <span className="flex-1 text-[12.5px] text-slate-800">{label(k)}</span>
-                      <span className="text-[11px] text-slate-400">rol standartini bekor qiladi</span>
-                      <TriCell state={st} def={false} onCycle={() => setPositionAccess(selPosition.id, k, nextState(st))} />
+                      <HolatTanlov
+                        holat={holat}
+                        def={def}
+                        ozgargan={k in lavQoralama}
+                        onSet={(v) => belgila(setLavQoralama, k, v, saqlangan)}
+                      />
                     </div>
                   );
                 })}
               </div>
             ))}
           </div>
+          <SaqlashPaneli
+            soni={Object.keys(lavQoralama).length}
+            saqlanmoqda={saqlanmoqda === "lavozim"}
+            onBekor={() => setLavQoralama({})}
+            onSaqla={() =>
+              saqla("lavozim", lavQoralama, () => setLavQoralama({}), (kalit, qiymat) =>
+                setPositionAccess(selPosition.id, kalit as AccessKey, qiymat)
+              )
+            }
+          />
+          </>
         )}
       </Panel>
 
@@ -934,7 +1180,18 @@ function AccessSection({
                   {selWorker.tabel} · {selWorker.roles.map((r) => ROLE_LABEL[r]).join(", ")}
                 </p>
               </div>
-              <Btn size="sm" className="ml-auto" onClick={() => setUserSel("")}>Yopish</Btn>
+              <Btn
+                size="sm"
+                className="ml-auto"
+                onClick={() => {
+                  // Saqlanmagan oʻzgarish jimgina yoʻqolib ketmasin
+                  const soni = Object.keys(shaxsQoralama).length;
+                  if (soni && !confirm(`${soni} ta oʻzgarish saqlanmagan. Baribir yopilsinmi?`)) return;
+                  setUserSel("");
+                }}
+              >
+                Yopish
+              </Btn>
             </div>
 
             <div className="overflow-hidden rounded-xl border border-slate-200">
@@ -944,8 +1201,11 @@ function AccessSection({
                     <div className="bg-slate-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">{g.title}</div>
                   )}
                   {g.keys.map((k) => {
-                    const st = db.access.userOverrides[selWorker.id]?.[k];
-                    // shaxs uchun standart = lavozim override (agar bor boʻlsa), boʻlmasa rol bazaviy holati
+                    const saqlangan = db.access.userOverrides[selWorker.id]?.[k];
+                    const holat = koringan(shaxsQoralama, k, saqlangan);
+
+                    // Shaxs uchun «standart» — avval lavozim override'i,
+                    // boʻlmasa rol holati.
                     const workerPosIds = selWorker.positionIds?.length ? selWorker.positionIds : [selWorker.positionId];
                     const posOverride = workerPosIds
                       .map((pid) => db.access.positionOverrides[pid]?.[k])
@@ -957,17 +1217,43 @@ function AccessSection({
                           if (ro !== undefined) return ro;
                           return roleDef(r, k);
                         });
+
+                    // Bu odam PIROVARDIDA nima oladi — asosiy savolga javob.
+                    const amaldagi = holat === null ? def : holat === true;
+
                     return (
                       <div key={k} className="flex items-center gap-3 border-t border-slate-100 px-3 py-2">
                         <span className="flex-1 text-[12.5px] text-slate-800">{label(k)}</span>
-                        <span className="text-[11px] text-slate-400">{def ? "standart: yoniq" : "standart: yashirin"}</span>
-                        <TriCell state={st} def={def} onCycle={() => setUserAccess(selWorker.id, k, nextState(st))} />
+                        <span
+                          className={`w-[70px] text-right text-[11px] font-medium ${
+                            amaldagi ? "text-emerald-700" : "text-slate-400"
+                          }`}
+                        >
+                          {amaldagi ? "ochiq" : "yopiq"}
+                        </span>
+                        <HolatTanlov
+                          holat={holat}
+                          def={def}
+                          ozgargan={k in shaxsQoralama}
+                          onSet={(v) => belgila(setShaxsQoralama, k, v, saqlangan)}
+                        />
                       </div>
                     );
                   })}
                 </div>
               ))}
             </div>
+
+            <SaqlashPaneli
+              soni={Object.keys(shaxsQoralama).length}
+              saqlanmoqda={saqlanmoqda === "shaxs"}
+              onBekor={() => setShaxsQoralama({})}
+              onSaqla={() =>
+                saqla("shaxs", shaxsQoralama, () => setShaxsQoralama({}), (kalit, qiymat) =>
+                  setUserAccess(selWorker.id, kalit as AccessKey, qiymat)
+                )
+              }
+            />
           </>
         )}
       </Panel>

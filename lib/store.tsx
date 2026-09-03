@@ -127,9 +127,12 @@ type Ctx = {
     opts?: { kitobTuri?: "tnu19" | "instruktor"; yoriqTuri?: string; mazmun?: string }
   ) => Promise<{ id: string } | { xato: string }>;
   yoriqnomaTasdiqla: (yozuvId: string, opts?: { yoriqTuri?: string; mazmun?: string }) => Promise<void>;
-  setRoleAccess: (role: Role, key: AccessKey, value: boolean | null) => Promise<void>;
-  setPositionAccess: (positionId: string, key: AccessKey, value: boolean | null) => Promise<void>;
-  setUserAccess: (workerId: string, key: AccessKey, value: boolean | null) => Promise<void>;
+  /* Saqlandimi — `true`. Xato boʻlsa `false` va sabab `xato` da turadi.
+     Admin panelidagi «Saqlash» tugmasi shu javobga qarab xabar beradi:
+     usiz saqlanmagan oʻzgarish ham «Saqlandi» deb koʻrsatilardi. */
+  setRoleAccess: (role: Role, key: AccessKey, value: boolean | null) => Promise<boolean>;
+  setPositionAccess: (positionId: string, key: AccessKey, value: boolean | null) => Promise<boolean>;
+  setUserAccess: (workerId: string, key: AccessKey, value: boolean | null) => Promise<boolean>;
   importWorkers: (rows: ImportRow[], positionId: string) => Promise<number>;
   setWorkerPin: (workerId: string, pin: string) => Promise<void>;
   clearWorkerPin: (workerId: string) => Promise<void>;
@@ -526,15 +529,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     },
 
     /* --- ruxsatlar --- */
-    setRoleAccess: async (role, key, value) => {
-      await yugur(() => api.setAccess("role", role, key, value));
-    },
-    setPositionAccess: async (positionId, key, value) => {
-      await yugur(() => api.setAccess("position", positionId, key, value));
-    },
-    setUserAccess: async (workerId, key, value) => {
-      await yugur(() => api.setAccess("user", workerId, key, value));
-    },
+    setRoleAccess: async (role, key, value) =>
+      (await yugur(() => api.setAccess("role", role, key, value))) !== null,
+    setPositionAccess: async (positionId, key, value) =>
+      (await yugur(() => api.setAccess("position", positionId, key, value))) !== null,
+    setUserAccess: async (workerId, key, value) =>
+      (await yugur(() => api.setAccess("user", workerId, key, value))) !== null,
 
     /* --- xodisalar --- */
     addIncident: async (turi, matn) => {
