@@ -3,7 +3,7 @@
 import React, { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useStore, type ImportRow, type WorkerYozuv } from "@/lib/store";
-import { fmt, fmtDT, fio, fioShort, iso, itemById, money, positionById, positionNames, TODAY } from "@/lib/logic";
+import { fmt, fmtDT, fio, fioShort, iso, itemById, money, positionById, positionNames, qidiruvMos, TODAY } from "@/lib/logic";
 import {
   ALL_PERMS, PERM_LABEL, ROLE_PERMS,
   ALL_FEATURES, FEATURE_LABEL, FEATURE_GROUPS, ROLE_FEATURES,
@@ -784,11 +784,14 @@ function AccessSection({
   const selPosition = db.positions.find((p) => p.id === posSel) || null;
 
   const selWorker = db.workers.find((w) => w.id === userSel) || null;
+  /* Ism ham, tabel ham bitta satrda qidiriladi — xodim qaysi birini
+     tersa ham topadi. `qidiruvMos` apostrof turlarini tenglashtiradi va
+     soʻzlarni tartibidan qatʼi nazar solishtiradi (lib/logic.ts). */
   const foundWorkers = useMemo(() => {
-    const s = userQ.trim().toLowerCase();
+    const s = userQ.trim();
     if (!s) return [];
     return db.workers
-      .filter((w) => fio(w).toLowerCase().includes(s) || w.tabel.includes(s))
+      .filter((w) => qidiruvMos(`${fio(w)} ${w.tabel}`, s))
       .slice(0, 8);
   }, [db.workers, userQ]);
 

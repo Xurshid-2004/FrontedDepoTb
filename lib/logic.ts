@@ -317,6 +317,39 @@ export function fio(w: Worker) {
   return `${w.familiya} ${w.ism} ${w.otasi}`;
 }
 
+/* ---------------- Qidiruv ---------------- */
+
+/**
+ * Matnni solishtirish uchun bir koʻrinishga keltiradi.
+ *
+ * Kadrlar roʻyxatida apostrof TOʻRT xil belgida yozilgan:
+ *   U+2018 (chap tirnoq) — 442 marta,  U+2019 (oʻng tirnoq) — 11,
+ *   U+0027 (oddiy apostrof) — 4,       U+0060 (teskari tirnoq) — 2.
+ * Klaviaturadan esa odam odatda oddiy ' teradi. Solishtirishdan oldin
+ * hammasi bitta belgiga keltirilmasa, «Olimjon oʻgʻli» ni qidirgan
+ * xodim hech nima topa olmaydi.
+ */
+export function qidiruvMatn(s: string): string {
+  return (s ?? "")
+    .toLowerCase()
+    .replace(/[\u2018\u2019\u02bb\u02bc\u0060\u00b4\u2032']/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Soʻrovdagi HAR BIR soʻz matnda uchrasa — mos keladi.
+ *
+ * Tartib muhim emas: «ohun abduvaliyev» ham, «abduvaliyev ohun» ham
+ * bitta odamni topadi. Bitta uzun satr bilan solishtirilganda bu
+ * ishlamasdi — `includes` faqat ketma-ket kelgan matnni topadi.
+ */
+export function qidiruvMos(matn: string, sorov: string): boolean {
+  const m = qidiruvMatn(matn);
+  const sozlar = qidiruvMatn(sorov).split(" ").filter(Boolean);
+  return sozlar.length > 0 && sozlar.every((soz) => m.includes(soz));
+}
+
 export function fioShort(w: Worker) {
   return `${w.familiya} ${w.ism[0]}.${w.otasi[0]}.`;
 }

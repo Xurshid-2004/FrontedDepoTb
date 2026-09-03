@@ -59,7 +59,9 @@ type Ctx = {
   can: (p: Perm) => boolean;
   canFeature: (f: FeatureKey) => boolean;
 
-  login: (tabel: string, pin: string) => Promise<"ok" | "pin" | "xato">;
+  /** `eslabQol` — «Bu qurilmani eslab qol». Faqat telefonda taʼsir qiladi:
+   *  umumiy kompyuterda server baribir qurilmani ishonchli deb belgilamaydi. */
+  login: (tabel: string, pin: string, eslabQol?: boolean) => Promise<"ok" | "pin" | "xato">;
   /** Yuz bilan kirish — mos kelmasa {ok:false} qaytadi va PIN'ga oʻtiladi.
    *
    *  `status` — serverning javob kodi. U orqali «yuz mos kelmadi» (401,
@@ -67,13 +69,15 @@ type Ctx = {
    *  (qayta urinish befoyda) holatlari ajratiladi. */
   faceLogin: (
     tabel: string,
-    frames: string[]
+    frames: string[],
+    eslabQol?: boolean
   ) => Promise<{ ok: boolean; xato?: string; status?: number }>;
   /** Roʻyxatdan oʻtish — frames boʻsh boʻlsa faqat PIN bilan */
   register: (
     tabel: string,
     pin: string,
-    frames: string[]
+    frames: string[],
+    eslabQol?: boolean
   ) => Promise<{ ok: boolean; xato?: string; faceSaqlandi?: boolean; faceXabar?: string }>;
   logout: () => void;
   setRoleAs: (r: Role | null) => void;
@@ -290,10 +294,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setReady(true);
   }, []);
 
-  const login: Ctx["login"] = useCallback(async (tabel, pin) => {
+  const login: Ctx["login"] = useCallback(async (tabel, pin, eslabQol = true) => {
     setXato(null);
     try {
-      const r = await api.login(tabel, pin);
+      const r = await api.login(tabel, pin, eslabQol);
       if (r.kutilmoqda === "pin") return "pin";
       await kirdi(r.user);
       return "ok";
@@ -303,10 +307,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
   }, [kirdi]);
 
-  const faceLogin: Ctx["faceLogin"] = useCallback(async (tabel, frames) => {
+  const faceLogin: Ctx["faceLogin"] = useCallback(async (tabel, frames, eslabQol = true) => {
     setXato(null);
     try {
-      await kirdi(await api.faceLogin(tabel, frames));
+      await kirdi(await api.faceLogin(tabel, frames, eslabQol));
       return { ok: true };
     } catch (e) {
       // Yuz mos kelmasa bu ODATIY holat — chaqiruvchi PIN'ga oʻtadi,
@@ -319,10 +323,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
   }, [kirdi]);
 
-  const register: Ctx["register"] = useCallback(async (tabel, pin, frames) => {
+  const register: Ctx["register"] = useCallback(async (tabel, pin, frames, eslabQol = true) => {
     setXato(null);
     try {
-      const r = await api.register(tabel, pin, frames);
+      const r = await api.register(tabel, pin, frames, eslabQol);
       await kirdi(r.user);
       return { ok: true, faceSaqlandi: r.faceSaqlandi, faceXabar: r.faceXabar };
     } catch (e) {

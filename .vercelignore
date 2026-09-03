@@ -27,6 +27,6 @@ __pycache__/
 # --- hujjat va skriptlar ---
 *.ps1
 deploy.sh
-arxiv/
+/arxiv/
 HISOBOT_*.md
 HOLAT_*.md

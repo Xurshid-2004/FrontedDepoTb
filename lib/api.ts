@@ -13,6 +13,7 @@
 ------------------------------------------------------------------ */
 
 import type { DB } from "./types";
+import { qurilmaSarlavhalari } from "./qurilma";
 
 /** Django manzili. Boʻsh boʻlsa — shu domendan (Caddy yoki Vercel rewrite
  *  soʻrovni Django'ga uzatadi).
@@ -53,26 +54,99 @@ async function fetchTimeout(url: string, init: RequestInit): Promise<Response> {
    Tokenlar — yagona localStorage ishlatiladigan joy
 ------------------------------------------------------------------ */
 
+/** Joriy rejim: token doimiy (localStorage) saqlanayaptimi. */
+let doimiy = false;
+
+function xotira(d: boolean): Storage | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return d ? window.localStorage : window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
+function oqi(kalit: string): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.sessionStorage.getItem(kalit) ?? window.localStorage.getItem(kalit);
+  } catch {
+    return null;
+  }
+}
+
+function yoz(kalit: string, qiymat: string | null) {
+  try {
+    xotira(!doimiy)?.removeItem(kalit);
+    if (qiymat) xotira(doimiy)?.setItem(kalit, qiymat);
+    else xotira(doimiy)?.removeItem(kalit);
+  } catch {
+    // Maxfiy oynada yozish taqiqlangan boʻlishi mumkin — ilova shu
+    // seans davomida baribir ishlaydi, faqat eslab qolmaydi.
+  }
+}
+
+// Sahifa ochilganda rejimni tiklaymiz: token qaysi omborda yotgan
+// boʻlsa, keyingi yozuvlar ham oʻsha yerga tushadi.
+if (typeof window !== "undefined") {
+  try {
+    doimiy = window.localStorage.getItem(RKEY) !== null;
+  } catch {
+    doimiy = false;
+  }
+}
+
 export const tokens = {
   get access(): string | null {
-    return typeof window === "undefined" ? null : localStorage.getItem(AKEY);
+    return oqi(AKEY);
   },
   get refresh(): string | null {
-    return typeof window === "undefined" ? null : localStorage.getItem(RKEY);
+    return oqi(RKEY);
   },
-  set(access: string | null, refresh?: string | null) {
+
+  /**
+   * `ishonchli` berilganda ombor almashadi:
+   *   true  — ishonchli telefon, localStorage (brauzer yopilsa ham qoladi)
+   *   false — umumiy kompyuter, sessionStorage (oyna yopilsa oʻchadi)
+   *
+   * Bu qiymatni SERVER aytadi (`qurilma.ishonchli`), mijoz oʻzi hal
+   * qilmaydi — aks holda umumiy kompyuterda seans ochiq qolib ketardi.
+   */
+  set(access: string | null, refresh?: string | null, ishonchli?: boolean) {
     if (typeof window === "undefined") return;
-    if (access) localStorage.setItem(AKEY, access);
-    else localStorage.removeItem(AKEY);
-    if (refresh !== undefined) {
-      if (refresh) localStorage.setItem(RKEY, refresh);
-      else localStorage.removeItem(RKEY);
+
+    if (typeof ishonchli === "boolean" && ishonchli !== doimiy) {
+      // Rejim almashdi — refresh token yoʻqolib qolmasligi uchun uni
+      // avval oʻqib olamiz, keyin eski omborni tozalaymiz.
+      const saqlanadi = refresh === undefined ? this.refresh : refresh;
+      const eski = xotira(doimiy);
+      try {
+        eski?.removeItem(AKEY);
+        eski?.removeItem(RKEY);
+      } catch {
+        /* ombor yopiq */
+      }
+      doimiy = ishonchli;
+      yoz(AKEY, access);
+      yoz(RKEY, saqlanadi ?? null);
+      return;
     }
+
+    yoz(AKEY, access);
+    if (refresh !== undefined) yoz(RKEY, refresh);
   },
+
   clear() {
     if (typeof window === "undefined") return;
-    localStorage.removeItem(AKEY);
-    localStorage.removeItem(RKEY);
+    for (const kalit of [AKEY, RKEY]) {
+      try {
+        window.localStorage.removeItem(kalit);
+        window.sessionStorage.removeItem(kalit);
+      } catch {
+        /* ombor yopiq */
+      }
+    }
+    doimiy = false;
   },
 };
 
@@ -134,19 +208,27 @@ async function refreshAccess(): Promise<boolean> {
     try {
       const res = await fetchTimeout(`${API_BASE}${PREFIX}/auth/refresh`, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", ...qurilmaSarlavhalari() },
         body: JSON.stringify({ refresh: rt }),
       });
       if (!res.ok) {
         tokens.clear();
         return false;
       }
-      const d = (await res.json()) as { access?: string };
+      const d = (await res.json()) as {
+        access?: string;
+        refresh?: string;
+        qurilma?: { ishonchli?: boolean };
+      };
       if (!d.access) {
         tokens.clear();
         return false;
       }
-      tokens.set(d.access);
+      // Server har yangilanishda YANGI refresh token beradi (rotation).
+      // Uni saqlamasak, keyingi yangilash ishlamay qoladi va foydalanuvchi
+      // chiqib ketadi. Eski server `refresh` qaytarmaydi — u holda
+      // mavjudi saqlanib qoladi.
+      tokens.set(d.access, d.refresh ?? undefined, d.qurilma?.ishonchli);
       return true;
     } catch {
       return false;
@@ -164,7 +246,7 @@ async function so(
   body?: unknown,
   qayta = true
 ): Promise<unknown> {
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { ...qurilmaSarlavhalari() };
   if (body !== undefined) headers["content-type"] = "application/json";
   const at = tokens.access;
   if (at) headers.authorization = `Bearer ${at}`;
@@ -225,6 +307,17 @@ async function amal(path: string, method: Method, body?: unknown): Promise<AmalJ
    Foydalanuvchi turi — serverdan keladigan shakl
 ------------------------------------------------------------------ */
 
+/** «Qurilmalarim» roʻyxatidagi bitta yozuv */
+export type QurilmaYozuv = {
+  id: string;
+  nom: string;
+  mobil: boolean;
+  ishonchli: boolean;
+  joriy: boolean;
+  oxirgiKirish: string;
+  oxirgiIp: string;
+};
+
 export type MeUser = {
   id: string;
   tabel: string;
@@ -275,17 +368,22 @@ export const api = {
    *
    * PIN hali oʻrnatilmagan boʻlsa {kutilmoqda:"pin"} qaytadi.
    */
-  async login(tabel: string, pin: string): Promise<LoginJavob> {
-    const d = (await so("/auth/login", "POST", { tabel: tabel.trim(), pin })) as {
+  async login(tabel: string, pin: string, eslabQol = true): Promise<LoginJavob> {
+    const d = (await so("/auth/login", "POST", {
+      tabel: tabel.trim(),
+      pin,
+      eslabQol,
+    })) as {
       needsPin?: boolean;
       access?: string;
       refresh?: string;
       user?: MeUser;
+      qurilma?: { ishonchli?: boolean };
     };
 
     if (d.needsPin) return { kutilmoqda: "pin", tabel: tabel.trim() };
 
-    tokens.set(d.access ?? null, d.refresh ?? null);
+    tokens.set(d.access ?? null, d.refresh ?? null, d.qurilma?.ishonchli);
     return { kutilmoqda: "tayyor", user: d.user as MeUser };
   },
 
@@ -309,13 +407,18 @@ export const api = {
    * Yuz bilan kirish. Bir nechta kadr yuboriladi (jonlilik uchun).
    * Mos kelmasa ApiError koʻtariladi — chaqiruvchi PIN'ga oʻtadi.
    */
-  async faceLogin(tabel: string, frames: string[]): Promise<MeUser> {
-    const d = (await so("/auth/face-login", "POST", { tabel: tabel.trim(), frames })) as {
+  async faceLogin(tabel: string, frames: string[], eslabQol = true): Promise<MeUser> {
+    const d = (await so("/auth/face-login", "POST", {
+      tabel: tabel.trim(),
+      frames,
+      eslabQol,
+    })) as {
       access?: string;
       refresh?: string;
       user?: MeUser;
+      qurilma?: { ishonchli?: boolean };
     };
-    tokens.set(d.access ?? null, d.refresh ?? null);
+    tokens.set(d.access ?? null, d.refresh ?? null, d.qurilma?.ishonchli);
     return d.user as MeUser;
   },
 
@@ -326,16 +429,23 @@ export const api = {
   async register(
     tabel: string,
     pin: string,
-    frames: string[]
+    frames: string[],
+    eslabQol = true
   ): Promise<{ user: MeUser; faceSaqlandi: boolean; faceXabar: string }> {
-    const d = (await so("/auth/register", "POST", { tabel: tabel.trim(), pin, frames })) as {
+    const d = (await so("/auth/register", "POST", {
+      tabel: tabel.trim(),
+      pin,
+      frames,
+      eslabQol,
+    })) as {
       access?: string;
       refresh?: string;
       user?: MeUser;
+      qurilma?: { ishonchli?: boolean };
       faceSaqlandi?: boolean;
       faceXabar?: string;
     };
-    tokens.set(d.access ?? null, d.refresh ?? null);
+    tokens.set(d.access ?? null, d.refresh ?? null, d.qurilma?.ishonchli);
     return {
       user: d.user as MeUser,
       faceSaqlandi: !!d.faceSaqlandi,
@@ -348,15 +458,32 @@ export const api = {
     so("/me/face", "POST", { frames }) as Promise<{ ok: boolean; faceBor: boolean }>,
 
   /** Birinchi marta PIN oʻrnatish — server tokenlarni ham qaytaradi. */
-  async setPin(tabel: string, pin: string): Promise<MeUser> {
-    const d = (await so("/auth/set-pin", "POST", { tabel: tabel.trim(), pin })) as {
+  async setPin(tabel: string, pin: string, eslabQol = true): Promise<MeUser> {
+    const d = (await so("/auth/set-pin", "POST", {
+      tabel: tabel.trim(),
+      pin,
+      eslabQol,
+    })) as {
       access?: string;
       refresh?: string;
       user?: MeUser;
+      qurilma?: { ishonchli?: boolean };
     };
-    tokens.set(d.access ?? null, d.refresh ?? null);
+    tokens.set(d.access ?? null, d.refresh ?? null, d.qurilma?.ishonchli);
     return d.user as MeUser;
   },
+
+  /* ---------------- qurilmalar ---------------- */
+
+  /** Foydalanuvchining faol qurilmalari — «Qurilmalarim» boʻlimi uchun. */
+  async qurilmalar(): Promise<QurilmaYozuv[]> {
+    const d = (await so("/auth/qurilmalar")) as { qurilmalar?: QurilmaYozuv[] };
+    return d.qurilmalar ?? [];
+  },
+
+  /** Qurilmani oʻchirish — telefon yoʻqolganda. Oʻsha qurilma darrov chiqadi. */
+  qurilmaOchir: (id: string) =>
+    so(`/auth/qurilmalar/${id}`, "DELETE") as Promise<{ ok: boolean }>,
 
   async logout(): Promise<void> {
     const rt = tokens.refresh;

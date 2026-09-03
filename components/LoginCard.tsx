@@ -24,6 +24,7 @@ import FaceCapture from "./FaceCapture";
 import { TouchRipple } from "./Fx";
 import { useIsMobile } from "./ui";
 import { useStore } from "@/lib/store";
+import { mobilmi } from "@/lib/qurilma";
 import { api, ApiError, type TabelHolat } from "@/lib/api";
 
 type Mode = "login" | "register";
@@ -55,6 +56,18 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
   const [stage, setStage] = useState<Stage>("form");
   const [tabel, setTabel] = useState("");
   const [blind, setBlind] = useState(false);
+
+  /* «Bu qurilmani eslab qol» — faqat shaxsiy telefonda maʼnoli.
+     Umumiy kompyuterda server qurilmani baribir ishonchli deb
+     belgilamaydi, shuning uchun u yerda tanlov koʻrsatilmaydi ham.
+
+     `shaxsiy` boshlangʻich holatda false: server sahifani chizganda
+     navigator hali yoʻq. Brauzerda useEffect uni aniqlaydi — shu
+     tufayli SSR va mijoz chizmasi bir xil boʻladi (hydration xatosi
+     boʻlmaydi). */
+  const [shaxsiy, setShaxsiy] = useState(false);
+  const [eslabQol, setEslabQol] = useState(true);
+  useEffect(() => setShaxsiy(mobilmi()), []);
 
   /** Serverning tabel haqidagi javobi — keyingi qadam shunga qarab tanlanadi */
   const [holat, setHolat] = useState<TabelHolat | null>(null);
@@ -188,7 +201,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
     // Kirishda — darrov serverda solishtiriladi
     setFaceBand(true);
     try {
-      const r = await faceLogin(tabel.trim(), frames);
+      const r = await faceLogin(tabel.trim(), frames, eslabQol);
 
       // Xodim kutmasdan «PIN kod bilan kirish»ni bosgan boʻlsa — javob
       // endi kerak emas: u PIN terayotgan boʻlishi mumkin.
@@ -226,7 +239,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
 
   /** Roʻyxatdan oʻtish: PIN toʻlgach hisob yaratiladi */
   const royxatTasdiq = async (pin: string): Promise<boolean> => {
-    const r = await register(tabel.trim(), pin, kadrlar);
+    const r = await register(tabel.trim(), pin, kadrlar, eslabQol);
     if (r.ok) {
       if (r.faceXabar) setInfo(r.faceXabar);
       return true;
@@ -240,10 +253,10 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
     try {
       // Admin majburiy almashtirishga qoʻygan boʻlsa — avval yangisi oʻrnatiladi
       if (holat?.pinKerak) {
-        await api.setPin(tabel.trim(), pin);
+        await api.setPin(tabel.trim(), pin, eslabQol);
         return true;
       }
-      return (await login(tabel.trim(), pin)) === "ok";
+      return (await login(tabel.trim(), pin, eslabQol)) === "ok";
     } catch (e) {
       setPinErr(e instanceof ApiError ? e.message : "Xato yuz berdi");
       return false;
@@ -560,7 +573,9 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                           : "Har kirishda shu kod soʻraladi"
                         : holat?.pinKerak
                           ? "Administrator PIN'ni almashtirishni soʻragan"
-                          : "Har kirishda shu kod soʻraladi"
+                          : shaxsiy && eslabQol
+                            ? "Bu telefonda keyingi safar soʻralmaydi"
+                            : "Har kirishda shu kod soʻraladi"
                     }
                     /* PIN SERVERDA tekshiriladi — brauzerda hash yoʻq */
                     verify={royxat ? royxatTasdiq : kirishTasdiq}
@@ -571,6 +586,26 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                   />
 
                   {pinErr && <Xabar turi="err">{pinErr}</Xabar>}
+
+                  {/* Telefonni eslab qolish. Kompyuterda koʻrsatilmaydi —
+                      u yerda seans baribir brauzer yopilishi bilan oʻchadi. */}
+                  {shaxsiy && (
+                    <label className="mt-3 flex items-start gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                      <input
+                        type="checkbox"
+                        className="mt-0.5"
+                        checked={eslabQol}
+                        onChange={(e) => setEslabQol(e.target.checked)}
+                      />
+                      <span>
+                        Bu telefonni eslab qol
+                        <span className="block text-[11px] text-slate-400">
+                          Keyingi safar PIN soʻralmaydi. Umumiy telefondan
+                          kirayotgan boʻlsangiz belgini olib tashlang.
+                        </span>
+                      </span>
+                    </label>
+                  )}
 
                   {/* Yuz bosqichiga qaytish — kadr sifati yomon boʻlsa */}
                   {royxat && holat?.faceYoqilgan && (

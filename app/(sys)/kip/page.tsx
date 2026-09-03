@@ -64,9 +64,16 @@ export default function KipPage() {
      va biriktirish qilinmagan bazada jadval butunlay boʻsh chiqardi. Endi
      asos — lavozim; biriktirish esa faqat pastdagi filtr. */
   // Instruktor (mashinist yoʻriqchisi) — FAQAT oʻz kolonnasi maʼlumotlari.
-  // Admin/monitoring rollari — hammasini koʻradi (backend ham shu qoidada).
+  //
+  // `kip.read.all` ruxsati bu cheklovni ochadi: admin uni ruxsatlar
+  // jadvalidan bitta shaxsga bersa, oʻsha odam barcha kolonnalarning KIP
+  // maʼlumotlarini koʻradi. Bu FAQAT OʻQISH — yozish/tahrirlash `kip.write`
+  // ga bogʻliq va u alohida beriladi. Admin `can` orqali baribir true oladi.
+  //
+  // Backend ham xuddi shu qoidada (Bacend/api/serializers.py) — bu yerdagi
+  // filtr faqat koʻrinish uchun, maʼlumotni server oʻzi cheklaydi.
   const meKol = db.yoriqnoma?.instruktorKolonna ?? null;
-  const kolonnaRejim = roles.includes("yoriqchi") && !roles.includes("admin");
+  const kolonnaRejim = roles.includes("yoriqchi") && !can("kip.read.all");
 
   const lokoBarcha = useMemo(() => {
     let list = db.workers.filter((w) => lokoBrigada(db, w));

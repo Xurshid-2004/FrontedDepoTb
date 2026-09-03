@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useStore } from "@/lib/store";
 import {
@@ -10,7 +10,7 @@ import {
 import { Badge, Btn, Empty, PageHead, Panel, Stat, Table, Td, Tr, useToast } from "@/components/ui";
 import IncidentFeed from "@/components/IncidentFeed";
 import FaceCapture from "@/components/FaceCapture";
-import { api, ApiError } from "@/lib/api";
+import { api, ApiError, type QurilmaYozuv } from "@/lib/api";
 
 export default function Ishchi() {
   const { db, me, createRequest, can } = useStore();
@@ -126,6 +126,7 @@ export default function Ishchi() {
 
         <div className="space-y-5">
           <FaceIdPanel />
+          <QurilmalarPanel />
 
           <Panel>
             <h3 className="mb-4 text-[15px] font-semibold text-slate-900">Ogohlantirish talonlari</h3>
@@ -222,6 +223,114 @@ export default function Ishchi() {
         </div>
       )}
     </>
+  );
+}
+
+/* ================= QURILMALARIM ================= */
+/**
+ * Kirgan qurilmalar roʻyxati.
+ *
+ * Nima uchun kerak: telefon eslab qolingach, u 90 kun davomida PIN
+ * soʻramay kirishga ruxsat beradi. Telefon yoʻqolsa yoki almashtirilsa,
+ * ishchi shu yerdan uni oʻchiradi — oʻsha qurilma shu zahoti tizimdan
+ * chiqadi va endi kira olmaydi.
+ */
+function QurilmalarPanel() {
+  const t = useToast();
+  const [royxat, setRoyxat] = useState<QurilmaYozuv[] | null>(null);
+  const [band, setBand] = useState("");
+  const [xato, setXato] = useState("");
+
+  const yukla = useCallback(async () => {
+    try {
+      setRoyxat(await api.qurilmalar());
+      setXato("");
+    } catch (e) {
+      setXato(e instanceof ApiError ? e.message : "Roʻyxat olinmadi");
+      setRoyxat([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    void yukla();
+  }, [yukla]);
+
+  const ochir = async (q: QurilmaYozuv) => {
+    setBand(q.id);
+    try {
+      await api.qurilmaOchir(q.id);
+      await yukla();
+      t.show(
+        q.joriy
+          ? "Qurilma oʻchirildi — keyingi safar PIN soʻraladi"
+          : "Qurilma oʻchirildi"
+      );
+    } catch (e) {
+      setXato(e instanceof ApiError ? e.message : "Oʻchirilmadi");
+    } finally {
+      setBand("");
+    }
+  };
+
+  const sana = (iso: string) => {
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime())
+      ? ""
+      : d.toLocaleDateString("uz-UZ", { day: "2-digit", month: "2-digit", year: "numeric" });
+  };
+
+  return (
+    <Panel>
+      {t.node}
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h3 className="text-[15px] font-semibold text-slate-900">Qurilmalarim</h3>
+        {royxat && <Badge color="#94a3b8">{royxat.length}</Badge>}
+      </div>
+
+      <p className="mb-3 text-[12px] leading-relaxed text-slate-500">
+        Eslab qolingan telefonda PIN qayta soʻralmaydi. Telefoningiz
+        yoʻqolgan boʻlsa — uni shu yerdan oʻchiring.
+      </p>
+
+      {xato && <p className="mb-2 text-[12px] text-rose-600">{xato}</p>}
+
+      {royxat === null ? (
+        <p className="text-[12px] text-slate-400">Yuklanmoqda...</p>
+      ) : royxat.length === 0 ? (
+        <Empty text="Eslab qolingan qurilma yoʻq" icon="▤" />
+      ) : (
+        <ul className="space-y-2">
+          {royxat.map((q) => (
+            <li
+              key={q.id}
+              className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2"
+            >
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="truncate text-[13px] font-medium text-slate-800">
+                    {q.nom || "Qurilma"}
+                  </span>
+                  {q.joriy && <Badge color="#22c55e">shu qurilma</Badge>}
+                  {!q.ishonchli && <Badge color="#94a3b8">eslanmagan</Badge>}
+                </div>
+                <div className="text-[11px] text-slate-400">
+                  {sana(q.oxirgiKirish)}
+                  {q.oxirgiIp ? ` · ${q.oxirgiIp}` : ""}
+                </div>
+              </div>
+              <Btn
+                size="sm"
+                variant="ghost"
+                disabled={band === q.id}
+                onClick={() => ochir(q)}
+              >
+                Oʻchirish
+              </Btn>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Panel>
   );
 }
 

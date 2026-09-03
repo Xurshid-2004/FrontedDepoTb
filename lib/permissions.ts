@@ -20,6 +20,7 @@ export type Perm =
   | "exam.write"
   | "kip.read"
   | "kip.write"
+  | "kip.read.all"
   | "report.read"
   | "report.download"
   | "admin.users"
@@ -40,7 +41,7 @@ export const ALL_PERMS: Perm[] = [
   "stock.read", "stock.write",
   "card.read", "card.create",
   "talon.read", "talon.write", "exam.write",
-  "kip.read", "kip.write",
+  "kip.read", "kip.write", "kip.read.all",
   "report.read", "report.download",
   "admin.users", "admin.norms", "admin.settings",
   "incident.tb.write", "incident.tb.read", "incident.avariya.write", "incident.avariya.read",
@@ -65,6 +66,7 @@ export const PERM_LABEL: Record<Perm, string> = {
   "talon.write": "Talon olish / qaytarish",
   "exam.write": "Imtixon sanasini belgilash",
   "kip.read": "KIP koʻrish",
+  "kip.read.all": "Hamma KIP maʼlumotlarini koʻrish (faqat oʻqish)",
   "kip.write": "KIP yozish",
   "report.read": "Hisobotlarni koʻrish",
   "report.download": "Hisobotlarni yuklab olish",
@@ -242,7 +244,24 @@ function roleDefault(role: Role, key: AccessKey, isFeature: boolean): boolean {
 
 /** Yakuniy ruxsat/koʻrinishni hisoblaydi.
  *  Ustuvorlik: shaxs override → lavozim override → rol override → rol standarti. */
-export function resolveAccess(
+/**
+ * Baʼzi ruxsatlar oʻzi bilan boshqalarini ham olib keladi.
+ *
+ * `kip.read.all` — nazoratchiga butun KIP boʻlimini FAQAT OʻQISH uchun
+ * ochadi. Admin bitta belgini qoʻysa kifoya: boʻlim menyuda paydo
+ * boʻladi, KIP yozuvlari va avariya tasmasi koʻrinadi. Yozish
+ * ruxsatlari (`kip.write`, `incident.avariya.write`) bu roʻyxatda YOʻQ —
+ * ular alohida beriladi, shuning uchun bunday odam tahrirlay ham,
+ * oʻchira ham olmaydi.
+ */
+const OLIB_KELADI: Partial<Record<AccessKey, Perm>> = {
+  "nav.kip": "kip.read.all",
+  "kip.read": "kip.read.all",
+  "incident.avariya.read": "kip.read.all",
+};
+
+/** Override zanjiri: shaxs → lavozim → rol override → rol standarti. */
+function xomAccess(
   key: AccessKey,
   roles: Role[],
   uid: string | null | undefined,
@@ -250,8 +269,6 @@ export function resolveAccess(
   isFeature: boolean,
   positionIds?: string[]
 ): boolean {
-  // admin har doim hamma narsaga ega
-  if (roles.includes("admin")) return true;
   if (uid && access?.userOverrides?.[uid] && key in access.userOverrides[uid]) {
     return !!access.userOverrides[uid][key];
   }
@@ -266,4 +283,22 @@ export function resolveAccess(
     if (ro && key in ro) return !!ro[key];
     return roleDefault(r, key, isFeature);
   });
+}
+
+export function resolveAccess(
+  key: AccessKey,
+  roles: Role[],
+  uid: string | null | undefined,
+  access: AccessState | undefined,
+  isFeature: boolean,
+  positionIds?: string[]
+): boolean {
+  // admin har doim hamma narsaga ega
+  if (roles.includes("admin")) return true;
+
+  if (xomAccess(key, roles, uid, access, isFeature, positionIds)) return true;
+
+  // Bevosita berilmagan boʻlsa — uni olib keladigan ruxsat bormi?
+  const manba = OLIB_KELADI[key];
+  return manba ? xomAccess(manba, roles, uid, access, false, positionIds) : false;
 }
