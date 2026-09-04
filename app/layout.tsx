@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import CursorTubes from "@/components/CursorTubes";
 import { StoreProvider } from "@/lib/store";
 import { ASOS_URL } from "@/lib/sayt";
 
@@ -58,7 +57,6 @@ export default function RootLayout({
     <html lang="uz">
       <body className="noise antialiased">
         <StoreProvider>
-          <CursorTubes />
           {children}
         </StoreProvider>
       </body>

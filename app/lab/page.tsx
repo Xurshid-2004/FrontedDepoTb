@@ -46,20 +46,6 @@ export default function Lab() {
         <div className="mt-12 space-y-6">
           <Demo
             n="01"
-            title="Tubes Cursor — neon lentalar"
-            note="Faqat desktop. Sichqoncha ortidan 5 ta rangli lenta spring bilan quvlaydi, bosilganda kengayadi. Mobilda avtomatik oʻchadi."
-          >
-            <div className="grid h-[220px] place-items-center rounded-xl border border-dashed border-slate-300 bg-slate-50">
-              <p className="text-center text-[13px] text-slate-500">
-                Sichqonchani shu maydonda harakatlantiring
-                <br />
-                <span className="text-slate-400">(effekt butun sahifa boʻylab ishlaydi)</span>
-              </p>
-            </div>
-          </Demo>
-
-          <Demo
-            n="02"
             title="Afrosiyob kirish oʻtishi — haqiqiy 3D (WebGL)"
             note="Three.js sahnasi: relslar va ustunlar yonidan uchib oʻtadi, Afrosiyob yaqinlashadi, kamera yon tomonga chiqadi, eshik sirgʻalib ochiladi va kamera ichkariga uchib kiradi → yorugʻlik tunneli → oq portlash. Davomiyligi ~4.4 s."
           >
@@ -72,7 +58,7 @@ export default function Lab() {
           </Demo>
 
           <Demo
-            n="03"
+            n="02"
             title="PIN / OTP animatsiyasi"
             note="4 raqam kiritilgach kataklar sochiladi, bittaga yigʻiladi va yashil tasdiq halqasi chiziladi."
           >
@@ -88,7 +74,7 @@ export default function Lab() {
           </Demo>
 
           <Demo
-            n="04"
+            n="03"
             title="Lokomotiv mascot"
             note="Faralar kursorni kuzatadi. PIN yoki parol kiritilganda faralar oʻchadi — foydalanuvchiga 'koʻrmayapman' signali."
           >
@@ -107,7 +93,7 @@ export default function Lab() {
           </Demo>
 
           <Demo
-            n="05"
+            n="04"
             title="Kitob ochilishi — parchalanish + 3D"
             note="Muqova 70 boʻlakka parchalanadi va uchib ketadi, keyin qaytib yigʻiladi va kitob 3D da ochiladi."
           >
@@ -123,7 +109,7 @@ export default function Lab() {
           </Demo>
 
           <Demo
-            n="06"
+            n="05"
             title="Morflanuvchi yuklab olish tugmasi"
             note="Yuklab olish → doiraga siqiladi + progres halqasi → 'Ochish'. Hisobotlar boʻlimida ishlatiladi."
           >
@@ -131,7 +117,7 @@ export default function Lab() {
           </Demo>
 
           <Demo
-            n="07"
+            n="06"
             title="3D coverflow qidiruv"
             note="Mashinist yoʻriqchisi ishchini qidiradi. Kartalar 3D perspektivada, markazdagisi KIP holati rangi bilan yonadi."
           >
@@ -139,7 +125,7 @@ export default function Lab() {
           </Demo>
 
           <Demo
-            n="08"
+            n="07"
             title="Tilt + Touch Ripple"
             note="Desktopda karta kursor ostida qiyalanadi va yaltiraydi. Mobilda barmoq tekkan joydan yorugʻlik toʻlqini tarqaladi."
           >
@@ -157,7 +143,7 @@ export default function Lab() {
           </Demo>
 
           <Demo
-            n="09"
+            n="08"
             title="Tezlik chiziqlari — 3D perspektiva + yulduz uchishi"
             note="Ikki barobar tezlashtirildi. Har bir chiziqning boshi yorugʻ yulduz — orqasida soʻnib boruvchi dum. Vaqti-vaqti bilan yirik meteorlar kesishuvchi nur bilan uchib oʻtadi. Fonda miltillovchi yulduzlar chuqurlik beradi."
           >

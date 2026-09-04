@@ -187,9 +187,6 @@ nav,
   color: #ffffff;
 }
 
-/* Kursor hech qachon yashirilmaydi — ish qulayligi effektdan muhimroq.
-   Neon lentalar kursor ortidan qoʻshimcha bezak sifatida yuradi. */
-
 /* ---------- keyframes ---------- */
 @keyframes floaty {
   0%,
