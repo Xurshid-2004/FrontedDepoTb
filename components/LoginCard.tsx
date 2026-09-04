@@ -45,7 +45,7 @@ const EASE = [0.76, 0, 0.24, 1] as const;
 /* ------------------------------------------------------------------
    Rang mavzusi
 
-   Kirish — korporativ koʻk. Roʻyxatdan oʻtish — toʻq siyohrang.
+   Kirish — toʻq feruza. Roʻyxatdan oʻtish — toʻq siyohrang.
 
    Nima uchun: bular ikki xil ish. Kirish — har kungi odat; roʻyxatdan
    oʻtish esa bir martalik, ehtiyot bilan bajariladigan amal. Rang
@@ -69,20 +69,20 @@ type Mavzu = {
   qadamMatn: string;
 };
 
-const MAVZU_KOK: Mavzu = {
-  tugma: "bg-[#17518f] hover:bg-[#123f70]",
-  belgi: "from-[#1b6fe0] to-[#38bdf8]",
-  urgu: "text-[#17518f]",
-  urguFon: "bg-[#17518f]",
-  maydonFokus: "border-[#17518f] shadow-[0_0_0_4px_rgba(23,81,143,.10)]",
-  panelMobil: "bg-[linear-gradient(135deg,#1c5c9e_0%,#2f8ff0_58%,#4a9fd8_100%)]",
+const MAVZU_FERUZA: Mavzu = {
+  tugma: "bg-[#0f766e] hover:bg-[#115e59]",
+  belgi: "from-[#0d9488] to-[#2dd4bf]",
+  urgu: "text-[#0f766e]",
+  urguFon: "bg-[#0f766e]",
+  maydonFokus: "border-[#0f766e] shadow-[0_0_0_4px_rgba(15,118,110,.13)]",
+  panelMobil: "bg-[linear-gradient(135deg,#062a2b_0%,#0d4b4a_52%,#0f766e_100%)]",
   panelQoplama:
-    "bg-[linear-gradient(140deg,rgba(28,92,158,.92)_0%,rgba(35,120,190,.86)_45%,rgba(74,159,216,.8)_100%)]",
-  yorqinlik: "bg-[radial-gradient(circle_at_70%_18%,rgba(255,255,255,.42),transparent_58%)]",
-  havola: "text-sky-700",
-  qadamOtgan: "bg-sky-500",
-  qadamFaol: "bg-sky-400",
-  qadamMatn: "text-sky-700",
+    "bg-[linear-gradient(150deg,rgba(5,32,33,.95)_0%,rgba(12,68,66,.91)_46%,rgba(15,118,110,.84)_100%)]",
+  yorqinlik: "bg-[radial-gradient(circle_at_72%_16%,rgba(45,212,191,.34),transparent_60%)]",
+  havola: "text-teal-700",
+  qadamOtgan: "bg-teal-600",
+  qadamFaol: "bg-teal-400",
+  qadamMatn: "text-teal-700",
 };
 
 const MAVZU_SIYOH: Mavzu = {
@@ -360,7 +360,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
   };
 
   const royxat = mode === "register";
-  const mavzu = royxat ? MAVZU_SIYOH : MAVZU_KOK;
+  const mavzu = royxat ? MAVZU_SIYOH : MAVZU_FERUZA;
 
   return (
     <TouchRipple className="relative w-full max-w-[1120px] rounded-[28px]">
@@ -463,7 +463,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                   </h1>
                   <p className="mt-[clamp(0.25rem,0.8dvh,0.5rem)] text-[clamp(12.5px,1.6dvh,13.5px)] leading-snug text-slate-600 [@media(max-height:620px)]:hidden md:text-[clamp(12.5px,1.7dvh,14px)]">
                     {royxat
-                      ? "Tabel raqamingiz kadrlar bazasi bilan solishtiriladi. Faqat depo xodimlari roʻyxatdan oʻta oladi."
+                      ? "Tabel raqamingizni kiriting va saytda hisob yarating. Faqat depo xodimlari roʻyxatdan oʻta oladi."
                       : "Ish guvohnomangizdagi tabel raqamini kiriting."}
                   </p>
 
