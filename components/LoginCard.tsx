@@ -348,7 +348,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
           >
             {/* --- tashkilot sarlavhasi --- */}
             <div className="flex items-center gap-3 border-b border-slate-200 pb-[clamp(0.5rem,1.3dvh,0.75rem)] md:pb-[clamp(0.5rem,1.5dvh,1rem)]">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#1b6fe0] to-[#38bdf8] text-[14px] font-black text-white">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#1b6fe0] to-[#38bdf8] text-[13px] font-black text-white md:h-11 md:w-11 md:text-[14px]">
                 TB
               </span>
               <div className="min-w-0">
@@ -392,7 +392,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                       jumlalik tushuntirish. Uchtasi bir xil chap chetdan
                       boshlanadi, oʻlchamlari aniq farq qiladi — koʻz
                       qayerdan oʻqishni boshlashni izlamaydi. */}
-                  <div className="flex items-center gap-2 [@media(max-height:560px)]:hidden">
+                  <div className="hidden items-center gap-2 md:flex [@media(max-height:560px)]:md:hidden">
                     <span className="h-4 w-1 rounded-full bg-[#17518f]" />
                     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#17518f] md:text-[11px] md:tracking-[0.28em]">
                       TCH-6 · Buxoro lokomotiv deposi
@@ -451,7 +451,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                       type="button"
                       disabled={!canSubmit}
                       onClick={submit}
-                      className="flex h-[clamp(44px,6.1dvh,52px)] w-full items-center justify-center gap-2 rounded-xl bg-[#17518f] text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#123f70] active:scale-[.99] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+                      className="flex h-[54px] w-full items-center justify-center gap-2 rounded-xl bg-[#17518f] text-[16px] md:h-[clamp(44px,6.1dvh,52px)] md:text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#123f70] active:scale-[.99] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
                     >
                       {tekshirmoqda ? (
                         <>
@@ -472,7 +472,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                   {/* «yoki» — asosiy amal bilan ikkinchi darajali amal
                       orasidagi chegara. Usiz ikkala tugma bir xil vaznda
                       koʻrinib, qaysi biri asosiy ekani bilinmasdi. */}
-                  <div className="mt-[clamp(0.5rem,1.7dvh,1.25rem)] flex items-center gap-3 [@media(max-height:560px)]:hidden md:mt-[clamp(0.5rem,1.9dvh,1.5rem)]">
+                  <div className="mt-[clamp(0.5rem,1.7dvh,1.25rem)] flex items-center gap-3 [@media(max-height:600px)]:hidden md:mt-[clamp(0.5rem,1.9dvh,1.5rem)]">
                     <span className="h-px flex-1 bg-slate-200" />
                     <span className="text-[11px] font-medium uppercase tracking-wider text-slate-400">yoki</span>
                     <span className="h-px flex-1 bg-slate-200" />
@@ -483,7 +483,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                       xodim roʻyxatdan oʻtish yoʻlini topa olmasdi. Endi
                       butun blok qizil ohangda va nima boʻlishi yozib
                       qoʻyilgan. */}
-                  <div className="mt-[clamp(0.5rem,1.5dvh,1rem)] flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-xl border border-red-200 bg-red-50 px-4 py-[clamp(0.5rem,1.7dvh,0.875rem)]">
+                  <div className="mt-[clamp(0.5rem,1.5dvh,1rem)] flex flex-col gap-2.5 rounded-xl border border-red-200 bg-red-50 px-3 py-3 md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-x-3 md:gap-y-2 md:px-4 md:py-[clamp(0.5rem,1.7dvh,0.875rem)]">
                     <div className="min-w-0">
                       <p className="text-[14.5px] font-bold text-red-700">
                         {royxat ? "Hisobingiz bormi?" : "Hisobingiz yoʻqmi?"}
@@ -497,7 +497,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                     <button
                       type="button"
                       onClick={() => boshdan(royxat ? "login" : "register")}
-                      className="inline-flex h-[clamp(38px,5dvh,44px)] shrink-0 items-center gap-2 rounded-xl bg-red-600 px-4 text-[14px] font-bold text-white shadow-sm transition hover:bg-red-700 active:scale-[.98]"
+                      className="inline-flex h-[52px] w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 text-[15px] font-bold text-white md:h-[clamp(38px,5dvh,44px)] md:w-auto md:justify-start md:text-[14px] shadow-sm transition hover:bg-red-700 active:scale-[.98]"
                     >
                       <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" aria-hidden>
                         {royxat ? (
@@ -707,7 +707,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
               (ilgari oq matn oq karta ustida koʻrinmasdi) va joy 5 barobar
               kam ketadi. Katta ekranda hammasi avvalgidek. */}
           <motion.div
-            className="order-1 flex items-center gap-4 bg-[linear-gradient(135deg,#1c5c9e_0%,#2f8ff0_58%,#4a9fd8_100%)] px-5 py-3.5 md:order-2 md:flex-col md:justify-center md:gap-0 md:bg-none md:px-7 md:py-10"
+            className="order-1 flex items-center gap-4 bg-[linear-gradient(135deg,#1c5c9e_0%,#2f8ff0_58%,#4a9fd8_100%)] px-5 py-3 md:order-2 md:flex-col md:justify-center md:gap-0 md:bg-none md:px-7 md:py-10"
             animate={{ x: mobil ? 0 : royxat ? "-100%" : 0 }}
             transition={{ duration: 0.85, ease: EASE }}
           >
@@ -910,7 +910,7 @@ function Field({
           onChange={(e) => onChange(e.target.value)}
           /* Tabel — raqam. `tabular-nums` bilan raqamlar bir xil enda
              boʻladi va terilayotganda satr sakramaydi. */
-          className="h-[clamp(44px,6.1dvh,52px)] w-full bg-transparent px-4 text-[clamp(15px,2.2dvh,17px)] font-medium tabular-nums tracking-[0.06em] text-slate-900 outline-none placeholder:font-normal placeholder:tracking-normal placeholder:text-slate-300"
+          className="h-[52px] w-full bg-transparent px-4 text-[17px] font-medium tabular-nums md:h-[clamp(44px,6.1dvh,52px)] md:text-[clamp(15px,2.2dvh,17px)] tracking-[0.06em] text-slate-900 outline-none placeholder:font-normal placeholder:tracking-normal placeholder:text-slate-300"
         />
       </div>
     </label>
