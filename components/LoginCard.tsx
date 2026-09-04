@@ -483,12 +483,12 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                       xodim roʻyxatdan oʻtish yoʻlini topa olmasdi. Endi
                       butun blok qizil ohangda va nima boʻlishi yozib
                       qoʻyilgan. */}
-                  <div className="mt-[clamp(0.5rem,1.5dvh,1rem)] flex flex-col gap-2.5 rounded-xl border border-red-200 bg-red-50 px-3 py-3 md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-x-3 md:gap-y-2 md:px-4 md:py-[clamp(0.5rem,1.7dvh,0.875rem)]">
+                  <div className="mt-[clamp(0.5rem,1.5dvh,1rem)] flex flex-col gap-2.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-x-3 md:gap-y-2 md:px-4 md:py-[clamp(0.5rem,1.7dvh,0.875rem)]">
                     <div className="min-w-0">
                       <p className="text-[14.5px] font-bold text-red-700">
                         {royxat ? "Hisobingiz bormi?" : "Hisobingiz yoʻqmi?"}
                       </p>
-                      <p className="mt-0.5 text-[12px] leading-snug text-red-900/70 max-[400px]:hidden [@media(max-height:640px)]:hidden">
+                      <p className="mt-0.5 text-[12px] leading-snug text-slate-600 max-[400px]:hidden [@media(max-height:640px)]:hidden">
                         {royxat
                           ? "Tabel raqamingiz bilan kiravering"
                           : "Bir marta roʻyxatdan oʻtasiz — PIN qoʻyasiz"}
@@ -497,7 +497,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                     <button
                       type="button"
                       onClick={() => boshdan(royxat ? "login" : "register")}
-                      className="inline-flex h-[52px] w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 text-[15px] font-bold text-white md:h-[clamp(38px,5dvh,44px)] md:w-auto md:justify-start md:text-[14px] shadow-sm transition hover:bg-red-700 active:scale-[.98]"
+                      className="inline-flex h-[52px] w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-[15px] font-bold text-white md:h-[clamp(38px,5dvh,44px)] md:w-auto md:justify-start md:text-[14px] shadow-sm transition hover:bg-emerald-700 active:scale-[.98]"
                     >
                       <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" aria-hidden>
                         {royxat ? (
