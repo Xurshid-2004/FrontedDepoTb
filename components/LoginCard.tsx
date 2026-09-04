@@ -966,7 +966,7 @@ function Field({
       </span>
       <div
         className={`relative rounded-xl border-2 bg-white transition-all duration-200 ${
-          focus ? fokus : "border-slate-200"
+          focus ? fokus : "border-slate-400 hover:border-slate-500"
         }`}
       >
         <input
