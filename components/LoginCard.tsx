@@ -485,22 +485,8 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                       qoʻyilgan. */}
                   <div className="mt-[clamp(0.5rem,1.5dvh,1rem)] flex flex-col gap-2.5 rounded-r-xl border border-l-4 border-slate-200 border-l-red-600 bg-white px-3 py-3 md:flex-row md:flex-wrap md:items-center md:justify-between md:gap-x-3 md:gap-y-2 md:px-4 md:py-[clamp(0.5rem,1.7dvh,0.875rem)]">
                     <div className="min-w-0">
-                      {/* Matndan keyin pastga ishora qiluvchi strelka —
-                          u savolni ostidagi tugmaga bogʻlaydi, shunda
-                          «bu yozuv aynan shu tugma haqida» ekani darrov
-                          bilinadi. */}
-                      <p className="flex items-center gap-1.5 text-[14.5px] font-bold text-red-700">
+                      <p className="text-[14.5px] font-bold text-red-700">
                         {royxat ? "Hisobingiz bormi?" : "Hisobingiz yoʻqmi?"}
-                        <svg viewBox="0 0 24 24" className="h-[15px] w-[15px] shrink-0" aria-hidden>
-                          <path
-                            d="M12 4v14M6 13l6 6 6-6"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.6"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
                       </p>
                       <p className="mt-0.5 text-[12px] leading-snug text-slate-600 max-[400px]:hidden [@media(max-height:640px)]:hidden">
                         {royxat
@@ -508,10 +494,24 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                           : "Bir marta roʻyxatdan oʻtasiz — PIN qoʻyasiz"}
                       </p>
                     </div>
+                    <div className="flex w-full items-center gap-2 md:w-auto">
+                    {/* Qizil strelka tugmaning chap yonida turadi va aynan
+                        unga ishora qiladi — shunda yuqoridagi savol qaysi
+                        tugmaga tegishli ekani hech qanday izohsiz bilinadi. */}
+                    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0 text-red-600" aria-hidden>
+                      <path
+                        d="M4 12h14M13 6l6 6-6 6"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
                     <button
                       type="button"
                       onClick={() => boshdan(royxat ? "login" : "register")}
-                      className="inline-flex h-[52px] w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-[15px] font-bold text-white md:h-[clamp(38px,5dvh,44px)] md:w-auto md:justify-start md:text-[14px] shadow-sm transition hover:bg-emerald-700 active:scale-[.98]"
+                      className="inline-flex h-[52px] flex-1 shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-[15px] font-bold text-white md:h-[clamp(38px,5dvh,44px)] md:flex-none md:justify-start md:text-[14px] shadow-sm transition hover:bg-emerald-700 active:scale-[.98]"
                     >
                       <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" aria-hidden>
                         {royxat ? (
@@ -538,6 +538,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                       </svg>
                       {royxat ? "Tizimga kirish" : "Roʻyxatdan oʻtish"}
                     </button>
+                    </div>
                   </div>
                 </motion.div>
               )}
