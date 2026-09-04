@@ -342,12 +342,12 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
         <div className="relative grid max-h-[min(760px,calc(var(--kirish-h,100dvh)-4.5rem))] grid-rows-[auto_minmax(0,1fr)] overflow-hidden md:h-[min(760px,calc(var(--kirish-h,100dvh)-3rem))] md:max-h-none md:grid-cols-2 md:grid-rows-none">
           {/* CHAP: forma */}
           <motion.div
-            className="order-2 flex min-h-0 flex-col px-5 py-4 md:order-1 md:px-11 md:py-[clamp(1rem,2.2dvh,1.75rem)]"
+            className="order-2 flex min-h-0 flex-col px-5 py-[clamp(0.625rem,1.8dvh,1rem)] md:order-1 md:px-11 md:py-[clamp(0.625rem,2.2dvh,1.75rem)]"
             animate={{ x: mobil ? 0 : royxat ? "100%" : 0, opacity: 1 }}
             transition={{ duration: 0.85, ease: EASE }}
           >
             {/* --- tashkilot sarlavhasi --- */}
-            <div className="flex items-center gap-3 border-b border-slate-200 pb-3 md:pb-4">
+            <div className="flex items-center gap-3 border-b border-slate-200 pb-[clamp(0.5rem,1.3dvh,0.75rem)] md:pb-[clamp(0.5rem,1.5dvh,1rem)]">
               <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#1b6fe0] to-[#38bdf8] text-[14px] font-black text-white">
                 TB
               </span>
@@ -392,22 +392,22 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                       jumlalik tushuntirish. Uchtasi bir xil chap chetdan
                       boshlanadi, oʻlchamlari aniq farq qiladi — koʻz
                       qayerdan oʻqishni boshlashni izlamaydi. */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 [@media(max-height:560px)]:hidden">
                     <span className="h-4 w-1 rounded-full bg-[#17518f]" />
                     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#17518f] md:text-[11px] md:tracking-[0.28em]">
                       TCH-6 · Buxoro lokomotiv deposi
                     </p>
                   </div>
-                  <h1 className="mt-2.5 text-[26px] font-bold leading-tight tracking-tight text-slate-900 md:mt-3 md:text-[32px]">
+                  <h1 className="mt-[clamp(0.375rem,1.1dvh,0.625rem)] text-[clamp(21px,3.1dvh,26px)] font-bold leading-tight tracking-tight text-slate-900 md:mt-[clamp(0.375rem,1.2dvh,0.75rem)] md:text-[clamp(22px,3.5dvh,32px)]">
                     {royxat ? "Roʻyxatdan oʻtish" : "Tizimga kirish"}
                   </h1>
-                  <p className="mt-2 text-[13.5px] leading-relaxed text-slate-600 md:text-[14px]">
+                  <p className="mt-[clamp(0.25rem,0.8dvh,0.5rem)] text-[clamp(12.5px,1.6dvh,13.5px)] leading-snug text-slate-600 [@media(max-height:620px)]:hidden md:text-[clamp(12.5px,1.7dvh,14px)]">
                     {royxat
                       ? "Tabel raqamingiz kadrlar bazasi bilan solishtiriladi. Faqat depo xodimlari roʻyxatdan oʻta oladi."
                       : "Ish guvohnomangizdagi tabel raqamini kiriting."}
                   </p>
 
-                  <div className="mt-5 md:mt-7">
+                  <div className="mt-[clamp(0.625rem,2dvh,1.25rem)] md:mt-[clamp(0.75rem,2.5dvh,1.75rem)]">
                     <Field
                       label="Tabel raqami"
                       hint={royxat ? undefined : "4–5 xonali raqam"}
@@ -442,7 +442,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                       ostida qolib ketardi — sahifa scroll'i yopiq boʻlgani
                       uchun unga yetib ham boʻlmasdi. Endi tugma doim koʻzda:
                       mazmun kerak boʻlsa uning ORQASIDAN suriladi. */}
-                  <div className="sticky bottom-0 z-10 -mx-1 mt-5 bg-white/95 px-1 pb-1 pt-2 backdrop-blur-sm md:static md:mx-0 md:mt-6 md:bg-transparent md:p-0 md:backdrop-blur-none">
+                  <div className="sticky bottom-0 z-10 -mx-1 mt-[clamp(0.625rem,1.9dvh,1.25rem)] bg-white/95 px-1 pb-1 pt-2 backdrop-blur-sm md:static md:mx-0 md:mt-[clamp(0.625rem,2.1dvh,1.5rem)] md:bg-transparent md:p-0 md:backdrop-blur-none">
                     {/* Yagona asosiy amal — qatʼiy toʻq koʻk. Ilgari yaltiroq
                         gradient va neon soya bor edi; korporativ tizim uchun
                         u jiddiy koʻrinmasdi. Oʻchiq holat endi kulrang —
@@ -451,7 +451,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                       type="button"
                       disabled={!canSubmit}
                       onClick={submit}
-                      className="flex h-[52px] w-full items-center justify-center gap-2 rounded-xl bg-[#17518f] text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#123f70] active:scale-[.99] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+                      className="flex h-[clamp(44px,6.1dvh,52px)] w-full items-center justify-center gap-2 rounded-xl bg-[#17518f] text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#123f70] active:scale-[.99] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
                     >
                       {tekshirmoqda ? (
                         <>
@@ -472,7 +472,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                   {/* «yoki» — asosiy amal bilan ikkinchi darajali amal
                       orasidagi chegara. Usiz ikkala tugma bir xil vaznda
                       koʻrinib, qaysi biri asosiy ekani bilinmasdi. */}
-                  <div className="mt-5 flex items-center gap-3 md:mt-6">
+                  <div className="mt-[clamp(0.5rem,1.7dvh,1.25rem)] flex items-center gap-3 [@media(max-height:560px)]:hidden md:mt-[clamp(0.5rem,1.9dvh,1.5rem)]">
                     <span className="h-px flex-1 bg-slate-200" />
                     <span className="text-[11px] font-medium uppercase tracking-wider text-slate-400">yoki</span>
                     <span className="h-px flex-1 bg-slate-200" />
@@ -483,12 +483,12 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                       xodim roʻyxatdan oʻtish yoʻlini topa olmasdi. Endi
                       butun blok qizil ohangda va nima boʻlishi yozib
                       qoʻyilgan. */}
-                  <div className="mt-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3.5">
+                  <div className="mt-[clamp(0.5rem,1.5dvh,1rem)] flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-xl border border-red-200 bg-red-50 px-4 py-[clamp(0.5rem,1.7dvh,0.875rem)]">
                     <div className="min-w-0">
                       <p className="text-[14.5px] font-bold text-red-700">
                         {royxat ? "Hisobingiz bormi?" : "Hisobingiz yoʻqmi?"}
                       </p>
-                      <p className="mt-0.5 text-[12px] leading-snug text-red-900/70">
+                      <p className="mt-0.5 text-[12px] leading-snug text-red-900/70 max-[400px]:hidden [@media(max-height:640px)]:hidden">
                         {royxat
                           ? "Tabel raqamingiz bilan kiravering"
                           : "Bir marta roʻyxatdan oʻtasiz — PIN qoʻyasiz"}
@@ -497,7 +497,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                     <button
                       type="button"
                       onClick={() => boshdan(royxat ? "login" : "register")}
-                      className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl bg-red-600 px-4 text-[14px] font-bold text-white shadow-sm transition hover:bg-red-700 active:scale-[.98]"
+                      className="inline-flex h-[clamp(38px,5dvh,44px)] shrink-0 items-center gap-2 rounded-xl bg-red-600 px-4 text-[14px] font-bold text-white shadow-sm transition hover:bg-red-700 active:scale-[.98]"
                     >
                       <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0" aria-hidden>
                         {royxat ? (
@@ -877,7 +877,7 @@ function Field({
   const [focus, setFocus] = useState(false);
   return (
     <label className="block">
-      <span className="mb-1.5 flex items-baseline justify-between gap-2">
+      <span className="mb-[clamp(0.25rem,0.7dvh,0.375rem)] flex items-baseline justify-between gap-2">
         <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-600">
           {label}
         </span>
@@ -910,7 +910,7 @@ function Field({
           onChange={(e) => onChange(e.target.value)}
           /* Tabel — raqam. `tabular-nums` bilan raqamlar bir xil enda
              boʻladi va terilayotganda satr sakramaydi. */
-          className="h-[52px] w-full bg-transparent px-4 text-[17px] font-medium tabular-nums tracking-[0.06em] text-slate-900 outline-none placeholder:font-normal placeholder:tracking-normal placeholder:text-slate-300"
+          className="h-[clamp(44px,6.1dvh,52px)] w-full bg-transparent px-4 text-[clamp(15px,2.2dvh,17px)] font-medium tabular-nums tracking-[0.06em] text-slate-900 outline-none placeholder:font-normal placeholder:tracking-normal placeholder:text-slate-300"
         />
       </div>
     </label>
