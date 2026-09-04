@@ -42,6 +42,65 @@ type Stage = "form" | "face" | "pin" | "face-setup";
 
 const EASE = [0.76, 0, 0.24, 1] as const;
 
+/* ------------------------------------------------------------------
+   Rang mavzusi
+
+   Kirish — korporativ koʻk. Roʻyxatdan oʻtish — toʻq siyohrang.
+
+   Nima uchun: bular ikki xil ish. Kirish — har kungi odat; roʻyxatdan
+   oʻtish esa bir martalik, ehtiyot bilan bajariladigan amal. Rang
+   almashishi xodimga qaysi oqimda ekanini bir qarashda aytadi va ikki
+   boʻlim koʻz oldida aralashib ketmaydi.
+
+   Sinf nomlari toʻliq yozilgan — Tailwind ularni kodda soʻzma-soʻz
+   koʻrishi shart, aks holda uslub yigʻilmaydi. */
+type Mavzu = {
+  tugma: string;
+  belgi: string;
+  urgu: string;
+  urguFon: string;
+  maydonFokus: string;
+  panelMobil: string;
+  panelQoplama: string;
+  yorqinlik: string;
+  havola: string;
+  qadamOtgan: string;
+  qadamFaol: string;
+  qadamMatn: string;
+};
+
+const MAVZU_KOK: Mavzu = {
+  tugma: "bg-[#17518f] hover:bg-[#123f70]",
+  belgi: "from-[#1b6fe0] to-[#38bdf8]",
+  urgu: "text-[#17518f]",
+  urguFon: "bg-[#17518f]",
+  maydonFokus: "border-[#17518f] shadow-[0_0_0_4px_rgba(23,81,143,.10)]",
+  panelMobil: "bg-[linear-gradient(135deg,#1c5c9e_0%,#2f8ff0_58%,#4a9fd8_100%)]",
+  panelQoplama:
+    "bg-[linear-gradient(140deg,rgba(28,92,158,.92)_0%,rgba(35,120,190,.86)_45%,rgba(74,159,216,.8)_100%)]",
+  yorqinlik: "bg-[radial-gradient(circle_at_70%_18%,rgba(255,255,255,.42),transparent_58%)]",
+  havola: "text-sky-700",
+  qadamOtgan: "bg-sky-500",
+  qadamFaol: "bg-sky-400",
+  qadamMatn: "text-sky-700",
+};
+
+const MAVZU_SIYOH: Mavzu = {
+  tugma: "bg-[#7c3aed] hover:bg-[#6d28d9]",
+  belgi: "from-[#8b5cf6] to-[#c084fc]",
+  urgu: "text-[#6d28d9]",
+  urguFon: "bg-[#6d28d9]",
+  maydonFokus: "border-[#7c3aed] shadow-[0_0_0_4px_rgba(124,58,237,.13)]",
+  panelMobil: "bg-[linear-gradient(135deg,#1e0b3d_0%,#4c1d95_52%,#7c3aed_100%)]",
+  panelQoplama:
+    "bg-[linear-gradient(150deg,rgba(24,8,48,.95)_0%,rgba(67,26,133,.9)_46%,rgba(124,58,237,.82)_100%)]",
+  yorqinlik: "bg-[radial-gradient(circle_at_72%_16%,rgba(192,132,252,.38),transparent_60%)]",
+  havola: "text-violet-700",
+  qadamOtgan: "bg-violet-500",
+  qadamFaol: "bg-violet-400",
+  qadamMatn: "text-violet-700",
+};
+
 export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
   const { login, faceLogin, register } = useStore();
 
@@ -301,6 +360,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
   };
 
   const royxat = mode === "register";
+  const mavzu = royxat ? MAVZU_SIYOH : MAVZU_KOK;
 
   return (
     <TouchRipple className="relative w-full max-w-[1120px] rounded-[28px]">
@@ -322,8 +382,8 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
             }}
           >
             <img src="/ichi.jpg" alt="" className="animate-kenburns h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-[linear-gradient(140deg,rgba(28,92,158,.92)_0%,rgba(35,120,190,.86)_45%,rgba(74,159,216,.8)_100%)]" />
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_18%,rgba(255,255,255,.42),transparent_58%)]" />
+            <div className={`absolute inset-0 ${mavzu.panelQoplama}`} />
+            <div className={`absolute inset-0 ${mavzu.yorqinlik}`} />
           </div>
         </motion.div>
 
@@ -348,7 +408,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
           >
             {/* --- tashkilot sarlavhasi --- */}
             <div className="flex items-center gap-3 border-b border-slate-200 pb-[clamp(0.5rem,1.3dvh,0.75rem)] md:pb-[clamp(0.5rem,1.5dvh,1rem)]">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-[#1b6fe0] to-[#38bdf8] text-[13px] font-black text-white md:h-11 md:w-11 md:text-[14px]">
+              <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${mavzu.belgi} text-[13px] font-black text-white md:h-11 md:w-11 md:text-[14px]`}>
                 TB
               </span>
               <div className="min-w-0">
@@ -362,7 +422,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
             </div>
 
             {/* --- qadamlar --- */}
-            <Qadamlar joriy={stage} royxat={royxat} holat={holat} />
+            <Qadamlar joriy={stage} royxat={royxat} holat={holat} mavzu={mavzu} />
 
             {/* Bosqichlar oddiy shartli render bilan almashadi.
                 AnimatePresence + mode="wait" bu yerda keraksiz murakkablik
@@ -393,8 +453,8 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                       boshlanadi, oʻlchamlari aniq farq qiladi — koʻz
                       qayerdan oʻqishni boshlashni izlamaydi. */}
                   <div className="hidden items-center gap-2 md:flex [@media(max-height:560px)]:md:hidden">
-                    <span className="h-4 w-1 rounded-full bg-[#17518f]" />
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#17518f] md:text-[11px] md:tracking-[0.28em]">
+                    <span className={`h-4 w-1 rounded-full ${mavzu.urguFon}`} />
+                    <p className={`text-[10px] font-semibold uppercase tracking-[0.16em] ${mavzu.urgu} md:text-[11px] md:tracking-[0.28em]`}>
                       TCH-6 · Buxoro lokomotiv deposi
                     </p>
                   </div>
@@ -409,6 +469,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
 
                   <div className="mt-[clamp(0.625rem,2dvh,1.25rem)] md:mt-[clamp(0.75rem,2.5dvh,1.75rem)]">
                     <Field
+                      fokus={mavzu.maydonFokus}
                       label="Tabel raqami"
                       hint={royxat ? undefined : "4–5 xonali raqam"}
                       value={tabel}
@@ -451,7 +512,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                       type="button"
                       disabled={!canSubmit}
                       onClick={submit}
-                      className="flex h-[54px] w-full items-center justify-center gap-2 rounded-xl bg-[#17518f] text-[16px] md:h-[clamp(44px,6.1dvh,52px)] md:text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#123f70] active:scale-[.99] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+                      className={`flex h-[54px] w-full items-center justify-center gap-2 rounded-xl ${mavzu.tugma} text-[16px] md:h-[clamp(44px,6.1dvh,52px)] md:text-[15px] font-semibold text-white shadow-sm transition active:scale-[.99] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none`}
                     >
                       {tekshirmoqda ? (
                         <>
@@ -674,7 +735,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                         setPinErr("");
                         setStage("face");
                       }}
-                      className="mt-5 block w-full text-center text-[12.5px] font-medium text-sky-700 underline-offset-4 hover:underline"
+                      className={`mt-5 block w-full text-center text-[12.5px] font-medium ${mavzu.havola} underline-offset-4 hover:underline`}
                     >
                       {kadrlar.length ? "Yuzni qayta olish" : "Face ID qoʻshish"}
                     </button>
@@ -722,7 +783,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
               (ilgari oq matn oq karta ustida koʻrinmasdi) va joy 5 barobar
               kam ketadi. Katta ekranda hammasi avvalgidek. */}
           <motion.div
-            className="order-1 flex items-center gap-4 bg-[linear-gradient(135deg,#1c5c9e_0%,#2f8ff0_58%,#4a9fd8_100%)] px-5 py-3 md:order-2 md:flex-col md:justify-center md:gap-0 md:bg-none md:px-7 md:py-10"
+            className={`order-1 flex items-center gap-4 ${mavzu.panelMobil} px-5 py-2.5 md:order-2 md:flex-col md:justify-center md:gap-0 md:bg-none md:px-7 md:py-10`}
             animate={{ x: mobil ? 0 : royxat ? "-100%" : 0 }}
             transition={{ duration: 0.85, ease: EASE }}
           >
@@ -735,7 +796,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
             </div>
 
             <div className="min-w-0 md:mt-6 md:flex md:flex-col md:items-center">
-              <p className="text-[14.5px] font-semibold leading-snug text-white md:max-w-[280px] md:text-center md:text-lg">
+              <p className="text-[15px] font-bold leading-tight text-white [text-shadow:0_2px_10px_rgba(0,0,0,.45)] md:max-w-[300px] md:text-center md:text-[26px] md:leading-tight">
                 {stage === "pin"
                   ? "Faralar oʻchdi — kodingizni koʻrmayapman"
                   : stage === "face"
@@ -744,7 +805,7 @@ export default function LoginCard({ onAuthed }: { onAuthed: () => void }) {
                       ? "Yangi ishchimisiz?"
                       : "Xush kelibsiz!"}
               </p>
-              <p className="mt-0.5 text-[11.5px] leading-snug text-white/85 md:mt-2 md:max-w-[300px] md:text-center md:text-[13px]">
+              <p className="mt-0.5 text-[11.5px] leading-snug text-white/90 [text-shadow:0_1px_6px_rgba(0,0,0,.4)] md:mt-3 md:max-w-[320px] md:text-center md:text-[14px]">
                 {stage === "pin"
                   ? "PIN shifrlangan holda saqlanadi — hech kim koʻra olmaydi"
                   : stage === "face"
@@ -766,10 +827,12 @@ function Qadamlar({
   joriy,
   royxat,
   holat,
+  mavzu,
 }: {
   joriy: Stage;
   royxat: boolean;
   holat: TabelHolat | null;
+  mavzu: Mavzu;
 }) {
   // Roʻyxatdan oʻtishda tartib: tabel → PIN → (ixtiyoriy) Face ID.
   //
@@ -816,12 +879,12 @@ function Qadamlar({
             <div className="min-w-0 flex-1">
               <div
                 className={`h-1 rounded-full transition-colors ${
-                  otgan ? "bg-sky-500" : faol ? "bg-sky-400" : "bg-slate-200"
+                  otgan ? mavzu.qadamOtgan : faol ? mavzu.qadamFaol : "bg-slate-200"
                 }`}
               />
               <p
                 className={`mt-1.5 truncate text-[10.5px] transition-colors ${
-                  faol ? "font-semibold text-sky-700" : otgan ? "text-slate-500" : "text-slate-400"
+                  faol ? `font-semibold ${mavzu.qadamMatn}` : otgan ? "text-slate-500" : "text-slate-400"
                 }`}
               >
                 {i + 1}. {q.l}
@@ -860,7 +923,7 @@ function Orqaga({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="mt-6 block w-full text-center text-[12px] text-slate-500 transition hover:text-sky-700"
+      className="mt-6 block w-full text-center text-[12px] text-slate-500 transition hover:text-slate-900"
     >
       ← Boshqa tabel raqami
     </button>
@@ -877,6 +940,7 @@ function Field({
   onFocusChange,
   onEnter,
   autoFocus,
+  fokus,
 }: {
   label: string;
   /** Maydon ostidagi qisqa izoh — nima kutilayotganini aytadi */
@@ -888,6 +952,8 @@ function Field({
   onFocusChange?: (v: boolean) => void;
   onEnter?: () => void;
   autoFocus?: boolean;
+  /** Fokus holatidagi ramka va halqa — mavzudan keladi (koʻk yoki siyohrang) */
+  fokus: string;
 }) {
   const [focus, setFocus] = useState(false);
   return (
@@ -900,7 +966,7 @@ function Field({
       </span>
       <div
         className={`relative rounded-xl border-2 bg-white transition-all duration-200 ${
-          focus ? "border-[#17518f] shadow-[0_0_0_4px_rgba(23,81,143,.10)]" : "border-slate-200"
+          focus ? fokus : "border-slate-200"
         }`}
       >
         <input
