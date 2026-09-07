@@ -483,3 +483,35 @@ nav,
   }
   @page { margin: 10mm; }
 }
+
+/* =====================================================================
+   KIP MUDDATLARI — jonli lenta (components/KipOqim.tsx)
+   Roʻyxat ikki nusxada chiziladi; qobiq -50% ga sirpanganda ikkinchi
+   nusxa birinchisining oʻrniga keladi va halqa uzilmasdan davom etadi.
+   ===================================================================== */
+@keyframes kipOqim {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-50%); }
+}
+.kip-oqim {
+  animation: kipOqim var(--kip-davr, 24s) linear infinite;
+  will-change: transform;
+}
+.kip-oqim-qobiq:hover .kip-oqim,
+.kip-oqim-qobiq:focus-within .kip-oqim {
+  animation-play-state: paused;
+}
+
+/* Muddati oʻtgan / bugun tugaydigan yozuv nuqtasi — yumshoq puls */
+@keyframes kipNuqta {
+  0%, 100% { box-shadow: 0 0 0 0 var(--kip-rang, #ef4444); opacity: 1; }
+  70%      { box-shadow: 0 0 0 5px transparent; opacity: .85; }
+}
+.kip-nuqta-puls {
+  animation: kipNuqta 1.8s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kip-oqim { animation: none; }
+  .kip-nuqta-puls { animation: none; }
+}

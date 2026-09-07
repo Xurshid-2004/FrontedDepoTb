@@ -10,6 +10,7 @@ import {
 } from "@/lib/logic";
 import { Badge, Btn, Empty, PageHead, Panel, Stat, Table, Td, Tr } from "@/components/ui";
 import { Tilt, SpeedLines } from "@/components/Fx";
+import KipOqim, { KipJonli } from "@/components/KipOqim";
 
 export default function Dash() {
   const { db, me, roles, can, canFeature } = useStore();
@@ -244,32 +245,17 @@ export default function Dash() {
           </Panel>
         )}
 
-        {/* KIP */}
+        {/* KIP — jonli lenta (components/KipOqim.tsx) */}
         {(can("kip.read") || myKip) && (
           <Panel>
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-[15px] font-semibold text-slate-900">KIP muddatlari</h3>
+            <div className="mb-4 flex items-center justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-2">
+                <h3 className="text-[15px] font-semibold text-slate-900">KIP muddatlari</h3>
+                <KipJonli soni={kipYaqin.length} />
+              </div>
               {can("kip.write") && <Link href="/kip"><Btn size="sm">Kabinet</Btn></Link>}
             </div>
-            {kipYaqin.length === 0 ? (
-              <Empty text="Muddati yaqin KIP yoʻq" />
-            ) : (
-              <div className="space-y-2">
-                {kipYaqin.slice(0, 6).map((k) => {
-                  const w = workerById(db, k.workerId);
-                  const t = kipTone(k.tugash);
-                  return (
-                    <div key={k.id} className="flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5">
-                      <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: t.color }} />
-                      <span className="min-w-0 flex-1 truncate text-[14.5px] font-semibold" style={{ color: jonliRang(k.id) }}>
-                        {w ? fioShort(w) : "—"}
-                      </span>
-                      <span className="shrink-0 text-[13px] font-semibold" style={{ color: t.color }}>{t.label}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            <KipOqim kips={kipYaqin} />
           </Panel>
         )}
 
