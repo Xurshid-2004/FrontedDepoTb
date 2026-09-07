@@ -22,6 +22,19 @@ export function useIsMobile(bp = 768) {
 }
 
 /* ---------------- Card ---------------- */
+/** Ustunlar uchun jonli rang palitrasi — jadval sarlavhasi VA katak
+ *  qiymatlari shu ranglar boʻyicha ustunma-ustun jilolanadi (aylanma). */
+export const USTUN_RANG = [
+  "#1d4ed8", // ko'k
+  "#7c3aed", // siyohrang
+  "#c026d3", // sirenа
+  "#0d9488", // zumrad-ko'k
+  "#ea580c", // to'q sariq
+  "#be123c", // qizil-pushti
+  "#0369a1", // dengiz ko'ki
+  "#4338ca", // indigo
+];
+
 export function Panel({
   children,
   className = "",
@@ -33,7 +46,7 @@ export function Panel({
 }) {
   return (
     <div
-      className={`rounded-2xl border border-slate-200/90 bg-white card-shadow ${
+      className={`rounded-2xl border border-white/70 bg-white/55 backdrop-blur-lg backdrop-saturate-150 shadow-[0_2px_10px_rgba(13,42,85,.06),0_30px_60px_-30px_rgba(13,42,85,.5)] ring-1 ring-white/60 ${
         pad ? "p-4 sm:p-5 md:p-6" : ""
       } ${className}`}
     >
@@ -255,18 +268,26 @@ export function Table({
       <div className="table-cards overflow-x-auto rounded-xl border border-slate-200">
         <table className="w-full border-collapse text-left" style={{ minWidth: min }}>
           <thead>
-            <tr className="bg-slate-100">
-              {head.map((h, i) => (
-                <th
-                  key={i}
-                  className="border-b border-slate-200 px-3 py-2.5 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500"
-                >
-                  {h}
-                </th>
-              ))}
+            <tr className="bg-gradient-to-b from-slate-100 to-slate-50/80">
+              {head.map((h, i) => {
+                // Har ustunga alohida rang urgʻusi — sarlavha rangi va
+                // ostki chiziq. Ranglar aylanma tartibda beriladi.
+                const acc = USTUN_RANG[i % USTUN_RANG.length];
+                return (
+                  <th
+                    key={i}
+                    className="border-b-[3px] px-3.5 py-3.5 text-[12.5px] font-extrabold uppercase tracking-wide"
+                    style={{ color: acc, borderColor: `${acc}55` }}
+                  >
+                    {h}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
-          <tbody>{children}</tbody>
+          {/* Quyuqroq zebra — faqat katta ekranda (md+). Telefonda jadval
+              kartalarga aylanadi, u yerda oq fon qoladi. */}
+          <tbody className="md:[&>tr:nth-child(even)]:bg-slate-100/80">{children}</tbody>
         </table>
       </div>
     </HeadCtx.Provider>
@@ -296,11 +317,18 @@ export function Td({
         ? String(h)
         : undefined;
 
+  // Har ustun oʻz rangida jilolanadi. colSpan'li (butun enli) kataklar —
+  // masalan boʻsh holat — neytral qoladi.
+  const rang = col >= 0 && colSpan === undefined ? USTUN_RANG[col % USTUN_RANG.length] : undefined;
+
   return (
     <td
       colSpan={colSpan}
       data-label={label}
-      className={`border-b border-slate-200 px-3 py-3 align-top text-[12.5px] text-slate-700 ${className}`}
+      style={rang ? { color: rang } : undefined}
+      className={`border-b border-slate-200/70 px-3.5 py-4 align-top text-[16px] font-semibold leading-relaxed ${
+        rang ? "" : "text-slate-800"
+      } ${className}`}
     >
       {children}
     </td>
@@ -315,7 +343,7 @@ export function Tr({ children, onClick }: { children: React.ReactNode; onClick?:
   return (
     <tr
       onClick={onClick}
-      className={`transition-colors hover:bg-slate-50 ${onClick ? "cursor-pointer" : ""}`}
+      className={`transition-colors hover:!bg-sky-100/70 ${onClick ? "cursor-pointer" : ""}`}
     >
       {cells.map((cell, i) => (
         <ColCtx.Provider key={i} value={i}>
@@ -420,7 +448,7 @@ export function PageHead({
 export function Stat({
   label,
   value,
-  color = "#38bdf8",
+  color = "#0369a1",
   hint,
 }: {
   label: string;
@@ -430,9 +458,9 @@ export function Stat({
 }) {
   return (
     <Panel className="relative overflow-hidden">
-      <span className="absolute inset-x-0 top-0 h-[3px]" style={{ background: color }} />
-      <p className="text-[10.5px] uppercase tracking-wider text-slate-500 sm:text-[11px]">{label}</p>
-      <p className="mt-1.5 text-[25px] font-bold leading-none tabular-nums text-slate-900 sm:mt-2 sm:text-[30px]">
+      <span className="absolute inset-x-0 top-0 h-1" style={{ background: color }} />
+      <p className="text-[11.5px] font-semibold uppercase tracking-wider text-slate-500 sm:text-[12px]">{label}</p>
+      <p className="mt-1.5 text-[26px] font-extrabold leading-none tabular-nums sm:mt-2 sm:text-[32px]" style={{ color }}>
         {value}
       </p>
       {hint && <p className="mt-2 text-[11.5px] leading-snug text-slate-500">{hint}</p>}

@@ -21,6 +21,12 @@ export type Perm =
   | "kip.read"
   | "kip.write"
   | "kip.read.all"
+  | "tibbiy.read"
+  | "tibbiy.read.all"
+  | "tibbiy.write"
+  | "psixolog.read"
+  | "psixolog.read.all"
+  | "psixolog.write"
   | "report.read"
   | "report.download"
   | "admin.users"
@@ -42,6 +48,8 @@ export const ALL_PERMS: Perm[] = [
   "card.read", "card.create",
   "talon.read", "talon.write", "exam.write",
   "kip.read", "kip.write", "kip.read.all",
+  "tibbiy.read", "tibbiy.read.all", "tibbiy.write",
+  "psixolog.read", "psixolog.read.all", "psixolog.write",
   "report.read", "report.download",
   "admin.users", "admin.norms", "admin.settings",
   "incident.tb.write", "incident.tb.read", "incident.avariya.write", "incident.avariya.read",
@@ -68,6 +76,12 @@ export const PERM_LABEL: Record<Perm, string> = {
   "kip.read": "KIP koʻrish",
   "kip.read.all": "Hamma KIP maʼlumotlarini koʻrish (faqat oʻqish)",
   "kip.write": "KIP yozish",
+  "tibbiy.read": "Tibbiy koʻrik — oʻzining maʼlumotini koʻrish",
+  "tibbiy.read.all": "Tibbiy koʻrik — hamma maʼlumotni koʻrish (faqat oʻqish)",
+  "tibbiy.write": "Tibbiy koʻrik sanasini kiritish",
+  "psixolog.read": "Psixolog — oʻzining maʼlumotini koʻrish",
+  "psixolog.read.all": "Psixolog — hamma maʼlumotni koʻrish (faqat oʻqish)",
+  "psixolog.write": "Psixolog koʻrigini belgilash",
   "report.read": "Hisobotlarni koʻrish",
   "report.download": "Hisobotlarni yuklab olish",
   "admin.users": "Foydalanuvchilarni boshqarish",
@@ -135,6 +149,17 @@ export const ROLE_PERMS: Record<Role, Perm[]> = {
   ],
 };
 
+/* Standart darajalar (dasturiy) — core/permissions.py bilan bir xil. */
+(Object.keys(ROLE_PERMS) as Role[]).forEach((r) => {
+  if (r === "admin") return;
+  (["tibbiy.read", "psixolog.read"] as Perm[]).forEach((pp) => {
+    if (!ROLE_PERMS[r].includes(pp)) ROLE_PERMS[r].push(pp);
+  });
+});
+(["tibbiy.read.all", "psixolog.read.all"] as Perm[]).forEach((pp) => {
+  if (!ROLE_PERMS.depo_boshligi.includes(pp)) ROLE_PERMS.depo_boshligi.push(pp);
+});
+
 export function can(roles: Role[], perm: Perm, extra?: Record<string, boolean>): boolean {
   if (extra && perm in extra) return extra[perm];
   return roles.some((r) => ROLE_PERMS[r].includes(perm));
@@ -170,6 +195,8 @@ export type FeatureKey =
   | "nav.arxiv"          // Hujjatlar arxivi (yakuniy + blankalar)
   | "nav.kolonnalar"     // Kolonnalar (admin)
   | "nav.yoriqnoma"      // Yoʻriqnoma kitobchalari (TB kitobchalari)
+  | "nav.tibbiy"        // Tibbiy koʻrik
+  | "nav.psixolog"      // Psixolog
   // hujjatlar
   | "doc.trebovanie"     // Требование (MU-27)
   | "doc.mb6"            // MB-6 kartochka
@@ -178,7 +205,7 @@ export type FeatureKey =
 export const ALL_FEATURES: FeatureKey[] = [
   "card.mehnat", "card.ombor", "card.faolIshchilar", "card.buyumTuri", "card.choraTadbir", "card.kip",
   "nav.tb", "nav.ombor", "nav.kip", "nav.talon", "nav.hisobot", "nav.arizalar", "nav.hujjatlar", "nav.arxiv",
-  "nav.kolonnalar", "nav.yoriqnoma",
+  "nav.kolonnalar", "nav.yoriqnoma", "nav.tibbiy", "nav.psixolog",
   "doc.trebovanie", "doc.mb6", "doc.kitobcha",
 ];
 
@@ -199,6 +226,8 @@ export const FEATURE_LABEL: Record<FeatureKey, string> = {
   "nav.arxiv": "Boʻlim: Hujjatlar arxivi",
   "nav.kolonnalar": "Boʻlim: Kolonnalar (admin)",
   "nav.yoriqnoma": "Boʻlim: Yoʻriqnoma kitobchalari (TB kitobchalari)",
+  "nav.tibbiy": "Boʻlim: Tibbiy koʻrik",
+  "nav.psixolog": "Boʻlim: Psixolog",
   "doc.trebovanie": "Hujjat: Требование (MU-27)",
   "doc.mb6": "Hujjat: MB-6 kartochka",
   "doc.kitobcha": "Hujjat: TB jamoatchilik nazorati kitobchasi",
@@ -206,7 +235,7 @@ export const FEATURE_LABEL: Record<FeatureKey, string> = {
 
 export const FEATURE_GROUPS: { title: string; keys: FeatureKey[] }[] = [
   { title: "Bosh sahifa kartalari", keys: ["card.mehnat", "card.ombor", "card.faolIshchilar", "card.buyumTuri", "card.choraTadbir", "card.kip"] },
-  { title: "Boʻlimlar (menyu)", keys: ["nav.tb", "nav.ombor", "nav.kip", "nav.talon", "nav.hisobot", "nav.arizalar", "nav.hujjatlar", "nav.arxiv", "nav.kolonnalar", "nav.yoriqnoma"] },
+  { title: "Boʻlimlar (menyu)", keys: ["nav.tb", "nav.ombor", "nav.kip", "nav.talon", "nav.hisobot", "nav.arizalar", "nav.hujjatlar", "nav.arxiv", "nav.kolonnalar", "nav.yoriqnoma", "nav.tibbiy", "nav.psixolog"] },
   { title: "Hujjatlar", keys: ["doc.trebovanie", "doc.mb6", "doc.kitobcha"] },
 ];
 
@@ -235,6 +264,13 @@ export const ROLE_FEATURES: Record<Role, FeatureKey[]> = {
   ishchi: ["nav.arizalar", ...ALL_DOCS],
 };
 
+/* Boʻlim menyusi hamma rolga koʻrinadi — roʻyxat oʻzida cheklanadi. */
+(Object.keys(ROLE_FEATURES) as Role[]).forEach((r) => {
+  (["nav.tibbiy", "nav.psixolog"] as FeatureKey[]).forEach((f) => {
+    if (!ROLE_FEATURES[r].includes(f)) ROLE_FEATURES[r].push(f);
+  });
+});
+
 export type AccessKey = Perm | FeatureKey;
 
 function roleDefault(role: Role, key: AccessKey, isFeature: boolean): boolean {
@@ -258,6 +294,10 @@ const OLIB_KELADI: Partial<Record<AccessKey, Perm>> = {
   "nav.kip": "kip.read.all",
   "kip.read": "kip.read.all",
   "incident.avariya.read": "kip.read.all",
+  "nav.tibbiy": "tibbiy.read.all",
+  "tibbiy.read": "tibbiy.read.all",
+  "nav.psixolog": "psixolog.read.all",
+  "psixolog.read": "psixolog.read.all",
 };
 
 /** Override zanjiri: shaxs → lavozim → rol override → rol standarti. */

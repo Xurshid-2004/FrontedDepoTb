@@ -9,7 +9,6 @@ import { ASOS_URL } from "@/lib/sayt";
 // toʻxtatmaydi, u sahifa manzilini baribir indeksga qoʻyadi.
 const YOPIQ = [
   "/api/",
-  "/lab",
   "/verify/",
   "/admin",
   "/arizalar",

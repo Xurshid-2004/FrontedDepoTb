@@ -5,7 +5,7 @@ import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
 import {
-  dashboardStats, daysBetween, fmt, fioShort, itemStates, kipTone,
+  dashboardStats, daysBetween, fmt, fioShort, itemStates, jonliRang, kipTone,
   STATUS_COLOR, STATUS_LABEL, TODAY, itemById, workerById, money,
 } from "@/lib/logic";
 import { Badge, Btn, Empty, PageHead, Panel, Stat, Table, Td, Tr } from "@/components/ui";
@@ -146,7 +146,7 @@ export default function Dash() {
       {/* statistika */}
       <div className="mb-7 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {canFeature("card.faolIshchilar") && (
-          <Stat label="Faol ishchilar" value={db.workers.filter((w) => w.faol).length} />
+          <Stat label="Faol ishchilar" value={db.workers.filter((w) => w.faol).length} color="#0d9488" />
         )}
         {canFeature("card.buyumTuri") && (
           <Stat label="Ombordagi buyum turi" value={db.items.length} color="#f2b544" />
@@ -175,8 +175,8 @@ export default function Dash() {
                 return (
                   <div key={st.itemId} className="flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5">
                     <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: c }} />
-                    <span className="min-w-0 flex-1 truncate text-[12.5px] text-slate-800">{it?.nomi}</span>
-                    <span className="shrink-0 text-[11px] tabular-nums" style={{ color: c }}>
+                    <span className="min-w-0 flex-1 truncate text-[14.5px] font-semibold" style={{ color: jonliRang(st.itemId) }}>{it?.nomi}</span>
+                    <span className="shrink-0 text-[13px] font-semibold tabular-nums" style={{ color: c }}>
                       {st.holat === "chiqqun" ? "Ish. Chiqqun" : st.keyingi ? fmt(st.keyingi) : "muddati keldi"}
                     </span>
                   </div>
@@ -261,10 +261,10 @@ export default function Dash() {
                   return (
                     <div key={k.id} className="flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5">
                       <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: t.color }} />
-                      <span className="min-w-0 flex-1 truncate text-[12.5px] text-slate-800">
+                      <span className="min-w-0 flex-1 truncate text-[14.5px] font-semibold" style={{ color: jonliRang(k.id) }}>
                         {w ? fioShort(w) : "—"}
                       </span>
-                      <span className="shrink-0 text-[11px]" style={{ color: t.color }}>{t.label}</span>
+                      <span className="shrink-0 text-[13px] font-semibold" style={{ color: t.color }}>{t.label}</span>
                     </div>
                   );
                 })}
@@ -283,9 +283,9 @@ export default function Dash() {
             <div className="space-y-2">
               {ombor.map(({ st, it }) => (
                 <div key={st.itemId} className="flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-2.5">
-                  <span className="min-w-0 flex-1 truncate text-[12.5px] text-slate-800">{it.nomi}</span>
+                  <span className="min-w-0 flex-1 truncate text-[14.5px] font-semibold" style={{ color: jonliRang(st.itemId) }}>{it.nomi}</span>
                   <span
-                    className="shrink-0 text-[12px] font-semibold tabular-nums"
+                    className="shrink-0 text-[13px] font-semibold tabular-nums"
                     style={{ color: st.qoldiq < 30 ? "#ef4444" : st.qoldiq < 80 ? "#f59e0b" : "#22c55e" }}
                   >
                     {st.qoldiq} {it.unit}

@@ -332,8 +332,34 @@ export interface Kip {
   liniya: string;
   sana: string;
   muddatOy: number;
+  /** Kun boʻyicha muddat (masalan 15 kun). Boʻlsa tugash shu bilan hisoblanadi;
+   *  boʻsh/null boʻlsa muddatOy (oy) ishlatiladi. */
+  muddatKun?: number | null;
   tugash: string;
   imzoId?: string;
+}
+
+/* --- Koʻrik (tibbiy koʻrik / psixolog) --- */
+
+export type KorikTuri = "tibbiy" | "psixolog";
+
+export const KORIK_LABEL: Record<KorikTuri, string> = {
+  tibbiy: "Tibbiy koʻrik",
+  psixolog: "Psixolog",
+};
+
+/** Davriy koʻrik yozuvi. Asosiy sana — `tugash` (qayta oʻtish sanasi):
+ *  tibbiyda toʻgʻridan kiritiladi, psixologda sana+muddatdan hisoblanadi. */
+export interface Korik {
+  id: string;
+  workerId: string;
+  turi: KorikTuri;
+  sana: string | null;        // oʻtgan/asos sana (psixolog majburiy, tibbiy ixtiyoriy)
+  muddatOy: number | null;    // psixolog: 3/6/12; tibbiy: null
+  tugash: string;             // qayta oʻtish sanasi
+  belgilaganId?: string | null;
+  imzoId?: string | null;
+  izoh?: string | null;
 }
 
 export interface Notification {
@@ -388,6 +414,7 @@ export interface DB {
   talons: Talon[];
   exams: Exam[];
   kips: Kip[];
+  koriklar: Korik[];
   notifications: Notification[];
   incidents: IncidentEntry[];
   audit: AuditLog[];

@@ -140,7 +140,7 @@ function HolatTanlov({
             type="button"
             title={x.izoh}
             onClick={() => onSet(x.v)}
-            className={`px-2.5 py-1 text-[11.5px] font-medium transition-colors ${
+            className={`px-2.5 py-1.5 text-[13px] font-semibold transition-colors ${
               tanlangan
                 ? `bg-slate-100 ${HOLAT_RANG[x.rang]}`
                 : "text-slate-400 hover:bg-slate-50"
@@ -185,7 +185,7 @@ function SozKatak({
             ? "Majburan ochiq"
             : "Majburan yopiq"
       }
-      className={`mx-auto w-[62px] rounded-md py-1 text-[11px] font-medium hover:bg-slate-100 ${
+      className={`mx-auto w-[74px] rounded-md py-1.5 text-[13px] font-semibold hover:bg-slate-100 ${
         standart ? "text-slate-400" : amaldagi ? "text-emerald-700" : "text-rose-700"
       } ${ozgargan ? "ring-1 ring-amber-400" : standart ? "" : "ring-1 ring-inset ring-slate-200"}`}
     >
@@ -942,6 +942,10 @@ function AccessSection({
   const [lavQoralama, setLavQoralama] = useState<Qoralama>({});
   const [shaxsQoralama, setShaxsQoralama] = useState<Qoralama>({});
   const [saqlanmoqda, setSaqlanmoqda] = useState("");
+  // Tezlik: guruhlar sukut boʻyicha yigʻiq, faqat ochilgan/qidirilgan
+  // satrlar chiziladi. Shunda katak bosilganda kam element qayta chizadi.
+  const [qidir, setQidir] = useState("");
+  const [ochiqGuruh, setOchiqGuruh] = useState<Record<string, boolean>>({});
 
   const [posSel, setPosSel] = useState<string>("");
   const selPosition = db.positions.find((p) => p.id === posSel) || null;
@@ -1006,43 +1010,67 @@ function AccessSection({
       .slice(0, 8);
   }, [db.workers, userQ]);
 
+  // Qidiruv + guruh filtri (rol matritsasi uchun)
+  const _q = qidir.trim().toLowerCase();
+  const rolFiltG = groupedKeys
+    .map((g) => ({ title: g.title, keys: g.keys.filter((k) => !_q || label(k).toLowerCase().includes(_q)) }))
+    .filter((g) => g.keys.length);
+  const guruhOchiq = (title: string) => (_q ? true : !!ochiqGuruh[title || "all"]);
+
   return (
     <div className="space-y-6">
       {t.node}
       <p className="text-[12px] leading-relaxed text-slate-500">{note}</p>
 
       {/* ROL MATRITSASI */}
-      <Panel pad={false}>
-        <div className="border-b border-slate-200 px-4 py-3 text-[13px] font-semibold text-slate-900">
-          Rol boʻyicha (standart)
+      <Panel pad={false} className="!bg-white/95 !backdrop-blur-none">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+          <span className="text-[13px] font-semibold text-slate-900">Rol boʻyicha (standart)</span>
+          <input
+            value={qidir}
+            onChange={(e) => setQidir(e.target.value)}
+            placeholder="Ruxsat/koʻrinish qidirish…"
+            className="h-9 w-full max-w-[300px] rounded-lg border border-slate-200 bg-white px-3 text-[13px] outline-none focus:border-sky-500"
+          />
         </div>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left" style={{ minWidth: 1100 }}>
             <thead>
               <tr className="bg-slate-100">
-                <th className="sticky left-0 z-10 border-b border-slate-200 bg-slate-100 px-3 py-2.5 text-[10.5px] font-semibold uppercase tracking-wider text-slate-500">
+                <th className="sticky left-0 z-10 border-b border-slate-200 bg-slate-100 px-3 py-3 text-[12px] font-bold uppercase tracking-wide text-slate-600">
                   {isFeature ? "Koʻrinish" : "Ruxsat"}
                 </th>
                 {roles.map((r) => (
-                  <th key={r} className="border-b border-slate-200 px-2 py-2.5 text-center text-[10.5px] font-semibold uppercase tracking-wider text-slate-500">
+                  <th key={r} className="border-b border-slate-200 px-2 py-3 text-center text-[12px] font-bold uppercase tracking-wide text-slate-600">
                     {ROLE_LABEL[r].split(" ")[0]}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {groupedKeys.map((g) => (
+              {rolFiltG.length === 0 && (
+                <tr><td colSpan={roles.length + 1} className="px-4 py-6 text-center text-[13px] text-slate-500">Hech narsa topilmadi</td></tr>
+              )}
+              {rolFiltG.map((g) => {
+                const ochiq = guruhOchiq(g.title);
+                return (
                 <React.Fragment key={g.title || "all"}>
-                  {g.title && (
-                    <tr>
-                      <td colSpan={roles.length + 1} className="bg-slate-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                        {g.title}
-                      </td>
-                    </tr>
-                  )}
-                  {g.keys.map((k) => (
+                  <tr>
+                    <td colSpan={roles.length + 1} className="bg-slate-50 px-3 py-2.5">
+                      <button
+                        type="button"
+                        onClick={() => setOchiqGuruh((o) => ({ ...o, [g.title || "all"]: !o[g.title || "all"] }))}
+                        className="flex items-center gap-2 text-[12.5px] font-bold uppercase tracking-wide text-slate-600"
+                      >
+                        <span className="text-slate-400">{ochiq ? "▾" : "▸"}</span>
+                        {g.title || "Barcha ruxsatlar"}
+                        <span className="text-slate-400">({g.keys.length})</span>
+                      </button>
+                    </td>
+                  </tr>
+                  {ochiq && g.keys.map((k) => (
                     <tr key={k} className="hover:bg-slate-50">
-                      <td className="sticky left-0 z-10 border-b border-slate-200 bg-white px-3 py-2.5 text-[12px] text-slate-800">
+                      <td className="sticky left-0 z-10 border-b border-slate-200 bg-white px-3 py-3 text-[14px] font-medium text-slate-800">
                         {label(k)}
                       </td>
                       {roles.map((r) => {
@@ -1052,7 +1080,7 @@ function AccessSection({
                         return (
                           <td key={r} className="border-b border-slate-200 px-2 py-1.5 text-center">
                             {r === "admin" ? (
-                              <span className="text-[11px] font-medium text-emerald-700">Ochiq</span>
+                              <span className="text-[13px] font-semibold text-emerald-700">Ochiq</span>
                             ) : (
                               <SozKatak
                                 holat={holat}
@@ -1069,7 +1097,8 @@ function AccessSection({
                     </tr>
                   ))}
                 </React.Fragment>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

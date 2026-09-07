@@ -9,7 +9,7 @@
 
 import { useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
-import { fio } from "@/lib/logic";
+import { fio, lokoBrigada } from "@/lib/logic";
 import { KOLONNA_TURI_LABEL, type KolonnaTuri } from "@/lib/types";
 import {
   Badge, Btn, Empty, Field, Input, Modal, PageHead, Panel, Select,
@@ -51,16 +51,21 @@ export default function KolonnalarPage() {
     [db.workers]
   );
 
+  // Kolonnaga faqat lokomotiv brigadasi biriktiriladi: mashinist yoʻriqchisi
+  // (yoriqchi roli), mashinist va mashinist yordamchilari (lokoBrigada).
+  // Boshqa lavozimdagilar bu roʻyxatda umuman koʻrinmaydi.
+  const biriktiriladigan = (w: (typeof db.workers)[number]) =>
+    w.faol && (lokoBrigada(db, w) || (w.roles || []).includes("yoriqchi"));
+
   const izlangan = useMemo(() => {
     const s = q.trim().toLowerCase();
-    if (!s) return db.workers.filter((w) => w.faol).slice(0, 40);
-    return db.workers
-      .filter((w) => w.faol)
-      .filter((w) =>
-        `${w.tabel} ${fio(w)}`.toLowerCase().includes(s)
-      )
+    const base = db.workers.filter(biriktiriladigan);
+    if (!s) return base.slice(0, 40);
+    return base
+      .filter((w) => `${w.tabel} ${fio(w)}`.toLowerCase().includes(s))
       .slice(0, 40);
-  }, [db.workers, q]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [db, q]);
 
   if (!boshqara) {
     return (

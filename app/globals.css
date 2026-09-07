@@ -43,7 +43,15 @@
 html,
 body {
   height: 100%;
-  background: linear-gradient(180deg, #f2f7fc 0%, #eaf0f7 42%, #f3efe8 100%);
+  /* Rangli, yumshoq fon — burchaklarda ranglar shisha (glass) panellar
+     ostidan jilolanadi. Statik gradient boʻlgani uchun tezlikka taʼsir
+     qilmaydi. */
+  background:
+    radial-gradient(900px 620px at 10% -8%, rgba(56, 189, 248, 0.26), transparent 60%),
+    radial-gradient(820px 620px at 90% -4%, rgba(139, 92, 246, 0.20), transparent 56%),
+    radial-gradient(760px 720px at 78% 106%, rgba(245, 158, 11, 0.18), transparent 55%),
+    radial-gradient(720px 640px at -4% 104%, rgba(16, 185, 129, 0.17), transparent 55%),
+    linear-gradient(180deg, #eef4fb 0%, #e8eef7 45%, #f3eee6 100%);
   background-attachment: fixed;
   color: #0d1b2a;
   font-family: var(--font-sans);

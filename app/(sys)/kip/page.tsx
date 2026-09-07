@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 import {
-  fmt, fio, fioShort, kipTone, lokoBrigada, positionById, positionNames, workerLokoBor,
+  fmt, fio, fioShort, jonliRang, kipTone, kolonnaNomi, lokoBrigada, positionById, positionNames, workerLokoBor,
 } from "@/lib/logic";
 import type { Kip, Worker } from "@/lib/types";
 import {
@@ -39,6 +39,25 @@ const JADVALLAR = [
   },
 ];
 
+/** KIP muddati variantlari: 15 kun yoki 1/2/3 oy. Tanlov qiymati «k:kun»
+ *  yoki «o:oy» koʻrinishida — submitda muddatOy/muddatKun ga aylanadi. */
+const MUDDAT_TANLOV = [
+  { val: "k:15", label: "15 kun", muddatOy: 1, muddatKun: 15 as number | null },
+  { val: "o:1", label: "1 oy", muddatOy: 1, muddatKun: null as number | null },
+  { val: "o:2", label: "2 oy", muddatOy: 2, muddatKun: null as number | null },
+  { val: "o:3", label: "3 oy", muddatOy: 3, muddatKun: null as number | null },
+] as const;
+
+/** Yozuvdan tanlov qiymatini topish (tahrirlashda). */
+function muddatVal(k: { muddatOy: number; muddatKun?: number | null }): string {
+  return k.muddatKun ? `k:${k.muddatKun}` : `o:${k.muddatOy}`;
+}
+
+/** Muddatni oʻqiladigan matn: «15 kun» yoki «N oy». */
+function muddatLabel(k: { muddatOy: number; muddatKun?: number | null }): string {
+  return k.muddatKun ? `${k.muddatKun} kun` : `${k.muddatOy} oy`;
+}
+
 export default function KipPage() {
   const {
     db, me, roles, can, addKip, editKip, deleteKip,
@@ -49,7 +68,11 @@ export default function KipPage() {
   /** Modal ikki holatda ishlaydi: yangi yozuv (kip yoʻq) va tahrirlash. */
   const [open, setOpen] = useState<{ workerId: string; kip?: Kip } | null>(null);
   const [ochir, setOchir] = useState<Kip | null>(null);
-  const [f, setF] = useState({ liniya: "", sana: new Date().toISOString().slice(0, 10), muddatOy: 1 });
+  const [f, setF] = useState<{ liniya: string; sana: string; muddat: string }>({
+    liniya: "",
+    sana: new Date().toISOString().slice(0, 10),
+    muddat: "k:15",
+  });
   const [tab, setTab] = useState<"elektrovoz" | "teplovoz">("teplovoz");
   const [faqatMenikilar, setFaqatMenikilar] = useState(false);
   const elRef = useRef<HTMLDivElement>(null);
@@ -158,12 +181,12 @@ export default function KipPage() {
     can("kip.write") && (k.yoriqchiId === me.id || can("admin.users"));
 
   const yangiOch = (workerId: string) => {
-    setF({ liniya: "", sana: new Date().toISOString().slice(0, 10), muddatOy: 1 });
+    setF({ liniya: "", sana: new Date().toISOString().slice(0, 10), muddat: "k:15" });
     setOpen({ workerId });
   };
 
   const tahrirOch = (k: Kip) => {
-    setF({ liniya: k.liniya, sana: k.sana, muddatOy: k.muddatOy });
+    setF({ liniya: k.liniya, sana: k.sana, muddat: muddatVal(k) });
     setOpen({ workerId: k.workerId, kip: k });
   };
 
@@ -193,13 +216,13 @@ export default function KipPage() {
       return (
         <Tr key={w.id}>
           <Td className="font-medium text-slate-900">
-            {fioShort(w)}
+            {fio(w)}
             <span className="block text-[11px] text-slate-500">tabel {w.tabel}</span>
           </Td>
           <Td>{positionNames(db, w) || positionById(db, w.positionId)?.nomi || "—"}</Td>
-          <Td>{w.kolonna ?? "—"}</Td>
+          <Td>{kolonnaNomi(db, w)}</Td>
           <Td>{k ? k.liniya : "—"}</Td>
-          <Td className="tabular-nums">{k ? `${k.muddatOy} oy` : "—"}</Td>
+          <Td className="tabular-nums">{k ? muddatLabel(k) : "—"}</Td>
           <Td className="tabular-nums">{k ? fmt(k.tugash) : "—"}</Td>
           <Td>{tone ? <Badge color={tone.color}>{tone.label}</Badge> : <Badge color="#64748b">KIP yoʻq</Badge>}</Td>
           <Td>
@@ -235,7 +258,7 @@ export default function KipPage() {
               : "Sizga hali kolonna biriktirilmagan — admin biriktirgach, kolonnangiz mashinistlari shu yerda koʻrinadi.")
           : `Elektrovoz va teplovoz mashinistlari hamda yordamchilari — jami ${lokoBarcha.length} ta xodim${
               mine.length ? `, shundan ${mine.length} tasi menga biriktirilgan` : ""
-            }. KIP: liniya/stansiya, sana, muddat (oy) va QR imzo.`}
+            }. KIP: liniya/stansiya, sana, muddat va QR imzo.`}
         right={<Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="F.I.Sh., tabel, kolonna" className="h-11 w-full sm:h-10 sm:w-[250px]" />}
       />
 
@@ -249,17 +272,34 @@ export default function KipPage() {
       <div className="mb-7 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {buckets.map((b) => (
           <div key={b.q} className="rounded-2xl border p-4" style={{ borderColor: `${b.c}55`, background: `${b.c}10` }}>
-            <p className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: b.c }}>
+            <p className="text-[12.5px] font-bold uppercase tracking-wider" style={{ color: b.c }}>
               {b.q}-qism · {b.l}
             </p>
-            <div className="mt-3 space-y-2">
-              {b.rows.length === 0 && <p className="text-[12px] text-slate-500">Yoʻq</p>}
+            <div className="mt-3 space-y-1.5">
+              {b.rows.length === 0 && <p className="text-[13.5px] text-slate-500">Yoʻq</p>}
               {b.rows.map((w) => {
                 const k = kipOf(w.id)!;
+                const yozaOladi = can("kip.write");
+                const ichki = (
+                  <>
+                    <p className="truncate text-[15px] font-bold leading-tight" style={{ color: jonliRang(w.id) }}>{fio(w)}</p>
+                    <p className="truncate text-[12px] leading-tight text-slate-500">{kolonnaNomi(db, w)} · {k.liniya} · {fmt(k.tugash)}</p>
+                  </>
+                );
                 return (
-                  <div key={w.id} className="rounded-lg bg-white/70 px-3 py-2">
-                    <p className="truncate text-[12.5px] font-medium text-slate-900">{fioShort(w)}</p>
-                    <p className="truncate text-[11px] text-slate-500">{k.liniya} · {fmt(k.tugash)}</p>
+                  <div key={w.id} className="rounded-lg bg-white/70 px-2.5 py-1.5">
+                    {yozaOladi ? (
+                      <button
+                        type="button"
+                        onClick={() => yangiOch(w.id)}
+                        title="Yangi KIP yozish"
+                        className="block w-full cursor-pointer text-left transition hover:opacity-80"
+                      >
+                        {ichki}
+                      </button>
+                    ) : (
+                      ichki
+                    )}
                     {boshqara(k) && <div className="mt-1.5">{kipTugmalar(k, true)}</div>}
                   </div>
                 );
@@ -396,9 +436,15 @@ export default function KipPage() {
             <Field label="2. Sanasi">
               <Input type="date" value={f.sana} onChange={(e) => setF({ ...f, sana: e.target.value })} />
             </Field>
-            <Field label="3. Muddat (oy)">
-              <Select value={f.muddatOy} onChange={(e) => setF({ ...f, muddatOy: Number(e.target.value) })}>
-                {[1, 3, 6, 12].map((m) => <option key={m} value={m}>{m} oy</option>)}
+            <Field label="3. Muddat">
+              <Select value={f.muddat} onChange={(e) => setF({ ...f, muddat: e.target.value })}>
+                {MUDDAT_TANLOV.map((m) => <option key={m.val} value={m.val}>{m.label}</option>)}
+                {/* Tahrirlanayotgan eski yozuvda muddat yangi variantlarda
+                    boʻlmasa (masalan 6/12 oy) — uni yoʻqotib qoʻymaslik uchun
+                    joriy qiymat ham qoʻshiladi. */}
+                {open?.kip && !MUDDAT_TANLOV.some((m) => m.val === f.muddat) && (
+                  <option value={f.muddat}>{muddatLabel(open.kip)}</option>
+                )}
               </Select>
             </Field>
           </div>
@@ -414,8 +460,17 @@ export default function KipPage() {
               disabled={!f.liniya.trim() || !f.sana}
               onClick={() => {
                 const liniya = f.liniya.trim();
+                // Tanlovni muddatOy/muddatKun ga aylantirish. Roʻyxatda boʻlmagan
+                // eski qiymat ham (masalan «o:6») toʻgʻri oʻqiladi.
+                const sel = MUDDAT_TANLOV.find((m) => m.val === f.muddat);
+                const muddatKun = sel
+                  ? sel.muddatKun
+                  : (f.muddat.startsWith("k:") ? Number(f.muddat.slice(2)) : null);
+                const muddatOy = sel
+                  ? sel.muddatOy
+                  : (f.muddat.startsWith("o:") ? Number(f.muddat.slice(2)) || 1 : 1);
                 if (open?.kip) {
-                  editKip(open.kip.id, { liniya, sana: f.sana, muddatOy: f.muddatOy });
+                  editKip(open.kip.id, { liniya, sana: f.sana, muddatOy, muddatKun });
                   t.show("KIP yozuvi yangilandi");
                 } else if (open) {
                   addKip({
@@ -423,7 +478,8 @@ export default function KipPage() {
                     yoriqchiId: me.id,
                     liniya,
                     sana: f.sana,
-                    muddatOy: f.muddatOy,
+                    muddatOy,
+                    muddatKun,
                   });
                   t.show("KIP yozildi va imzolandi");
                 }
@@ -449,7 +505,7 @@ export default function KipPage() {
                 })()}
               </p>
               <p className="mt-1 text-slate-600">
-                {ochir.liniya} · {ochir.muddatOy} oy · tugash: {fmt(ochir.tugash)}
+                {ochir.liniya} · {muddatLabel(ochir)} · tugash: {fmt(ochir.tugash)}
               </p>
             </div>
           )}

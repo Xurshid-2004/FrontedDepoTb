@@ -313,6 +313,20 @@ export function makeHash(input: string) {
   return (h1.toString(16).padStart(8, "0") + h2.toString(16).padStart(8, "0")).toUpperCase();
 }
 
+/** Matndan (id yoki nom) barqaror, lekin bir-biridan farqli jonli rang.
+ *  Bir xil id doim bir xil rang oladi (miltillamaydi), turli yozuvlar esa
+ *  har xil rangda ajralib turadi. Bildirishnoma, hodisa va roʻyxatlarda
+ *  ishlatiladi. */
+const JONLI_RANGLAR = [
+  "#1d4ed8", "#7c3aed", "#c026d3", "#0d9488", "#ea580c", "#be123c",
+  "#0369a1", "#4338ca", "#16a34a", "#db2777", "#0891b2", "#b45309",
+];
+export function jonliRang(seed: string): string {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return JONLI_RANGLAR[h % JONLI_RANGLAR.length];
+}
+
 export function fio(w: Worker) {
   return `${w.familiya} ${w.ism} ${w.otasi}`;
 }
@@ -395,6 +409,17 @@ export function itemById(db: DB, id: string) {
 export function positionById(db: DB, id: string) {
   return db.positions.find((p) => p.id === id);
 }
+/** Ishchiga admin biriktirgan kolonna nomi (kolonnaId boʻyicha, /kolonnalar
+ *  boʻlimida biriktiriladi). Biriktirilmagan boʻlsa eski erkin matnga
+ *  (w.kolonna) qaytadi, u ham boʻlmasa «—». */
+export function kolonnaNomi(db: DB, w: Worker): string {
+  if (w.kolonnaId) {
+    const k = db.kolonnalar.find((x) => x.id === w.kolonnaId);
+    if (k) return k.nomi;
+  }
+  return w.kolonna ?? "—";
+}
+
 /** Ishchining barcha lavozim nomlari, vergul bilan ajratilgan. */
 export function positionNames(db: DB, w: Worker) {
   return workerPositionIds(w)

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { DB, IncidentEntry } from "@/lib/types";
-import { fioShort } from "@/lib/logic";
+import { fioShort, jonliRang } from "@/lib/logic";
 import { Btn, Empty, Modal, Panel, Textarea, useToast } from "@/components/ui";
 
 function fmtDT(d: string) {
@@ -97,8 +97,14 @@ export default function IncidentFeed({
         <div className="max-h-[360px] space-y-2 overflow-y-auto pr-1">
           {entries.map((e) => {
             const tahrirlanmoqda = tahrir?.id === e.id;
+            // Har hodisa oʻz rangida ajralib turadi (id boʻyicha barqaror).
+            const rang = jonliRang(e.id);
             return (
-              <div key={e.id} className="rounded-xl border border-slate-200 px-3.5 py-2.5">
+              <div
+                key={e.id}
+                className="rounded-xl border border-l-4 px-3.5 py-3"
+                style={{ borderColor: "#e2e8f0", borderLeftColor: rang, background: `${rang}0f` }}
+              >
                 {tahrirlanmoqda ? (
                   <div className="space-y-2">
                     <Textarea
@@ -124,11 +130,11 @@ export default function IncidentFeed({
                   </div>
                 ) : (
                   <>
-                    <p className="whitespace-pre-wrap text-[12.5px] leading-relaxed text-slate-800">
+                    <p className="whitespace-pre-wrap text-[16px] font-medium leading-relaxed" style={{ color: rang }}>
                       {e.matn}
                     </p>
-                    <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
-                      <p className="text-[11px] text-slate-500">
+                    <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-[12.5px] font-semibold" style={{ color: `${rang}cc` }}>
                         {authorName(e.authorId)} · {fmtDT(e.sana)}
                       </p>
                       {boshqara(e) && (onEdit || onDelete) && (

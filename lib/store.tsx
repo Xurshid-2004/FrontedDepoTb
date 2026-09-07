@@ -21,7 +21,7 @@ import React, {
 } from "react";
 import type {
   AppRequest, BugalterFields, DB, IncidentEntry, Item, JournalEntry, Kip,
-  Norm, Position, RequestLine, Role, Unit, Worker,
+  KorikTuri, Norm, Position, RequestLine, Role, Unit, Worker,
 } from "./types";
 import { workerPositionIds } from "./logic";
 import { resolveAccess, type AccessKey, type FeatureKey, type Perm } from "./permissions";
@@ -96,9 +96,11 @@ type Ctx = {
   stockIn: (itemId: string, soni: number, izoh: string) => Promise<void>;
   toggleTalon: (workerId: string, raqam: 1 | 2 | 3, sabab?: string) => Promise<void>;
   addKip: (k: Omit<Kip, "id" | "tugash" | "imzoId">) => Promise<void>;
-  editKip: (id: string, patch: { liniya?: string; sana?: string; muddatOy?: number }) => Promise<void>;
+  editKip: (id: string, patch: { liniya?: string; sana?: string; muddatOy?: number; muddatKun?: number | null }) => Promise<void>;
   deleteKip: (id: string) => Promise<void>;
   setExam: (workerId: string, sana: string, davriylikOy: number) => Promise<void>;
+  setKorik: (b: { turi: KorikTuri; workerId: string; sana?: string | null; muddatOy?: number; tugash?: string; izoh?: string }) => Promise<void>;
+  deleteKorik: (workerId: string, turi: KorikTuri) => Promise<void>;
   upsertItem: (it: Item) => Promise<void>;
   upsertNorm: (n: Norm) => Promise<void>;
   removeNorm: (id: string) => Promise<void>;
@@ -157,7 +159,7 @@ function bosh(): DB {
   return {
     depo: { id: "", kod: "", nomi: "", tashkilot: "", qishBoshi: "09-15", qishOxiri: "04-15" },
     positions: [], items: [], norms: [], workers: [], cards: [], requests: [],
-    journal: [], stock: [], moves: [], talons: [], exams: [], kips: [],
+    journal: [], stock: [], moves: [], talons: [], exams: [], kips: [], koriklar: [],
     notifications: [], incidents: [], audit: [],
     lines: [], units: [], kolonnalar: [],
     yoriqnoma: { aktivSmena: null, aktivKitob: null, instruktorKolonna: null, aktivInstruktorKitob: null },
@@ -180,6 +182,7 @@ function normalize(d: DB): DB {
     lines: Array.isArray(d.lines) ? d.lines : [],
     units: Array.isArray(d.units) && d.units.length ? d.units : b.units,
     incidents: Array.isArray(d.incidents) ? d.incidents : [],
+    koriklar: Array.isArray(d.koriklar) ? d.koriklar : [],
   };
 }
 
@@ -268,6 +271,35 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     window.addEventListener("storage", kuzat);
     return () => window.removeEventListener("storage", kuzat);
   }, [yukla]);
+
+  /* --- tezkor yangilanish ---------------------------------------------
+     Boshqa foydalanuvchi KIP/ariza/hodisa yozsa, bu oyna uni koʻrishi
+     uchun holat davriy (12 s) va oynaga qaytilganda darhol qayta oʻqiladi.
+     Faqat holat olinadi (meʼni emas) — yengil. Fon oynada (hidden)
+     soʻrov yuborilmaydi. */
+  useEffect(() => {
+    if (!meUser) return;
+    let alive = true;
+    const yangila = async () => {
+      if (document.visibilityState === "hidden") return;
+      try {
+        const st = await api.getState();
+        if (alive) setDb(normalize(st));
+      } catch {
+        /* tarmoq xatosi — keyingi urinishda qayta oladi */
+      }
+    };
+    const iv = setInterval(yangila, 12000);
+    const onFocus = () => { void yangila(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    return () => {
+      alive = false;
+      clearInterval(iv);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
+  }, [meUser]);
 
   /* --- joriy foydalanuvchi (toʻliq Worker obyekti sifatida) --- */
   const me = useMemo<Worker | null>(() => {
@@ -423,6 +455,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     },
     setExam: async (workerId, sana, davriylikOy) => {
       await yugur(() => api.setExam(workerId, sana, davriylikOy));
+    },
+    setKorik: async (b) => {
+      await yugur(() => api.setKorik(b));
+    },
+    deleteKorik: async (workerId, turi) => {
+      await yugur(() => api.deleteKorik(workerId, turi));
     },
 
     /* --- buyum / norma --- */

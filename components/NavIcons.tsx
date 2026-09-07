@@ -132,6 +132,23 @@ export const IconAdmin = (p: Props) => (
   </Svg>
 );
 
+/** Tibbiy koʻrik — planshet (clipboard) va tibbiy xoch */
+export const IconTibbiy = (p: Props) => (
+  <Svg {...p}>
+    <path d="M8 4.5h8a2 2 0 012 2v11a2 2 0 01-2 2H8a2 2 0 01-2-2v-11a2 2 0 012-2z" />
+    <path d="M9.5 3.5h5v3h-5z" />
+    <path d="M12 10v5M9.5 12.5h5" />
+  </Svg>
+);
+
+/** Psixolog — aql/gʻoya (lampa koʻrinishidagi bosh) */
+export const IconPsixolog = (p: Props) => (
+  <Svg {...p}>
+    <path d="M12 3.5a6 6 0 00-6 6c0 2.2 1.2 3.6 2.3 4.6.7.6 1.2 1 1.2 2.1V17h5v-.8c0-1.1.5-1.5 1.2-2.1C16.8 13.1 18 11.7 18 9.5a6 6 0 00-6-6z" />
+    <path d="M10 20h4M10.5 17.5v2.5M13.5 17.5v2.5" />
+  </Svg>
+);
+
 /** Manzil boʻyicha belgini tanlaydi */
 export function NavIcon({ href, size, className }: { href: string } & Props) {
   const K = MAP[href] ?? IconDash;
@@ -144,6 +161,8 @@ const MAP: Record<string, (p: Props) => React.JSX.Element> = {
   "/arizalar": IconAriza,
   "/ombor": IconOmbor,
   "/kip": IconKip,
+  "/tibbiy": IconTibbiy,
+  "/psixolog": IconPsixolog,
   "/talon": IconTalon,
   "/hisobot": IconHisobot,
   "/hujjatlar": IconHujjat,
