@@ -5,8 +5,9 @@ import { useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
 import {
-  dashboardStats, daysBetween, fmt, fioShort, itemStates, jonliRang, kipTone,
-  STATUS_COLOR, STATUS_LABEL, TODAY, itemById, workerById, money,
+  dashboardStats, daysBetween, fmt, fioShort, itemStates, jonliRang,
+  kipOgohlantirish, oxirgiKip, STATUS_COLOR, STATUS_LABEL, TODAY,
+  itemById, workerById, money,
 } from "@/lib/logic";
 import { Badge, Btn, Empty, PageHead, Panel, Stat, Table, Td, Tr } from "@/components/ui";
 import { Tilt, SpeedLines } from "@/components/Fx";
@@ -17,6 +18,19 @@ export default function Dash() {
   const s = useMemo(() => dashboardStats(db), [db]);
   const router = useRouter();
 
+  /* KIP paneli — maʼlumot KIP kabineti bilan bitta manbadan olinadi
+     (`kipOgohlantirish`): har xodimning eng oxirgi yozuvi, lokomotiv
+     brigadasi boʻyicha. Yoʻriqchi `kip.read.all`siz faqat oʻz
+     kolonnasini koʻradi — KIP sahifasidagi qoidaning aynan oʻzi. */
+  const kolonnaRejim = roles.includes("yoriqchi") && !can("kip.read.all");
+  const kipYaqin = useMemo(
+    () => kipOgohlantirish(db, {
+      kolonnaId: kolonnaRejim ? (db.yoriqnoma?.instruktorKolonna?.id ?? "—yoʻq—") : null,
+    }),
+    [db, kolonnaRejim]
+  );
+  const kipOtganSoni = kipYaqin.filter((r) => r.tone.qism === 4).length;
+
   // Ishchi uchun bosh sahifa — «Mening kabinetim»
   const pureIshchi = !!me && roles.length === 1 && roles[0] === "ishchi";
   useEffect(() => {
@@ -26,7 +40,7 @@ export default function Dash() {
   if (!me || pureIshchi) return null;
 
   const myItems = itemStates(db, me);
-  const myKip = db.kips.filter((k) => k.workerId === me.id).sort((a, b) => (a.tugash < b.tugash ? 1 : -1))[0];
+  const myKip = oxirgiKip(db, me.id);
 
   const pending = db.requests.filter((r) => {
     if (r.status === "SUBMITTED") return can("request.approve1");
@@ -35,10 +49,6 @@ export default function Dash() {
     if (r.status === "HEAD_APPROVED" || r.status === "RECEIVED") return can("request.issue");
     return false;
   });
-
-  const kipYaqin = db.kips
-    .filter((k) => kipTone(k.tugash).qism > 0)
-    .sort((a, b) => (a.tugash > b.tugash ? 1 : -1));
 
   const jurnalYaqin = db.journal
     .filter((j) => !j.bajarildi)
@@ -154,7 +164,12 @@ export default function Dash() {
         )}
         <Stat label="Mening tasdigʻimni kutmoqda" value={pending.length} color="#a78bfa" hint={pending.length ? "Arizalar boʻlimiga oʻting" : "Hozircha yoʻq"} />
         {canFeature("card.kip") && (
-          <Stat label="KIP — muddati yaqin/oʻtgan" value={s.kipYaqin + s.kipOtgan} color="#ef4444" />
+          <Stat
+            label="KIP — muddati yaqin/oʻtgan"
+            value={kipYaqin.length}
+            color="#ef4444"
+            hint={kipOtganSoni ? `${kipOtganSoni} tasining muddati oʻtgan` : undefined}
+          />
         )}
       </div>
 
@@ -255,7 +270,7 @@ export default function Dash() {
               </div>
               {can("kip.write") && <Link href="/kip"><Btn size="sm">Kabinet</Btn></Link>}
             </div>
-            <KipOqim kips={kipYaqin} />
+            <KipOqim rows={kipYaqin} />
           </Panel>
         )}
 

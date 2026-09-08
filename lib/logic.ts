@@ -2,6 +2,7 @@ import type {
   AppRequest,
   Card,
   DB,
+  Kip,
   Norm,
   Position,
   RequestStatus,
@@ -300,6 +301,51 @@ export function kipTone(tugash: string, at: Date = TODAY()): KipTone {
   return { label: `${d} kun qoldi`, color: "#38bdf8", qism: 0 };
 }
 
+/* ---------------- KIP roʻyxati ----------------
+
+   Bitta xodimda bir nechta KIP yozuvi boʻladi: har safar yangisi
+   yozilganda eskisi tarixda qoladi. Holat FAQAT eng oxirgi yozuv
+   boʻyicha aniqlanadi — eskilari allaqachon almashtirilgan va ular
+   «muddati oʻtdi» deb sanalmasligi kerak.
+
+   Shu qoida KIP kabineti (app/(sys)/kip) va bosh sahifadagi panel
+   uchun bir joyda saqlanadi — ikki sahifa bir xil raqamni koʻrsatsin. */
+
+/** Xodimning eng oxirgi (eng kech tugaydigan) KIP yozuvi. */
+export function oxirgiKip(db: DB, workerId: string): Kip | undefined {
+  return db.kips
+    .filter((k) => k.workerId === workerId)
+    .sort((a, b) => (a.tugash < b.tugash ? 1 : -1))[0];
+}
+
+export type KipQator = { worker: Worker; kip: Kip; tone: KipTone };
+
+/** Ogohlantirish roʻyxati: lokomotiv brigadasining har bir xodimi uchun
+ *  eng oxirgi KIP olinadi va faqat muddati yaqin/oʻtganlari qoladi.
+ *  Tartib — eng kechikkani birinchi.
+ *
+ *  `kolonnaId` berilsa (yoʻriqchi oʻz kolonnasini koʻradigan rejim),
+ *  roʻyxat oʻsha kolonna xodimlari bilan cheklanadi. */
+export function kipOgohlantirish(
+  db: DB,
+  opts: { kolonnaId?: string | null } = {}
+): KipQator[] {
+  const { kolonnaId } = opts;
+  const rows: KipQator[] = [];
+
+  for (const w of db.workers) {
+    if (!lokoBrigada(db, w)) continue;
+    if (kolonnaId && w.kolonnaId !== kolonnaId) continue;
+    const kip = oxirgiKip(db, w.id);
+    if (!kip) continue;
+    const tone = kipTone(kip.tugash);
+    if (tone.qism === 0) continue;
+    rows.push({ worker: w, kip, tone });
+  }
+
+  return rows.sort((a, b) => (a.kip.tugash < b.kip.tugash ? -1 : a.kip.tugash > b.kip.tugash ? 1 : 0));
+}
+
 /* ---------------- QR imzo ---------------- */
 
 export function makeHash(input: string) {
@@ -394,8 +440,11 @@ export function dashboardStats(db: DB) {
     if (st.some((s) => s.holat === "qizil")) otgan++;
   }
 
-  const kipOtgan = db.kips.filter((k) => kipTone(k.tugash).qism === 4).length;
-  const kipYaqin = db.kips.filter((k) => [1, 2, 3].includes(kipTone(k.tugash).qism)).length;
+  // Har xodimning FAQAT eng oxirgi KIP yozuvi sanaladi — almashtirilgan
+  // eski yozuvlar «muddati oʻtdi» boʻlib qoʻshimcha hisoblanmasin.
+  const kipRows = kipOgohlantirish(db);
+  const kipOtgan = kipRows.filter((r) => r.tone.qism === 4).length;
+  const kipYaqin = kipRows.filter((r) => r.tone.qism !== 4).length;
 
   return { ochiqJurnal, muddatYaqin, muddatOtgan, faolAriza, kelgan, otgan, kipOtgan, kipYaqin };
 }

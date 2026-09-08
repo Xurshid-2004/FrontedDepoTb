@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "@/lib/store";
 import {
-  fmt, fio, fioShort, jonliRang, kipTone, kolonnaNomi, lokoBrigada, positionById, positionNames, workerLokoBor,
+  fmt, fio, fioShort, jonliRang, kipTone, kolonnaNomi, lokoBrigada, oxirgiKip,
+  positionById, positionNames, workerLokoBor,
 } from "@/lib/logic";
 import type { Kip, Worker } from "@/lib/types";
 import {
@@ -129,13 +130,10 @@ export default function KipPage() {
      Tartib: avval KIP muddati yaqinlari (tugash sanasi boʻyicha), keyin KIP
      yozuvi yoʻqlar — familiya boʻyicha alifboda. */
   const guruh = useMemo(() => {
-    const oxirgiKip = (wid: string) =>
-      db.kips.filter((k) => k.workerId === wid).sort((a, b) => (a.tugash < b.tugash ? 1 : -1))[0];
-
     const tartibla = (rows: Worker[]) =>
       [...rows].sort((a, b) => {
-        const ka = oxirgiKip(a.id)?.tugash ?? "";
-        const kb = oxirgiKip(b.id)?.tugash ?? "";
+        const ka = oxirgiKip(db, a.id)?.tugash ?? "";
+        const kb = oxirgiKip(db, b.id)?.tugash ?? "";
         if (ka && kb) return ka < kb ? -1 : ka > kb ? 1 : 0;
         if (ka) return -1; // KIP borlar tepada
         if (kb) return 1;
@@ -167,8 +165,10 @@ export default function KipPage() {
 
   if (!me) return null;
 
-  const kipOf = (wid: string) =>
-    db.kips.filter((k) => k.workerId === wid).sort((a, b) => (a.tugash < b.tugash ? 1 : -1))[0];
+  // Holat har doim eng OXIRGI KIP yozuvi boʻyicha — eskilari tarixda
+  // qoladi. Bir xil qoida bosh sahifadagi panelda ham ishlaydi
+  // (lib/logic.ts → oxirgiKip / kipOgohlantirish).
+  const kipOf = (wid: string) => oxirgiKip(db, wid);
 
   const surish = (turi: "elektrovoz" | "teplovoz") => {
     setTab(turi);
