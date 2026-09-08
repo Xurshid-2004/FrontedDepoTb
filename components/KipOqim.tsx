@@ -7,27 +7,22 @@ import { useStore } from "@/lib/store";
 import { Empty } from "@/components/ui";
 
 /* ------------------------------------------------------------------
-   KIP muddatlari — jonli lenta.
+   KIP muddatlari — qoʻlda aylantiriladigan roʻyxat.
 
    Bosh sahifadagi «KIP muddatlari» paneli avval faqat dastlabki 6 ta
-   yozuvni qotib koʻrsatardi. Endi:
+   yozuvni koʻrsatardi. Endi:
 
-   • Roʻyxat 6 qatordan uzun boʻlsa — yuqoriga uzluksiz sirpanadi
-     (CSS keyframe, GPU'da), shunda barcha xodimlar navbat bilan koʻrinadi.
-   • Sichqoncha ustiga kelganda yoki klaviatura bilan fokuslanganda
-     toʻxtaydi — oʻqish qulay.
-   • 6 ta yoki undan kam boʻlsa — oddiy statik roʻyxat (aylantirishning
-     maʼnosi yoʻq).
+   • Barcha yozuvlar chiqadi; 6 qatordan uzun boʻlsa panel ichida
+     oʻz scroll'i paydo boʻladi — xodim oʻzi sichqoncha/barmoq bilan
+     aylantiradi. Avtomatik harakat yoʻq.
    • Maʼlumot store orqali har 12 s va oynaga qaytilganda yangilanadi;
      bundan tashqari har daqiqada qayta hisoblanadi — yarim tunda
      «Bugun tugaydi» → «Muddati oʻtdi» oʻz-oʻzidan almashadi.
-   • «Harakatni kamaytirish» tizim sozlamasida animatsiya oʻchadi.
 ------------------------------------------------------------------ */
 
-const KORINADI = 6;          // bir vaqtda koʻrinadigan qatorlar
-const QATOR_PX = 42;         // bitta qator balandligi (h-[42px])
-const ORALIQ_PX = 8;         // qatorlar orasi (gap-2)
-const SONIYA_HAR_QATOR = 2.6; // bitta qator oʻtishi uchun vaqt
+const KORINADI = 6;   // scroll'siz koʻrinadigan qatorlar
+const QATOR_PX = 42;  // bitta qator balandligi (h-[42px])
+const ORALIQ_PX = 8;  // qatorlar orasi (gap-2)
 
 export default function KipOqim({ kips }: { kips: Kip[] }) {
   const { db } = useStore();
@@ -48,57 +43,36 @@ export default function KipOqim({ kips }: { kips: Kip[] }) {
     return { id: k.id, ism: w ? fioShort(w) : "—", tugash: k.tugash, tone: t, rang: jonliRang(k.id) };
   });
 
-  const aylanadi = qatorlar.length > KORINADI;
+  const uzun = qatorlar.length > KORINADI;
   const balandlik = KORINADI * QATOR_PX + (KORINADI - 1) * ORALIQ_PX;
-  const davr = Math.max(12, Math.round(qatorlar.length * SONIYA_HAR_QATOR));
-
-  const Royxat = ({ yashirin = false }: { yashirin?: boolean }) => (
-    <ul className="flex flex-col gap-2 pb-2" aria-hidden={yashirin || undefined}>
-      {qatorlar.map((q) => (
-        <li
-          key={q.id}
-          className="flex h-[42px] items-center gap-3 rounded-xl border border-slate-200 bg-white/70 px-3"
-          tabIndex={yashirin ? -1 : 0}
-        >
-          <span
-            className={`h-2 w-2 shrink-0 rounded-full ${q.tone.qism >= 3 ? "kip-nuqta-puls" : ""}`}
-            style={{ background: q.tone.color, ["--kip-rang" as string]: q.tone.color }}
-          />
-          <span className="min-w-0 flex-1 truncate text-[14.5px] font-semibold" style={{ color: q.rang }}>
-            {q.ism}
-          </span>
-          <span className="hidden shrink-0 text-[11.5px] tabular-nums text-slate-400 sm:inline">{fmt(q.tugash)}</span>
-          <span className="shrink-0 text-[13px] font-semibold" style={{ color: q.tone.color }}>
-            {q.tone.label}
-          </span>
-        </li>
-      ))}
-    </ul>
-  );
-
-  if (!aylanadi) {
-    return (
-      <div className="-mb-2">
-        <Royxat />
-      </div>
-    );
-  }
 
   return (
     <div
-      className="kip-oqim-qobiq relative -mx-1 overflow-hidden px-1"
-      style={{
-        height: balandlik,
-        WebkitMaskImage: "linear-gradient(180deg, transparent 0, #000 14px, #000 calc(100% - 18px), transparent 100%)",
-        maskImage: "linear-gradient(180deg, transparent 0, #000 14px, #000 calc(100% - 18px), transparent 100%)",
-      }}
+      className={`kip-royxat -mx-1 px-1 ${uzun ? "overflow-y-auto overscroll-contain pr-2" : ""}`}
+      style={uzun ? { maxHeight: balandlik + ORALIQ_PX } : undefined}
       role="region"
-      aria-label={`KIP muddatlari, ${qatorlar.length} ta yozuv, avtomatik aylanadi`}
+      aria-label={`KIP muddatlari, ${qatorlar.length} ta yozuv`}
     >
-      <div className="kip-oqim" style={{ ["--kip-davr" as string]: `${davr}s` }}>
-        <Royxat />
-        <Royxat yashirin />
-      </div>
+      <ul className="flex flex-col gap-2">
+        {qatorlar.map((q) => (
+          <li
+            key={q.id}
+            className="flex h-[42px] shrink-0 items-center gap-3 rounded-xl border border-slate-200 bg-white/70 px-3"
+          >
+            <span
+              className={`h-2 w-2 shrink-0 rounded-full ${q.tone.qism >= 3 ? "kip-nuqta-puls" : ""}`}
+              style={{ background: q.tone.color, ["--kip-rang" as string]: q.tone.color }}
+            />
+            <span className="min-w-0 flex-1 truncate text-[14.5px] font-semibold" style={{ color: q.rang }}>
+              {q.ism}
+            </span>
+            <span className="hidden shrink-0 text-[11.5px] tabular-nums text-slate-400 sm:inline">{fmt(q.tugash)}</span>
+            <span className="shrink-0 text-[13px] font-semibold" style={{ color: q.tone.color }}>
+              {q.tone.label}
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
